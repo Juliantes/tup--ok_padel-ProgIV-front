@@ -1,0 +1,76 @@
+<main class="users-page">
+  <section class="players-section" aria-labelledby="players-title">
+    <div class="section-header">
+      <div class="section-heading">
+        <p class="eyebrow dark">{{ 'USERS.EYEBROW' | translate }}</p>
+        <h2 id="players-title">{{ 'USERS.TITLE' | translate }}</h2>
+      </div>
+
+      @if (!isLoading() && !errorMessage()) {
+        <div class="section-controls">
+          <input
+            class="search-input"
+            type="search"
+            [value]="searchTerm()"
+            (input)="onSearchInput($event)"
+            [placeholder]="'USERS.SEARCH_PLACEHOLDER' | translate"
+            [attr.aria-label]="'USERS.SEARCH_ARIA' | translate"
+          />
+
+          <button
+            class="sort-button"
+            type="button"
+            [class.active]="isSortActive('name')"
+            (click)="toggleSort('name')"
+          >
+            {{ 'USERS.SORT_NAME' | translate }}{{ sortIndicator('name') }}
+          </button>
+
+          @if (isAdmin()) {
+            <button class="sort-button admin-action" type="button" (click)="createSamplePlayer()">
+              {{ 'USERS.ADD_PLAYER' | translate }}
+            </button>
+          }
+
+          <button
+            class="sort-button"
+            type="button"
+            [class.active]="isSortActive('age')"
+            (click)="toggleSort('age')"
+          >
+            {{ 'USERS.SORT_AGE' | translate }}{{ sortIndicator('age') }}
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <p class="state-message">{{ 'USERS.LOADING' | translate }}</p>
+    } @else if (errorMessage()) {
+      <p class="state-message error">{{ errorMessage() }}</p>
+    } @else if (players().length === 0) {
+      <p class="state-message">{{ 'USERS.NO_RESULTS' | translate }}</p>
+    } @else {
+      <div class="players-grid">
+        @for (player of players(); track player.id) {
+          <article class="player-card">
+            <img [src]="player.image" [alt]="player.fullName" />
+
+            <div class="player-info">
+              <h3>{{ player.fullName }}</h3>
+              <p>{{ player.email }}</p>
+              <p>{{ 'USERS.AGE' | translate: { age: player.age } }}</p>
+              <p>{{ player.phone }}</p>
+              <p>{{ player.country }} - {{ player.state }} - {{ player.city }}</p>
+              @if (isAdmin()) {
+                <button class="delete-button" type="button" (click)="deletePlayer(player)">
+                  {{ 'USERS.DELETE_PLAYER' | translate }}
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

@@ -1,0 +1,13 @@
+node_modules
+.angular/
+dist/
+.lighthouseci/
+.idea/
+android/
+.agents/
+skills-lock.json
+.firebase/
+src/environments/environment.ts
+src/environments/environment.prod.ts
+src/environments/environment.ts
+src/environments/environment.prod.ts

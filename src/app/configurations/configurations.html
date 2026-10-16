@@ -1,0 +1,77 @@
+<div class="config-container">
+  <mat-card class="profile-card">
+    <mat-card-header class="profile-card-header">
+      <mat-card-title>{{ 'CONFIG.PROFILE_TITLE' | translate }}</mat-card-title>
+      <button mat-stroked-button class="edit-profile-button" routerLink="/configurations/account">
+        {{ 'CONFIG.EDIT' | translate }}
+      </button>
+    </mat-card-header>
+    <mat-card-content class="profile-content">
+      <div class="profile-image">
+        <img [src]="userProfile().image" [alt]="'CONFIG.PROFILE_IMAGE_ALT' | translate" />
+      </div>
+      <div class="profile-info">
+        <p>
+          <strong>{{ 'CONFIG.NAME' | translate }}</strong> {{ userProfile().name }}
+        </p>
+        <p>
+          <strong>{{ 'CONFIG.EMAIL' | translate }}</strong> {{ userProfile().email }}
+        </p>
+        <p>
+          <strong>{{ 'CONFIG.MEMBER_SINCE' | translate }}</strong> {{ userProfile().memberSince }}
+        </p>
+        @if (accountDetails(); as details) {
+          @if (details.birthDate) {
+            <p>
+              <strong>{{ 'CONFIG.BIRTH_DATE' | translate }}</strong>
+              {{ formatBirthDate(details.birthDate) }}
+            </p>
+          }
+          @if (details.address) {
+            <p>
+              <strong>{{ 'CONFIG.ADDRESS' | translate }}</strong> {{ details.address }}
+            </p>
+          }
+          @if (hasSavedPhones(details.phones)) {
+            @for (phone of getSavedPhones(details.phones); track $index) {
+              <p>
+                <strong>{{
+                  'CONFIG.PHONE_WITH_NUMBER' | translate: { number: $index + 1 }
+                }}</strong>
+                {{ phone }}
+              </p>
+            }
+          }
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="logout-card">
+    <mat-card-content>
+      <button mat-raised-button color="warn" (click)="openLogoutDialog()">
+        <mat-icon>logout</mat-icon>
+        {{ 'CONFIG.LOGOUT' | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="app-info-card">
+    <mat-card-header>
+      <mat-card-title>{{ 'CONFIG.APP_INFO_TITLE' | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="app-logo">
+        <span class="logo-mark">PM</span>
+        <span class="logo-name">PadelMatch</span>
+      </div>
+      <p>
+        <strong>{{ 'CONFIG.VERSION' | translate }}</strong> {{ appInfo.version }}
+      </p>
+      <p>
+        <strong>{{ 'CONFIG.USER_AGENT' | translate }}</strong>
+      </p>
+      <code class="user-agent">{{ appInfo.userAgent }}</code>
+    </mat-card-content>
+  </mat-card>
+</div>

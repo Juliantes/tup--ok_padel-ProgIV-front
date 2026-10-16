@@ -1,0 +1,67 @@
+<section class="match-create-page">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ 'MATCHES.CREATE_TITLE' | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (errorMessage()) {
+        <p>{{ errorMessage() | translate }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="match-create-form">
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.COURT' | translate }}</mat-label>
+          <mat-select formControlName="courtId" [disabled]="isLoading()">
+            @for (court of courts(); track court.id) {
+              <mat-option [value]="court.id">{{ court.name }} — {{ court.club.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.DATE' | translate }}</mat-label>
+          <input matInput type="datetime-local" formControlName="date" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.DURATION' | translate }}</mat-label>
+          <input matInput type="number" formControlName="duration" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.ROSTER_MODE' | translate }}</mat-label>
+          <mat-select formControlName="rosterMode">
+            <mat-option value="individual">individual</mat-option>
+            <mat-option value="pairs">pairs</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.LEVEL' | translate }}</mat-label>
+          <input matInput type="number" min="1" max="7" formControlName="levelRequired" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'MATCHES.JOIN_POLICY' | translate }}</mat-label>
+          <mat-select formControlName="joinPolicy">
+            <mat-option value="auto">auto</mat-option>
+            <mat-option value="manual">manual</mat-option>
+            <mat-option value="auto_by_level">auto_by_level</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <a mat-button routerLink="/matches">{{ 'CONFIG.CANCEL' | translate }}</a>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="form.invalid || isSaving()"
+          >
+            {{ 'MATCHES.CREATE' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

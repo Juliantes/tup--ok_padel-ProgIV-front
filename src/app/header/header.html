@@ -1,0 +1,52 @@
+<main class="app-shell">
+  <header class="hero-header" [class.hero-header--compact]="!isHomeRoute()">
+    <mat-toolbar class="topbar" [attr.aria-label]="'HEADER.MAIN_ARIA' | translate">
+      <a class="brand" routerLink="/home" [attr.aria-label]="'HEADER.BRAND_ARIA' | translate">
+        <span class="brand-mark">PM</span>
+        <span>PadelMatch</span>
+      </a>
+    </mat-toolbar>
+
+    <section class="hero-content">
+      <p class="eyebrow">{{ 'HEADER.EYEBROW' | translate }}</p>
+      <h1 [innerHTML]="'HEADER.TITLE' | translate"></h1>
+      <p class="hero-description">
+        {{ 'HEADER.DESCRIPTION' | translate }}
+      </p>
+    </section>
+  </header>
+
+  <div class="app-shell-body">
+    <mat-toolbar class="navigation-bar" [attr.aria-label]="'HEADER.SECONDARY_NAV_ARIA' | translate">
+      <nav class="navigation-links">
+        @for (item of navigationItems; track item.path) {
+          <a
+            matButton
+            [routerLink]="item.path"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: true }"
+            (click)="trackNavClick(item.analyticsName, 'header_nav')"
+          >
+            {{ item.labelKey | translate }}
+          </a>
+        }
+      </nav>
+    </mat-toolbar>
+
+    <div class="app-shell-outlet">
+      <router-outlet />
+    </div>
+  </div>
+
+  <div class="bottom-bar-mobile">
+    @for (item of navigationItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        (click)="trackNavClick(item.analyticsName, 'mobile_nav')"
+      >
+        <span>{{ item.labelKey | translate }}</span>
+      </a>
+    }
+  </div>
+</main>

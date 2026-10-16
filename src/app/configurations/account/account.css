@@ -1,0 +1,124 @@
+:host {
+  display: block;
+}
+
+.account-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-size: 1rem;
+}
+
+.account-card {
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(8, 120, 201, 0.1);
+}
+
+.profile-readonly {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(8, 120, 201, 0.12);
+}
+
+.profile-image img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #149a61;
+}
+
+.profile-info p {
+  margin: 0.5rem 0;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.birth-date-field {
+  font-size: 1.2rem;
+}
+
+.address-field {
+  font-size: 1.2rem;
+}
+
+.birth-date-field .birth-date-toggle {
+  margin-right: 0.75rem;
+  font-size: 1rem;
+}
+.birth-date-field,
+.address-field,
+.phone-field {
+  --mat-form-field-container-text-size: 1rem;
+  --mat-form-field-container-text-line-height: 1rem;
+  --mat-form-field-filled-label-text-size: 1.18rem;
+}
+.phones-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 1rem;
+}
+
+.phones-label {
+  margin: 0.5rem 0 0;
+  font-weight: 600;
+  color: #0b5278;
+}
+
+.phone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.phone-field {
+  flex: 1;
+  font-size: 1.2rem;
+}
+
+.add-phone-button {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 767px) {
+  :host {
+    flex: none;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-readonly {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

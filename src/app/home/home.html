@@ -1,0 +1,16 @@
+<section
+  class="home-shell"
+  [style.background-image]="backgroundImage"
+  [attr.aria-label]="'HOME.ARIA' | translate"
+>
+  <a class="home-half home-half--left" routerLink="/matches" (click)="trackHomeClick('partidos')">
+    <span class="home-half-label">{{ 'HOME.MATCHES' | translate }}</span>
+  </a>
+  <a
+    class="home-half home-half--right"
+    routerLink="/configurations"
+    (click)="trackHomeClick('configuracion')"
+  >
+    <span class="home-half-label">{{ 'HOME.CONFIG' | translate }}</span>
+  </a>
+</section>

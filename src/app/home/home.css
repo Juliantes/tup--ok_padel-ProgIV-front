@@ -1,0 +1,79 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.home-shell {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 0;
+}
+
+.home-half {
+  flex: 1 1 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.45);
+  transition:
+    background-color 0.2s ease,
+    backdrop-filter 0.2s ease;
+}
+
+.home-half--left {
+  background: rgba(11, 82, 120, 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.home-half--right {
+  background: rgba(20, 154, 97, 0.38);
+  backdrop-filter: blur(2px);
+}
+
+.home-half:hover,
+.home-half:focus-visible {
+  background-color: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.home-half:focus-visible {
+  box-shadow: inset 0 0 0 0.1875rem rgba(255, 255, 255, 0.85);
+}
+
+.home-half-label {
+  padding: 1rem 1.5rem;
+  border-radius: 999px;
+  border: 0.125rem solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 767px) {
+  :host {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .home-shell {
+    flex: 1 1 auto;
+    min-height: 12rem;
+  }
+}

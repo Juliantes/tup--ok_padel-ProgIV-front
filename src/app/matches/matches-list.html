@@ -1,0 +1,40 @@
+<section class="matches-page">
+  <header class="matches-header">
+    <h1>{{ (isMine() ? 'MATCHES.MINE_TITLE' : 'MATCHES.TITLE') | translate }}</h1>
+    <div class="matches-actions">
+      <a mat-stroked-button routerLink="/matches">{{ 'MATCHES.ALL' | translate }}</a>
+      <a mat-stroked-button routerLink="/matches/mine">{{ 'MATCHES.MINE' | translate }}</a>
+      <a mat-raised-button color="primary" routerLink="/matches/new">{{
+        'MATCHES.CREATE' | translate
+      }}</a>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <mat-spinner />
+  } @else if (errorMessage()) {
+    <p>{{ errorMessage() | translate }}</p>
+  } @else if (matches().length === 0) {
+    <p>{{ 'MATCHES.EMPTY' | translate }}</p>
+  } @else {
+    <div class="matches-grid">
+      @for (match of matches(); track match.id) {
+        <mat-card class="match-card">
+          <mat-card-header>
+            <mat-card-title>{{ match.court.name }}</mat-card-title>
+            <mat-card-subtitle>{{ match.date | date: 'short' }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p>{{ 'MATCHES.STATUS' | translate }}: {{ match.status }}</p>
+            <p>
+              {{ 'MATCHES.PLAYERS' | translate }}: {{ match.players_count }}/{{ match.max_players }}
+            </p>
+          </mat-card-content>
+          <mat-card-actions>
+            <a mat-button [routerLink]="['/matches', match.id]">{{ 'MATCHES.VIEW' | translate }}</a>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

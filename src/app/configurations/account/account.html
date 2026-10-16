@@ -1,0 +1,144 @@
+<div class="account-container">
+  <mat-card class="account-card">
+    <mat-card-header>
+      <mat-card-title>{{ 'CONFIG.ACCOUNT_TITLE' | translate }}</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <section class="profile-readonly">
+        <div class="profile-image">
+          <img [src]="userProfile().image" [alt]="'CONFIG.PROFILE_IMAGE_ALT' | translate" />
+        </div>
+        <div class="profile-info">
+          <p>
+            <strong>{{ 'CONFIG.NAME' | translate }}</strong> {{ userProfile().name }}
+          </p>
+          <p>
+            <strong>{{ 'CONFIG.EMAIL' | translate }}</strong> {{ userProfile().email }}
+          </p>
+          @if (accountDetails(); as details) {
+            @if (details.birthDate) {
+              <p>
+                <strong>{{ 'CONFIG.BIRTH_DATE' | translate }}</strong>
+                {{ formatBirthDate(details.birthDate) }}
+              </p>
+            }
+            @if (details.address) {
+              <p>
+                <strong>{{ 'CONFIG.ADDRESS' | translate }}</strong> {{ details.address }}
+              </p>
+            }
+            @if (hasSavedPhones(details.phones)) {
+              @for (phone of getSavedPhones(details.phones); track $index) {
+                <p>
+                  <strong>{{
+                    'CONFIG.PHONE_WITH_NUMBER' | translate: { number: $index + 1 }
+                  }}</strong>
+                  {{ phone }}
+                </p>
+              }
+            }
+          }
+        </div>
+      </section>
+
+      @if (apiPhonePlaceholder()) {
+        <p class="placeholder-phone-hint">{{ 'CONFIG.PLACEHOLDER_PHONE_HINT' | translate }}</p>
+      }
+
+      <form class="account-form" [formGroup]="accountForm" (ngSubmit)="save()">
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'CONFIG.NAME' | translate }}</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'CONFIG.SELF_LEVEL' | translate }}</mat-label>
+          <input matInput type="number" min="1" max="7" formControlName="selfLevel" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>{{ 'CONFIG.BIO' | translate }}</mat-label>
+          <textarea matInput rows="3" formControlName="bio"></textarea>
+        </mat-form-field>
+
+        <mat-form-field class="full-width birth-date-field">
+          <mat-label>{{ 'CONFIG.BIRTH_DATE' | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="birthDatePicker"
+            formControlName="birthDate"
+            [max]="maxBirthDate"
+          />
+          <mat-datepicker-toggle matIconSuffix class="birth-date-toggle" [for]="birthDatePicker" />
+          <mat-datepicker #birthDatePicker />
+        </mat-form-field>
+
+        <mat-form-field class="full-width address-field">
+          <mat-label>{{ 'CONFIG.ADDRESS' | translate }}</mat-label>
+          <input matInput formControlName="address" />
+        </mat-form-field>
+
+        <div class="phones-section" formArrayName="phones">
+          <p class="phones-label">{{ 'CONFIG.PHONES' | translate }}</p>
+          @for (phone of phones.controls; track $index; let i = $index) {
+            <div class="phone-row">
+              <mat-form-field class="phone-field" appearance="fill">
+                <mat-label>{{ 'CONFIG.PHONE' | translate }} {{ i + 1 }}</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  inputmode="numeric"
+                  [formControl]="phone"
+                  (keydown)="onPhoneKeyDown($event, i)"
+                  (blur)="onPhoneBlur(i)"
+                  (paste)="onPhonePaste($event, phone)"
+                  [placeholder]="'CONFIG.PHONE_PLACEHOLDER' | translate"
+                />
+                <mat-icon matSuffix>phone</mat-icon>
+
+                @if (phone.invalid && (phone.dirty || phone.touched)) {
+                  <mat-error>{{ getPhoneErrorMessage(phone) }}</mat-error>
+                }
+              </mat-form-field>
+
+              @if (phones.length > 1) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'CONFIG.REMOVE_PHONE' | translate"
+                  (click)="removePhone(phone)"
+                  color="warn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <button mat-stroked-button type="button" class="add-phone-button" (click)="addPhone()">
+          <mat-icon>add</mat-icon>
+          {{ 'CONFIG.ADD_PHONE' | translate }}
+        </button>
+
+        <!-- Mensaje de error general del formulario -->
+        @if (accountForm.invalid && accountForm.touched) {
+          <div class="form-error-message">
+            <mat-icon color="warn">warning</mat-icon>
+            <span>{{ 'CONFIG.FORM_INVALID' | translate }}</span>
+          </div>
+        }
+
+        <div class="form-actions">
+          <button mat-button type="button" routerLink="/configurations">
+            {{ 'CONFIG.CANCEL' | translate }}
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="accountForm.invalid">
+            {{ 'CONFIG.SAVE' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,118 @@
+<section class="match-detail-page">
+  <a mat-button routerLink="/matches">{{ 'MATCHES.BACK' | translate }}</a>
+
+  @if (isLoading()) {
+    <mat-spinner />
+  } @else if (errorMessage()) {
+    <p>{{ errorMessage() | translate }}</p>
+  } @else if (match(); as current) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ current.court.name }}</mat-card-title>
+        <mat-card-subtitle>{{ current.date | date: 'full' }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ 'MATCHES.STATUS' | translate }}: {{ current.status }}</p>
+        <p>
+          {{ 'MATCHES.PLAYERS' | translate }}: {{ current.players_count }}/{{ current.max_players }}
+        </p>
+        <p>{{ 'MATCHES.CREATOR' | translate }}: {{ current.creator.name }}</p>
+
+        <h3>{{ 'MATCHES.ROSTER' | translate }}</h3>
+        <ul>
+          @for (player of current.match_players; track player.id) {
+            <li>{{ player.user.name }} ({{ player.team ?? '—' }} · {{ player.status }})</li>
+          }
+        </ul>
+
+        @if (current.consensus) {
+          <h3>{{ 'MATCHES.CONSENSUS' | translate }}</h3>
+          <p>
+            {{ 'MATCHES.CONSENSUS_VOTES' | translate }}: {{ current.consensus.votes }}/{{
+              current.consensus.total
+            }}
+          </p>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button type="button" [disabled]="actionLoading()" (click)="join()">
+          {{ 'MATCHES.JOIN' | translate }}
+        </button>
+        <button mat-stroked-button type="button" [disabled]="actionLoading()" (click)="leave()">
+          {{ 'MATCHES.LEAVE' | translate }}
+        </button>
+        @if (isActivePlayer()) {
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="actionLoading()"
+            (click)="markPlayed()"
+          >
+            {{ 'MATCHES.MARK_PLAYED' | translate }}
+          </button>
+        }
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="results-card">
+      <mat-card-header>
+        <mat-card-title>{{ 'MATCHES.RESULTS' | translate }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (results().length === 0) {
+          <p>{{ 'MATCHES.NO_RESULTS' | translate }}</p>
+        } @else {
+          <ul>
+            @for (result of results(); track result.id) {
+              <li>
+                {{ result.reported_by.name }} —
+                @for (set of result.sets; track $index) {
+                  <span>{{ set.team_a_games }}-{{ set.team_b_games }} </span>
+                }
+                @if (canDeleteResult(result)) {
+                  <button mat-button type="button" (click)="deleteResult(result.id)">
+                    {{ 'MATCHES.DELETE_RESULT' | translate }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        @if (isActivePlayer()) {
+          <form [formGroup]="resultForm" (ngSubmit)="reportResult()" class="result-form">
+            <p>{{ 'MATCHES.REPORT_RESULT' | translate }}</p>
+            @if (current.roster_mode === 'pairs') {
+              <mat-form-field>
+                <mat-label>{{ 'MATCHES.TEAM' | translate }}</mat-label>
+                <mat-select formControlName="team">
+                  <mat-option value="team_a">team_a</mat-option>
+                  <mat-option value="team_b">team_b</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+            <div class="set-row">
+              <mat-form-field
+                ><input matInput type="number" formControlName="set1A"
+              /></mat-form-field>
+              <mat-form-field
+                ><input matInput type="number" formControlName="set1B"
+              /></mat-form-field>
+            </div>
+            <div class="set-row">
+              <mat-form-field
+                ><input matInput type="number" formControlName="set2A"
+              /></mat-form-field>
+              <mat-form-field
+                ><input matInput type="number" formControlName="set2B"
+              /></mat-form-field>
+            </div>
+            <button mat-raised-button color="primary" type="submit" [disabled]="actionLoading()">
+              {{ 'MATCHES.SUBMIT_RESULT' | translate }}
+            </button>
+          </form>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</section>

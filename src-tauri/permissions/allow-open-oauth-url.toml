@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-open-oauth-url"
+description = "Allows opening OAuth URLs in a closable browser window."
+commands.allow = ["open_oauth_url"]
