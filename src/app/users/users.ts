@@ -54,7 +54,7 @@ export class Users implements OnInit {
   protected readonly isAdmin = this.authService.isAdmin;
 
   ngOnInit(): void {
-    void this.authService.refreshUserRole();
+    void this.authService.ensureRailsSession();
     this.loadPlayers();
   }
 
