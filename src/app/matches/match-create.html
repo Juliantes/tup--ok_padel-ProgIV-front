@@ -1,67 +1,397 @@
-<section class="match-create-page">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ 'MATCHES.CREATE_TITLE' | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (errorMessage()) {
-        <p>{{ errorMessage() | translate }}</p>
-      }
+<section class="match-create-page" aria-labelledby="match-create-title">
+  <h1 id="match-create-title" class="match-create-title">
+    {{ 'MATCHES.CREATE_TITLE' | translate }}
+  </h1>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="match-create-form">
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.COURT' | translate }}</mat-label>
-          <mat-select formControlName="courtId" [disabled]="isLoading()">
-            @for (court of courts(); track court.id) {
-              <mat-option [value]="court.id">{{ court.name }} — {{ court.club.name }}</mat-option>
+  @if (errorMessage()) {
+    <p class="match-create-error" role="alert">{{ errorMessage() | translate }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="match-create-wizard">
+    @for (step of wizardSteps; track step) {
+      @switch (stepState(step)) {
+        @case ('active') {
+          <article class="wizard-card wizard-card--active">
+            @switch (step) {
+              @case ('date') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_DATE' | translate }}</h2>
+                </header>
+                <div class="wizard-card__body">
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.CREATE_FIELD_DATE' | translate }}</span>
+                    <span class="field__control field__control--date">
+                      <mat-icon aria-hidden="true">calendar_today</mat-icon>
+                      <input type="date" formControlName="matchDate" />
+                    </span>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.CREATE_FIELD_TIME' | translate }}</span>
+                    <span class="field__control field__control--select">
+                      <mat-icon aria-hidden="true">schedule</mat-icon>
+                      <select formControlName="matchTime">
+                        <option value="" disabled>
+                          {{ 'MATCHES.CREATE_TIME_PLACEHOLDER' | translate }}
+                        </option>
+                        @for (time of timeOptions; track time) {
+                          <option [value]="time">{{ time }}</option>
+                        }
+                      </select>
+                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                    </span>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.DURATION' | translate }}</span>
+                    <span class="field__control field__control--select">
+                      <select formControlName="duration">
+                        @for (minutes of durationOptions; track minutes) {
+                          <option [value]="minutes">{{ minutes }}</option>
+                        }
+                      </select>
+                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                    </span>
+                  </label>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('date')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('place') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_PLACE' | translate }}</h2>
+                </header>
+                <div class="wizard-card__body">
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.COURT' | translate }}</span>
+                    <span class="field__control field__control--select">
+                      <select formControlName="courtId" [disabled]="isLoading()">
+                        <option value="" disabled>
+                          {{ 'MATCHES.CREATE_COURT_PLACEHOLDER' | translate }}
+                        </option>
+                        @for (court of courts(); track court.id) {
+                          <option [value]="court.id">
+                            {{ court.name }} — {{ court.club.name }}
+                          </option>
+                        }
+                      </select>
+                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                    </span>
+                  </label>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('place')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('play') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_PLAY' | translate }}</h2>
+                </header>
+                <div class="wizard-card__body">
+                  <div class="choice-row">
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      [class.choice-chip--selected]="form.controls.autoJoin.value === true"
+                      (click)="selectAutoJoin(true)"
+                    >
+                      {{ 'MATCHES.CREATE_PLAY_YES' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      [class.choice-chip--selected]="form.controls.autoJoin.value === false"
+                      (click)="selectAutoJoin(false)"
+                    >
+                      {{ 'MATCHES.CREATE_PLAY_NO' | translate }}
+                    </button>
+                  </div>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('play')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('category') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">
+                    {{ 'MATCHES.CREATE_STEP_CATEGORY' | translate }}
+                  </h2>
+                </header>
+                <div class="wizard-card__body">
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.SEARCH_CATEGORY' | translate }}</span>
+                    <span class="field__control field__control--select">
+                      <select formControlName="levelRequired">
+                        @for (level of levelOptions; track level) {
+                          <option [value]="level">
+                            {{ levelRequiredI18nKey(level) | translate }}
+                          </option>
+                        }
+                      </select>
+                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                    </span>
+                  </label>
+                  <p class="field__hint">{{ 'MATCHES.CREATE_PLAYERS_FIXED' | translate }}</p>
+                  <label class="field">
+                    <span class="field__label">{{ 'MATCHES.ROSTER_MODE' | translate }}</span>
+                    <span class="field__control field__control--select">
+                      <select formControlName="rosterMode">
+                        <option value="individual">
+                          {{ 'MATCHES.CREATE_ROSTER_INDIVIDUAL' | translate }}
+                        </option>
+                        <option value="pairs">
+                          {{ 'MATCHES.CREATE_ROSTER_PAIRS' | translate }}
+                        </option>
+                      </select>
+                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                    </span>
+                  </label>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('category')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('who') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_WHO' | translate }}</h2>
+                </header>
+                <div class="wizard-card__body">
+                  <div
+                    class="roster-preview"
+                    [attr.aria-label]="'MATCHES.CREATE_STEP_WHO' | translate"
+                  >
+                    @for (slot of rosterPreviewSlots(); track $index) {
+                      <div class="roster-slot" [class.roster-slot--filled]="slot.filled">
+                        @if (slot.filled) {
+                          <span class="roster-slot__avatar">{{ slot.initials }}</span>
+                          <span class="roster-slot__name">{{ slot.label }}</span>
+                        } @else {
+                          <mat-icon aria-hidden="true">person_outline</mat-icon>
+                          <span class="roster-slot__empty">{{
+                            'MATCHES.CREATE_SLOT_EMPTY' | translate
+                          }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <p class="field__hint">
+                    @if (form.controls.autoJoin.value) {
+                      {{ 'MATCHES.CREATE_SPOTS_WITH_CREATOR' | translate }}
+                    } @else {
+                      {{ 'MATCHES.CREATE_SPOTS_WITHOUT_CREATOR' | translate }}
+                    }
+                  </p>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('who')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('visibility') {
+                <header class="wizard-card__header">
+                  <span class="wizard-step-badge wizard-step-badge--active">{{
+                    stepNumber(step)
+                  }}</span>
+                  <h2 class="wizard-card__title">
+                    {{ 'MATCHES.CREATE_STEP_VISIBILITY' | translate }}
+                  </h2>
+                </header>
+                <div class="wizard-card__body">
+                  <div class="visibility-options">
+                    <button
+                      type="button"
+                      class="visibility-option"
+                      [class.visibility-option--selected]="
+                        form.controls.joinPolicy.value === 'auto'
+                      "
+                      (click)="selectJoinPolicy('auto')"
+                    >
+                      <span class="visibility-option__title">
+                        {{ 'MATCHES.CREATE_VISIBILITY_PUBLIC' | translate }}
+                      </span>
+                      <span class="visibility-option__hint">
+                        {{ 'MATCHES.CREATE_VISIBILITY_PUBLIC_HINT' | translate }}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="visibility-option"
+                      [class.visibility-option--selected]="
+                        form.controls.joinPolicy.value === 'manual'
+                      "
+                      (click)="selectJoinPolicy('manual')"
+                    >
+                      <span class="visibility-option__title">
+                        {{ 'MATCHES.CREATE_VISIBILITY_MANUAL' | translate }}
+                      </span>
+                      <span class="visibility-option__hint">
+                        {{ 'MATCHES.CREATE_VISIBILITY_MANUAL_HINT' | translate }}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="visibility-option"
+                      [class.visibility-option--selected]="
+                        form.controls.joinPolicy.value === 'auto_by_level'
+                      "
+                      (click)="selectJoinPolicy('auto_by_level')"
+                    >
+                      <span class="visibility-option__title">
+                        {{ 'MATCHES.CREATE_VISIBILITY_LEVEL' | translate }}
+                      </span>
+                      <span class="visibility-option__hint">
+                        {{ 'MATCHES.CREATE_VISIBILITY_LEVEL_HINT' | translate }}
+                      </span>
+                    </button>
+                  </div>
+                  <div class="wizard-card__actions">
+                    <button type="button" class="wizard-continue" (click)="continue('visibility')">
+                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
             }
-          </mat-select>
-        </mat-form-field>
+          </article>
+        }
+        @case ('complete') {
+          <article class="wizard-card wizard-card--complete">
+            <div class="wizard-card__summary">
+              <span class="wizard-step-badge wizard-step-badge--done" aria-hidden="true">
+                <mat-icon>check</mat-icon>
+              </span>
+              <div class="wizard-card__text">
+                @switch (step) {
+                  @case ('date') {
+                    <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_DATE' | translate }}</h2>
+                    <p class="wizard-card__hint">
+                      {{ formatDateLabel(form.controls.matchDate.value) }}
+                      · {{ form.controls.matchTime.value }} · {{ form.controls.duration.value }} min
+                    </p>
+                  }
+                  @case ('place') {
+                    <h2 class="wizard-card__title">
+                      {{ 'MATCHES.CREATE_STEP_PLACE' | translate }}
+                    </h2>
+                    <p class="wizard-card__hint">{{ courtLabel(form.controls.courtId.value) }}</p>
+                  }
+                  @case ('play') {
+                    <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_PLAY' | translate }}</h2>
+                    <p class="wizard-card__hint">
+                      @if (form.controls.autoJoin.value) {
+                        {{ 'MATCHES.CREATE_PLAY_SUMMARY_YES' | translate }}
+                      } @else {
+                        {{ 'MATCHES.CREATE_PLAY_SUMMARY_NO' | translate }}
+                      }
+                    </p>
+                  }
+                  @case ('category') {
+                    <h2 class="wizard-card__title">
+                      {{ 'MATCHES.CREATE_STEP_CATEGORY' | translate }}
+                    </h2>
+                    <p class="wizard-card__hint">
+                      {{ levelLabel(form.controls.levelRequired.value) | translate }}
+                      · 4 jugadores
+                    </p>
+                  }
+                  @case ('who') {
+                    <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_WHO' | translate }}</h2>
+                    <p class="wizard-card__hint">
+                      @if (form.controls.autoJoin.value) {
+                        {{ 'MATCHES.CREATE_SPOTS_WITH_CREATOR' | translate }}
+                      } @else {
+                        {{ 'MATCHES.CREATE_SPOTS_WITHOUT_CREATOR' | translate }}
+                      }
+                    </p>
+                  }
+                  @case ('visibility') {
+                    <h2 class="wizard-card__title">
+                      {{ 'MATCHES.CREATE_STEP_VISIBILITY' | translate }}
+                    </h2>
+                    <p class="wizard-card__hint">
+                      @switch (form.controls.joinPolicy.value) {
+                        @case ('manual') {
+                          {{ 'MATCHES.CREATE_VISIBILITY_MANUAL_HINT' | translate }}
+                        }
+                        @case ('auto_by_level') {
+                          {{ 'MATCHES.CREATE_VISIBILITY_LEVEL_HINT' | translate }}
+                        }
+                        @default {
+                          {{ 'MATCHES.CREATE_VISIBILITY_PUBLIC_HINT' | translate }}
+                        }
+                      }
+                    </p>
+                  }
+                }
+              </div>
+              <button type="button" class="wizard-edit" (click)="edit(step)">
+                {{ 'CONFIG.EDIT' | translate }}
+              </button>
+            </div>
+          </article>
+        }
+        @case ('pending') {
+          <article class="wizard-card wizard-card--pending">
+            <div class="wizard-card__summary">
+              <span class="wizard-step-badge wizard-step-badge--pending">{{
+                stepNumber(step)
+              }}</span>
+              <h2 class="wizard-card__title">
+                @switch (step) {
+                  @case ('date') {
+                    {{ 'MATCHES.CREATE_STEP_DATE' | translate }}
+                  }
+                  @case ('place') {
+                    {{ 'MATCHES.CREATE_STEP_PLACE' | translate }}
+                  }
+                  @case ('play') {
+                    {{ 'MATCHES.CREATE_STEP_PLAY' | translate }}
+                  }
+                  @case ('category') {
+                    {{ 'MATCHES.CREATE_STEP_CATEGORY' | translate }}
+                  }
+                  @case ('who') {
+                    {{ 'MATCHES.CREATE_STEP_WHO' | translate }}
+                  }
+                  @case ('visibility') {
+                    {{ 'MATCHES.CREATE_STEP_VISIBILITY' | translate }}
+                  }
+                }
+              </h2>
+            </div>
+          </article>
+        }
+      }
+    }
 
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.DATE' | translate }}</mat-label>
-          <input matInput type="datetime-local" formControlName="date" />
-        </mat-form-field>
-
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.DURATION' | translate }}</mat-label>
-          <input matInput type="number" formControlName="duration" />
-        </mat-form-field>
-
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.ROSTER_MODE' | translate }}</mat-label>
-          <mat-select formControlName="rosterMode">
-            <mat-option value="individual">individual</mat-option>
-            <mat-option value="pairs">pairs</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.LEVEL' | translate }}</mat-label>
-          <input matInput type="number" min="1" max="7" formControlName="levelRequired" />
-        </mat-form-field>
-
-        <mat-form-field class="full-width">
-          <mat-label>{{ 'MATCHES.JOIN_POLICY' | translate }}</mat-label>
-          <mat-select formControlName="joinPolicy">
-            <mat-option value="auto">auto</mat-option>
-            <mat-option value="manual">manual</mat-option>
-            <mat-option value="auto_by_level">auto_by_level</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div class="form-actions">
-          <a mat-button routerLink="/matches">{{ 'CONFIG.CANCEL' | translate }}</a>
-          <button
-            mat-raised-button
-            color="primary"
-            type="submit"
-            [disabled]="form.invalid || isSaving()"
-          >
-            {{ 'MATCHES.CREATE' | translate }}
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+    <div class="match-create-footer">
+      <a class="footer-link" routerLink="/matches">{{ 'CONFIG.CANCEL' | translate }}</a>
+      <button class="cta-button" type="submit" [disabled]="!canSubmit()">
+        {{ 'MATCHES.CREATE' | translate }}
+      </button>
+    </div>
+  </form>
 </section>
