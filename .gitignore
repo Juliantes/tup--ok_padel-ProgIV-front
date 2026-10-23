@@ -1,13 +1,40 @@
-node_modules
+# Dependencies & build
+node_modules/
 .angular/
 dist/
-.lighthouseci/
+coverage/
+
+# IDE & OS
 .idea/
+.DS_Store
+*.log
+
+# Local env & secrets (use environment.example.ts as template)
+.env
+.env.*
+!.env.example
+src/environments/environment.ts
+src/environments/environment.prod.ts
+
+# Capacitor / Android (generated locally)
 android/
+
+# Cursor / agents (local only)
 .agents/
 skills-lock.json
+
+# Firebase CLI cache
 .firebase/
+<<<<<<< Updated upstream
 src/environments/environment.ts
 src/environments/environment.prod.ts
 src/environments/environment.ts
 src/environments/environment.prod.ts
+=======
+
+# Lighthouse CI
+.lighthouseci/
+
+# Tauri (Rust build output)
+src-tauri/target/
+>>>>>>> Stashed changes
