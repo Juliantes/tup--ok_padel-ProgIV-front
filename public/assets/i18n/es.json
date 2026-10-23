@@ -18,7 +18,26 @@
   "HOME": {
     "ARIA": "Inicio",
     "MATCHES": "Partidos",
-    "CONFIG": "Configuración"
+    "CONFIG": "Configuración",
+    "PADEL_TITLE": "Pádel profesional",
+    "PADEL_SUBTITLE": "Torneos, ranking FIP y resultados recientes vía Padel API.",
+    "PADEL_LOADING": "Cargando datos de pádel...",
+    "PADEL_ERROR": "No pudimos cargar los datos de Padel API. Intentá de nuevo más tarde.",
+    "PADEL_TOKEN_MISSING": "Falta configurar padelApiToken en environment.ts para ver datos de padelapi.org.",
+    "PADEL_SLIDER_ARIA": "Torneos destacados",
+    "PADEL_SLIDE": "Torneo {{index}}",
+    "PADEL_PREV": "Anterior",
+    "PADEL_NEXT": "Siguiente",
+    "PADEL_NEWS": "Noticias",
+    "PADEL_NEWS_EMPTY": "Sin noticias en español para este torneo por ahora.",
+    "PADEL_TOURNAMENT_LINK": "Ver torneo",
+    "PADEL_RANKINGS_ARIA": "Ranking oficial",
+    "PADEL_RANKING_MEN": "Ranking hombres",
+    "PADEL_RANKING_WOMEN": "Ranking mujeres",
+    "PADEL_RESULTS": "Resultados recientes",
+    "PADEL_RESULTS_ARIA": "Partidos recientes",
+    "PADEL_RESULTS_EMPTY": "No hay partidos recientes en este período.",
+    "PADEL_ATTRIBUTION": "Datos por Padel API"
   },
   "LOGIN": {
     "LOGO_ALT": "Padel Match",

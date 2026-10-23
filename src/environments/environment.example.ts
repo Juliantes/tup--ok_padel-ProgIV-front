@@ -1,6 +1,8 @@
 export const environment = {
   production: false,
   apiBaseUrl: 'http://localhost:3000',
+  /** Token de padelapi.org. Copiá el valor real solo en environment.ts (no commitear). */
+  padelApiToken: '',
   sentryDsn: 'https://<key>@o<orgId>.ingest.sentry.io/<projectId>',
   firebase: {
     apiKey: 'AIza...',
