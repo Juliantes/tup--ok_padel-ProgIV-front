@@ -3,6 +3,9 @@ export const environment = {
   apiBaseUrl: 'http://localhost:3000',
   /** Token de padelapi.org. Copiá el valor real solo en environment.ts (no commitear). */
   padelApiToken: '',
+  /** Solo Tauri/desktop OAuth. Copiá valores reales en environment.ts (no commitear). */
+  googleDesktopClientId: '',
+  googleDesktopClientSecret: '',
   sentryDsn: 'https://<key>@o<orgId>.ingest.sentry.io/<projectId>',
   firebase: {
     apiKey: 'AIza...',

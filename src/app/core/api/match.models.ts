@@ -23,15 +23,26 @@ export interface CourtResponse {
   court: Court;
 }
 
+export interface MatchClubSummary {
+  id: number;
+  name: string;
+  address: string;
+}
+
 export interface MatchCourtSummary {
   id: number;
   name: string;
   club_id: number;
+  description?: string | null;
+  price_per_hour: number;
+  club: MatchClubSummary;
 }
 
 export interface MatchUserSummary {
   id: number;
   name: string;
+  court_side?: 'derecha' | 'reves' | null;
+  court_side_label?: string | null;
 }
 
 export interface MatchPlayer {
@@ -79,6 +90,7 @@ export interface Match {
   status: string;
   roster_mode: string;
   level_required: string;
+  level_required_label?: string;
   join_policy: string;
   court: MatchCourtSummary;
   creator: MatchUserSummary;

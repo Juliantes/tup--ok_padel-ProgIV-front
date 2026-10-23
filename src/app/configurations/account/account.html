@@ -58,6 +58,15 @@
         </mat-form-field>
 
         <mat-form-field class="full-width">
+          <mat-label>{{ 'CONFIG.COURT_SIDE' | translate }}</mat-label>
+          <mat-select formControlName="courtSide">
+            <mat-option value="">{{ 'CONFIG.COURT_SIDE_NONE' | translate }}</mat-option>
+            <mat-option value="derecha">{{ 'CONFIG.COURT_SIDE_DERECHA' | translate }}</mat-option>
+            <mat-option value="reves">{{ 'CONFIG.COURT_SIDE_REVES' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
           <mat-label>{{ 'CONFIG.BIO' | translate }}</mat-label>
           <textarea matInput rows="3" formControlName="bio"></textarea>
         </mat-form-field>

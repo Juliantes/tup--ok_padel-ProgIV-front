@@ -13,10 +13,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { isPlaceholderApiPhone } from '../../core/api/api-base';
+import { ApiCourtSide } from '../../core/api/api-user.model';
 import { AuthService } from '../../login/auth.service';
 import { UserAccountDetails } from '../models/user-account.model';
 import { UserAccountService } from '../services/user-account.service';
@@ -30,6 +32,7 @@ import { UserAccountService } from '../services/user-account.service';
     MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatIconModule,
     RouterLink,
     TranslatePipe,
@@ -94,6 +97,7 @@ export class Account implements OnInit {
   protected readonly accountForm = this.fb.group({
     name: new FormControl('', { nonNullable: true }),
     selfLevel: new FormControl(3, { nonNullable: true }),
+    courtSide: new FormControl<ApiCourtSide | ''>('', { nonNullable: true }),
     bio: new FormControl('', { nonNullable: true }),
     birthDate: new FormControl<Date | null>(null),
     address: new FormControl('', { nonNullable: true }),
@@ -120,6 +124,7 @@ export class Account implements OnInit {
       this.accountForm.patchValue({
         name: profile.name,
         selfLevel: profile.self_level,
+        courtSide: profile.court_side ?? '',
         bio: profile.bio ?? '',
       });
 
@@ -254,6 +259,7 @@ export class Account implements OnInit {
         name: this.accountForm.controls.name.value.trim(),
         phone: primaryPhone,
         self_level: this.accountForm.controls.selfLevel.value,
+        court_side: this.accountForm.controls.courtSide.value || null,
         bio: this.accountForm.controls.bio.value.trim() || null,
       });
 
