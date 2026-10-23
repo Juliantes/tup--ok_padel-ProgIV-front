@@ -136,7 +136,7 @@ export interface CreateMatchPayload {
   date: string;
   duration: number;
   roster_mode?: string;
-  level_required?: number | null;
+  level_required?: string | number | null;
   auto_join?: boolean;
   join_policy?: string;
 }

@@ -1,20 +1,335 @@
-.match-create-page {
-  padding: 1rem;
+:host {
+  display: block;
 }
 
-.match-create-form {
+.match-create-page {
+  color: #103b50;
+  margin: 0 auto;
+  max-width: 40rem;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 2.5rem;
+}
+
+.match-create-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  margin: 0 0 1.25rem;
+}
+
+.match-create-error {
+  color: #b42318;
+  margin: 0 0 1rem;
+}
+
+.match-create-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wizard-card {
+  background: #fff;
+  border: 0.0625rem solid rgba(16, 59, 80, 0.1);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.wizard-card--pending {
+  opacity: 0.95;
+}
+
+.wizard-card__header {
+  align-items: center;
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.wizard-card__summary {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.wizard-card__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wizard-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.wizard-card__hint {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0.2rem 0 0;
+}
+
+.wizard-step-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.wizard-step-badge--active {
+  background: #e8f0fe;
+  color: #103b50;
+}
+
+.wizard-step-badge--pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.wizard-step-badge--done {
+  background: #103b50;
+  color: #fff;
+}
+
+.wizard-step-badge--done mat-icon {
+  font-size: 1rem;
+  height: 1rem;
+  width: 1rem;
+}
+
+.wizard-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.field__hint {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.field__control {
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  position: relative;
+}
+
+.field__control mat-icon {
+  color: #6b7280;
+  flex-shrink: 0;
+  font-size: 1.15rem;
+  height: 1.15rem;
+  width: 1.15rem;
+}
+
+.field__control input,
+.field__control select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: #103b50;
+  flex: 1;
+  font: inherit;
+  min-width: 0;
+  outline: none;
+  width: 100%;
+}
+
+.field__control--date input {
+  padding: 0.5rem 0;
+}
+
+.field__chevron {
+  pointer-events: none;
+  position: absolute;
+  right: 0.75rem;
+}
+
+.field__control--select select {
+  padding-right: 1.75rem;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.choice-chip {
+  background: #fff;
+  border: 0.0625rem solid rgba(16, 59, 80, 0.15);
+  border-radius: 999px;
+  color: #103b50;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+}
+
+.choice-chip--selected {
+  background: #103b50;
+  border-color: #103b50;
+  color: #fff;
+}
+
+.visibility-options {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.full-width {
-  width: 100%;
+.visibility-option {
+  background: #f9fafb;
+  border: 0.0625rem solid rgba(16, 59, 80, 0.12);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
 }
 
-.form-actions {
-  display: flex;
+.visibility-option--selected {
+  background: #eef6ff;
+  border-color: #103b50;
+}
+
+.visibility-option__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.visibility-option__hint {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.roster-preview {
+  display: grid;
   gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roster-slot {
+  align-items: center;
+  background: #f9fafb;
+  border: 0.0625rem dashed rgba(16, 59, 80, 0.2);
+  border-radius: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  justify-content: center;
+  min-height: 5rem;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.roster-slot--filled {
+  background: #f3f4f6;
+  border-style: solid;
+  color: #103b50;
+}
+
+.roster-slot__avatar {
+  align-items: center;
+  background: #103b50;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.roster-slot__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.roster-slot__empty {
+  font-size: 0.75rem;
+}
+
+.wizard-card__actions {
+  display: flex;
   justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 0.25rem;
+}
+
+.wizard-continue {
+  background: transparent;
+  border: none;
+  color: #0b5278;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.25rem 0;
+  text-decoration: underline;
+}
+
+.wizard-edit {
+  background: transparent;
+  border: none;
+  color: #0b5278;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.25rem 0;
+  text-decoration: underline;
+}
+
+.match-create-footer {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.footer-link {
+  color: #0b5278;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cta-button {
+  background: #dfff9b;
+  border: none;
+  border-radius: 999px;
+  color: #103b50;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.65rem 1.25rem;
+}
+
+.cta-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }

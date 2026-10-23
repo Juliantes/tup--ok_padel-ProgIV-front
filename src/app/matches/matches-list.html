@@ -1,39 +1,259 @@
 <section class="matches-page">
   <header class="matches-header">
-    <h1>{{ (isMine() ? 'MATCHES.MINE_TITLE' : 'MATCHES.TITLE') | translate }}</h1>
+    <h1>
+      {{ (isMine() ? 'MATCHES.MINE_TITLE' : 'MATCHES.SEARCH_TITLE') | translate }}
+    </h1>
     <div class="matches-actions">
-      <a mat-stroked-button routerLink="/matches">{{ 'MATCHES.ALL' | translate }}</a>
-      <a mat-stroked-button routerLink="/matches/mine">{{ 'MATCHES.MINE' | translate }}</a>
-      <a mat-raised-button color="primary" routerLink="/matches/new">{{
+      <a class="action-link" routerLink="/matches">{{ 'MATCHES.ALL' | translate }}</a>
+      <a class="action-link" routerLink="/matches/mine">{{ 'MATCHES.MINE' | translate }}</a>
+      <a class="action-link action-link--primary" routerLink="/matches/new">{{
         'MATCHES.CREATE' | translate
       }}</a>
     </div>
   </header>
 
+  @if (!isMine()) {
+    <div class="filters">
+      <div class="filter-row">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="onlyOpenSpots()"
+          (click)="onlyOpenSpots.set(!onlyOpenSpots())"
+        >
+          <mat-icon aria-hidden="true">person_outline</mat-icon>
+          {{ 'MATCHES.SEARCH_OPEN_SPOTS' | translate }}
+        </button>
+      </div>
+
+      <div class="filter-row filter-row--wrap">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="datePreset() === 'any'"
+          (click)="setDatePreset('any')"
+        >
+          {{ 'MATCHES.SEARCH_DATE_ANY' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="datePreset() === 'today'"
+          (click)="setDatePreset('today')"
+        >
+          {{ 'MATCHES.SEARCH_DATE_TODAY' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="datePreset() === 'tomorrow'"
+          (click)="setDatePreset('tomorrow')"
+        >
+          {{ 'MATCHES.SEARCH_DATE_TOMORROW' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="datePreset() === 'week'"
+          (click)="setDatePreset('week')"
+        >
+          {{ 'MATCHES.SEARCH_DATE_WEEK' | translate }}
+        </button>
+        <label class="filter-chip filter-chip--date" [class.active]="datePreset() === 'pick'">
+          <mat-icon aria-hidden="true">calendar_today</mat-icon>
+          <span>{{ 'MATCHES.SEARCH_DATE_PICK' | translate }}</span>
+          <input type="date" (change)="onPickedDateChange($event)" />
+        </label>
+      </div>
+
+      <div class="filter-row filter-row--wrap">
+        <button
+          type="button"
+          class="filter-chip filter-chip--compact"
+          [class.active]="timeOfDay() === 'morning'"
+          (click)="toggleTimeOfDay('morning')"
+        >
+          <mat-icon aria-hidden="true">wb_sunny</mat-icon>
+          {{ 'MATCHES.SEARCH_TIME_MORNING' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-chip filter-chip--compact"
+          [class.active]="timeOfDay() === 'afternoon'"
+          (click)="toggleTimeOfDay('afternoon')"
+        >
+          <mat-icon aria-hidden="true">cloud</mat-icon>
+          {{ 'MATCHES.SEARCH_TIME_AFTERNOON' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-chip filter-chip--compact"
+          [class.active]="timeOfDay() === 'night'"
+          (click)="toggleTimeOfDay('night')"
+        >
+          <mat-icon aria-hidden="true">dark_mode</mat-icon>
+          {{ 'MATCHES.SEARCH_TIME_NIGHT' | translate }}
+        </button>
+      </div>
+
+      <div class="filter-row filter-row--category">
+        <label class="category-label" for="match-category-filter">
+          {{ 'MATCHES.SEARCH_CATEGORY' | translate }}
+        </label>
+        <select
+          id="match-category-filter"
+          class="category-select"
+          [value]="category() ?? ''"
+          (change)="category.set($any($event.target).value || null)"
+        >
+          <option value="">{{ 'MATCHES.SEARCH_CATEGORY_ANY' | translate }}</option>
+          @for (level of levelOptions; track level) {
+            <option [value]="level">{{ levelRequiredI18nKey(level) | translate }}</option>
+          }
+        </select>
+        <button
+          type="button"
+          class="filter-icon-button"
+          [attr.aria-label]="'MATCHES.SEARCH_FILTER_ARIA' | translate"
+        >
+          <mat-icon aria-hidden="true">tune</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <p class="state-message error">{{ errorMessage() | translate }}</p>
+  }
+
   @if (isLoading()) {
-    <mat-spinner />
-  } @else if (errorMessage()) {
-    <p>{{ errorMessage() | translate }}</p>
-  } @else if (matches().length === 0) {
-    <p>{{ 'MATCHES.EMPTY' | translate }}</p>
+    <div class="loading-wrap">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (filteredMatches().length === 0) {
+    <p class="state-message">{{ 'MATCHES.EMPTY' | translate }}</p>
   } @else {
     <div class="matches-grid">
-      @for (match of matches(); track match.id) {
-        <mat-card class="match-card">
-          <mat-card-header>
-            <mat-card-title>{{ match.court.name }}</mat-card-title>
-            <mat-card-subtitle>{{ match.date | date: 'short' }}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <p>{{ 'MATCHES.STATUS' | translate }}: {{ match.status }}</p>
-            <p>
-              {{ 'MATCHES.PLAYERS' | translate }}: {{ match.players_count }}/{{ match.max_players }}
-            </p>
-          </mat-card-content>
-          <mat-card-actions>
-            <a mat-button [routerLink]="['/matches', match.id]">{{ 'MATCHES.VIEW' | translate }}</a>
-          </mat-card-actions>
-        </mat-card>
+      @for (match of filteredMatches(); track match.id) {
+        <article
+          class="match-card"
+          tabindex="0"
+          role="button"
+          (click)="onCardClick(match)"
+          (keydown)="onCardKeydown($event, match)"
+        >
+          <div class="match-card-badges">
+            <span class="badge badge--status" [class.badge--full]="match.status === 'full'">
+              {{
+                (match.status === 'full' ? 'MATCHES.STATUS_FULL' : 'MATCHES.STATUS_OPEN')
+                  | translate
+              }}
+            </span>
+            <span class="badge badge--level">
+              {{
+                'MATCHES.CATEGORY_LABEL'
+                  | translate: { label: (levelRequiredI18nKey(match.level_required) | translate) }
+              }}
+            </span>
+          </div>
+
+          <ul class="match-meta">
+            <li>
+              <mat-icon aria-hidden="true">event</mat-icon>
+              <span>{{ match.date | date: 'fullDate' }}</span>
+            </li>
+            <li>
+              <mat-icon aria-hidden="true">schedule</mat-icon>
+              <span>{{ match.date | date: 'HH:mm' }}</span>
+            </li>
+            <li>
+              <mat-icon aria-hidden="true">place</mat-icon>
+              <div>
+                <strong>{{ venueName(match) }}</strong>
+                @if (venueAddress(match); as address) {
+                  <span class="meta-sub">{{ address }}</span>
+                }
+              </div>
+            </li>
+            <li>
+              <mat-icon aria-hidden="true">emoji_events</mat-icon>
+              <span>
+                {{
+                  'MATCHES.CATEGORY_LABEL'
+                    | translate: { label: (levelRequiredI18nKey(match.level_required) | translate) }
+                }}
+              </span>
+            </li>
+          </ul>
+
+          <div class="match-roster-row">
+            <div class="player-slots">
+              @for (slot of rosterSlots(match); track $index) {
+                <span
+                  class="player-slot"
+                  [class.player-slot--empty]="!slot.filled"
+                  [attr.title]="slot.filled ? slot.filled.user.name : ''"
+                >
+                  @if (slot.filled) {
+                    {{ playerInitials(slot.filled.user.name) }}
+                  }
+                </span>
+              }
+            </div>
+            <div class="roster-stats">
+              <strong>{{ match.players_count }}/{{ match.max_players }}</strong>
+              @if (match.status === 'full') {
+                <span>{{ 'MATCHES.STATUS_FULL' | translate }}</span>
+              }
+            </div>
+            <div class="match-price">
+              @if (pricePerHour(match); as price) {
+                <strong>{{ price | currency: 'ARS' : 'symbol' : '1.0-0' }}</strong>
+              } @else {
+                <strong>{{ 'MATCHES.PRICE_UNKNOWN' | translate }}</strong>
+              }
+              <mat-icon aria-hidden="true">share</mat-icon>
+            </div>
+          </div>
+
+          <p class="match-organizer">
+            <span class="organizer-avatar">{{ playerInitials(match.creator.name) }}</span>
+            {{ 'MATCHES.ORGANIZER_NAME' | translate: { name: match.creator.name } }}
+          </p>
+
+          <div class="match-card-actions">
+            @if (showJoinButton(match)) {
+              <button
+                type="button"
+                class="cta-button"
+                [disabled]="actionMatchId() === match.id"
+                (click)="joinAndOpen(match, $event)"
+              >
+                {{ 'MATCHES.JOIN' | translate }}
+              </button>
+            } @else if (showDetailButton(match)) {
+              <button
+                type="button"
+                class="cta-button cta-button--secondary"
+                (click)="openDetail(match); $event.stopPropagation()"
+              >
+                {{ 'MATCHES.VIEW_DETAIL' | translate }}
+              </button>
+            } @else if (isFullForViewer(match)) {
+              <button type="button" class="cta-button" disabled>
+                {{ 'MATCHES.STATUS_FULL' | translate }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="cta-button cta-button--secondary"
+                (click)="openDetail(match); $event.stopPropagation()"
+              >
+                {{ 'MATCHES.VIEW_DETAIL' | translate }}
+              </button>
+            }
+          </div>
+        </article>
       }
     </div>
   }
