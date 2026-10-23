@@ -3,13 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { apiV1Url } from './api-base';
-import { ApiUser, UserResponse } from './api-user.model';
+import { ApiCourtSide, ApiUser, UserResponse } from './api-user.model';
 
 export interface UpdateProfilePayload {
   name?: string;
   phone?: string;
   self_level?: number;
   bio?: string | null;
+  court_side?: ApiCourtSide | null;
 }
 
 @Injectable({
