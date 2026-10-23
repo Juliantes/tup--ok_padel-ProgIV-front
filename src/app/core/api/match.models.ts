@@ -78,7 +78,7 @@ export interface Match {
   duration: number;
   status: string;
   roster_mode: string;
-  level_required: number | null;
+  level_required: string;
   join_policy: string;
   court: MatchCourtSummary;
   creator: MatchUserSummary;
@@ -124,7 +124,7 @@ export interface CreateMatchPayload {
   date: string;
   duration: number;
   roster_mode?: string;
-  level_required?: number | null;
+  level_required?: string | number | null;
   auto_join?: boolean;
   join_policy?: string;
 }
