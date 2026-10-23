@@ -74,6 +74,9 @@ export class MatchCreate implements OnInit {
     this.errorMessage.set('');
 
     const dateValue = this.form.controls.date.value;
+    if (!dateValue) {
+      return;
+    }
     const isoDate = dateValue.includes('T') ? dateValue : `${dateValue}T18:00:00`;
 
     this.matchesApi
