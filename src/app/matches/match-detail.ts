@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,12 +12,30 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 
 import { Match, MatchResponse, MatchResultReport } from '../core/api/match.models';
 import { MatchResultsApiService } from '../core/api/match-results-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
 import { ApiSessionService } from '../core/api/api-session.service';
+import {
+  canJoinMatch,
+  isUserEnrolled,
+  pickJoinTeam,
+  playerInitials,
+  rosterSlots,
+} from './matches-search.utils';
+import {
+  gamesForPair,
+  hasScoreboardData,
+  isSetWinnerForPair,
+  MatchPairSide,
+  normalizedScoreboardSets,
+  pairPlayerNames,
+  pairPlayerSlots,
+  SCOREBOARD_SET_COLUMNS,
+  scoreboardSourceSets,
+} from './match-scoreboard.utils';
 
 const STATUS_I18N_KEYS: Record<string, string> = {
   open: 'MATCHES.STATUS_OPEN',
@@ -25,6 +45,11 @@ const STATUS_I18N_KEYS: Record<string, string> = {
   cancelled: 'MATCHES.STATUS_CANCELLED',
   reported: 'MATCHES.STATUS_REPORTED',
 };
+
+type RouteLoadState =
+  | { kind: 'loading' }
+  | { kind: 'error'; key: string }
+  | { kind: 'ready'; match: Match };
 
 @Component({
   selector: 'app-match-detail',
@@ -45,7 +70,7 @@ const STATUS_I18N_KEYS: Record<string, string> = {
   templateUrl: './match-detail.html',
   styleUrl: './match-detail.css',
 })
-export class MatchDetail implements OnInit {
+export class MatchDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly matchesApi = inject(MatchesApiService);
   private readonly resultsApi = inject(MatchResultsApiService);
@@ -53,11 +78,95 @@ export class MatchDetail implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
 
-  protected readonly isLoading = signal(true);
+  protected readonly playerInitials = playerInitials;
+  protected readonly rosterSlots = rosterSlots;
+
+  protected readonly matchId = toSignal(
+    this.route.paramMap.pipe(map((params) => Number(params.get('id')))),
+    { initialValue: 0 },
+  );
+
+  protected readonly routeState = toSignal(
+    this.route.paramMap.pipe(
+      switchMap((params) => {
+        const id = Number(params.get('id'));
+        if (!id) {
+          return of<RouteLoadState>({ kind: 'error', key: 'MATCHES.ERROR' });
+        }
+
+        return this.matchesApi.getMatch(id).pipe(
+          map((response) => ({
+            kind: 'ready' as const,
+            match: response.match,
+          })),
+          catchError(() => of<RouteLoadState>({ kind: 'error', key: 'MATCHES.ERROR' })),
+          startWith({ kind: 'loading' as const }),
+        );
+      }),
+    ),
+    { initialValue: { kind: 'loading' } },
+  );
+
+  private readonly matchOverride = signal<Match | null>(null);
+  private readonly resultsOverride = signal<MatchResultReport[] | null>(null);
+
   protected readonly actionLoading = signal(false);
-  protected readonly errorMessage = signal('');
-  protected readonly match = signal<Match | null>(null);
-  protected readonly results = signal<MatchResultReport[]>([]);
+  protected readonly actionError = signal('');
+
+  protected readonly isLoading = computed(() => this.routeState().kind === 'loading');
+
+  protected readonly errorMessage = computed(() => {
+    const state = this.routeState();
+    return state.kind === 'error' ? state.key : '';
+  });
+
+  protected readonly match = computed(() => {
+    const override = this.matchOverride();
+    if (override) {
+      return override;
+    }
+
+    const state = this.routeState();
+    return state.kind === 'ready' ? state.match : null;
+  });
+
+  protected readonly results = computed(() => {
+    const override = this.resultsOverride();
+    if (override) {
+      return override;
+    }
+
+    return this.match()?.match_results ?? [];
+  });
+
+  protected readonly showResultsSection = computed(() => {
+    const current = this.match();
+    if (!current) {
+      return false;
+    }
+
+    const userId = this.apiSession.user()?.id;
+    return this.results().length > 0 || isUserEnrolled(current, userId);
+  });
+
+  protected readonly scoreboardSetIndexes = Array.from(
+    { length: SCOREBOARD_SET_COLUMNS },
+    (_, index) => index,
+  );
+
+  protected readonly scoreboardSets = computed(() => {
+    const current = this.match();
+    const source = scoreboardSourceSets(current, this.results());
+    return normalizedScoreboardSets(source);
+  });
+
+  protected readonly scoreboardHasData = computed(() =>
+    hasScoreboardData(this.match(), this.results()),
+  );
+
+  protected readonly joinForm = this.fb.group({
+    team: ['team_a', Validators.required],
+  });
 
   protected readonly resultForm = this.fb.group({
     set1A: [6, [Validators.required, Validators.min(0)]],
@@ -67,15 +176,27 @@ export class MatchDetail implements OnInit {
     team: ['team_a'],
   });
 
-  ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!id) {
-      this.errorMessage.set('MATCHES.ERROR');
-      this.isLoading.set(false);
-      return;
-    }
+  constructor() {
+    effect(() => {
+      this.matchId();
+      untracked(() => {
+        this.matchOverride.set(null);
+        this.resultsOverride.set(null);
+        this.actionError.set('');
+      });
+    });
 
-    this.loadMatch(id);
+    effect(() => {
+      const current = this.match();
+      if (!current || current.roster_mode !== 'pairs') {
+        return;
+      }
+
+      const suggested = pickJoinTeam(current);
+      if (suggested) {
+        untracked(() => this.joinForm.controls.team.setValue(suggested));
+      }
+    });
   }
 
   protected statusLabel(status: string): string {
@@ -108,7 +229,7 @@ export class MatchDetail implements OnInit {
   }
 
   protected organizerInitial(name: string): string {
-    return name.trim().charAt(0).toUpperCase();
+    return playerInitials(name);
   }
 
   protected shareText(match: Match): string {
@@ -158,30 +279,12 @@ export class MatchDetail implements OnInit {
   }
 
   protected canJoin(match: Match): boolean {
-    if (!this.apiSession.user()) {
-      return false;
-    }
-
-    if (match.status !== 'open' && match.status !== 'full') {
-      return false;
-    }
-
-    return !this.isActivePlayer();
+    return canJoinMatch(match, this.apiSession.user()?.id);
   }
 
-  protected loadMatch(id: number): void {
-    this.isLoading.set(true);
-    this.matchesApi.getMatch(id).subscribe({
-      next: (response) => {
-        this.match.set(response.match);
-        this.isLoading.set(false);
-        this.loadResults(id);
-      },
-      error: () => {
-        this.errorMessage.set('MATCHES.ERROR');
-        this.isLoading.set(false);
-      },
-    });
+  protected isFullForViewer(match: Match): boolean {
+    const userId = this.apiSession.user()?.id;
+    return match.status === 'full' && !isUserEnrolled(match, userId);
   }
 
   protected join(): void {
@@ -193,8 +296,8 @@ export class MatchDetail implements OnInit {
     this.runAction(() => {
       const team =
         current.roster_mode === 'pairs'
-          ? (this.resultForm.controls.team.value ?? undefined)
-          : undefined;
+          ? (this.joinForm.controls.team.value ?? undefined)
+          : pickJoinTeam(current);
       return this.matchesApi.joinMatch(current.id, team);
     });
   }
@@ -255,9 +358,7 @@ export class MatchDetail implements OnInit {
       return false;
     }
 
-    return current.match_players.some(
-      (player) => player.user_id === userId && player.status !== 'cancelled',
-    );
+    return isUserEnrolled(current, userId);
   }
 
   protected canDeleteResult(result: MatchResultReport): boolean {
@@ -265,33 +366,84 @@ export class MatchDetail implements OnInit {
     return userId !== undefined && result.reported_by.id === userId;
   }
 
-  private loadResults(matchId: number): void {
-    this.resultsApi.listResults(matchId).subscribe({
-      next: (response) => {
-        this.results.set(response.results);
-        const current = this.match();
-        if (current) {
-          this.match.set({ ...current, consensus: response.consensus });
-        }
-      },
-      error: () => {
-        this.results.set([]);
-      },
-    });
+  protected pairPlayers(match: Match, pair: MatchPairSide): (string | null)[] {
+    return pairPlayerNames(match, pair);
+  }
+
+  protected pairSlots(match: Match, pair: MatchPairSide) {
+    return pairPlayerSlots(match, pair);
+  }
+
+  protected scoreboardPlayerLabel(name: string | null): string {
+    if (!name) {
+      return this.translate.instant('MATCHES.PLAYER_SLOT_EMPTY');
+    }
+
+    return name;
+  }
+
+  protected scoreboardClubName(match: Match): string {
+    return match.court.club?.name ?? match.court.name;
+  }
+
+  protected formatSetScore(
+    set: { team_a_games: number; team_b_games: number },
+    pair: MatchPairSide,
+  ): string {
+    if (!this.scoreboardHasData()) {
+      return '—';
+    }
+
+    return String(gamesForPair(set, pair));
+  }
+
+  protected setWinner(
+    set: { team_a_games: number; team_b_games: number },
+    pair: MatchPairSide,
+  ): boolean {
+    if (!this.scoreboardHasData()) {
+      return false;
+    }
+
+    return isSetWinnerForPair(set, pair);
+  }
+
+  protected formatResultSets(result: MatchResultReport): string {
+    return result.sets.map((set) => `${set.team_a_games}-${set.team_b_games}`).join(' · ');
+  }
+
+  private applyMatchResponse(response: MatchResponse): void {
+    const updated = response.match;
+    this.matchOverride.set(updated);
+    this.resultsOverride.set(updated.match_results ?? []);
   }
 
   private runAction(action: () => Observable<MatchResponse>): void {
     this.actionLoading.set(true);
+    this.actionError.set('');
     action().subscribe({
       next: (response) => {
-        this.match.set(response.match);
+        this.applyMatchResponse(response);
         this.actionLoading.set(false);
-        this.loadResults(response.match.id);
       },
-      error: () => {
-        this.errorMessage.set('MATCHES.ACTION_ERROR');
+      error: (error) => {
+        this.actionError.set(this.extractActionError(error));
         this.actionLoading.set(false);
       },
     });
+  }
+
+  private extractActionError(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const body = error.error;
+      if (typeof body === 'object' && body !== null && 'error' in body) {
+        const message = (body as { error: unknown }).error;
+        if (typeof message === 'string' && message.length > 0) {
+          return message;
+        }
+      }
+    }
+
+    return this.translate.instant('MATCHES.ACTION_ERROR');
   }
 }
