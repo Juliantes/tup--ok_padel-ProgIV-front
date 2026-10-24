@@ -1,4 +1,4 @@
-import { Match, MatchResultReport, MatchSet } from '../core/api/match.models';
+import { Match, MatchPlayer, MatchResultReport, MatchSet } from '../core/api/match.models';
 
 export type MatchPairSide = 'a' | 'b';
 
@@ -25,6 +25,11 @@ export function pairPlayerNames(match: Match, pair: MatchPairSide): (string | nu
 export function pairRosterPlayers(match: Match, pair: MatchPairSide) {
   const team = pairTeamKey(pair);
   return match.match_players.filter((player) => player.team === team);
+}
+
+export function pairPlayerSlots(match: Match, pair: MatchPairSide): (MatchPlayer | null)[] {
+  const players = pairRosterPlayers(match, pair);
+  return [players[0] ?? null, players[1] ?? null];
 }
 
 export function scoreboardSourceSets(

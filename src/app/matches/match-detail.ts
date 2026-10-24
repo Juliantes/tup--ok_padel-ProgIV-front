@@ -25,6 +25,17 @@ import {
   playerInitials,
   rosterSlots,
 } from './matches-search.utils';
+import {
+  gamesForPair,
+  hasScoreboardData,
+  isSetWinnerForPair,
+  MatchPairSide,
+  normalizedScoreboardSets,
+  pairPlayerNames,
+  pairPlayerSlots,
+  SCOREBOARD_SET_COLUMNS,
+  scoreboardSourceSets,
+} from './match-scoreboard.utils';
 
 const STATUS_I18N_KEYS: Record<string, string> = {
   open: 'MATCHES.STATUS_OPEN',
@@ -137,6 +148,21 @@ export class MatchDetail {
     const userId = this.apiSession.user()?.id;
     return this.results().length > 0 || isUserEnrolled(current, userId);
   });
+
+  protected readonly scoreboardSetIndexes = Array.from(
+    { length: SCOREBOARD_SET_COLUMNS },
+    (_, index) => index,
+  );
+
+  protected readonly scoreboardSets = computed(() => {
+    const current = this.match();
+    const source = scoreboardSourceSets(current, this.results());
+    return normalizedScoreboardSets(source);
+  });
+
+  protected readonly scoreboardHasData = computed(() =>
+    hasScoreboardData(this.match(), this.results()),
+  );
 
   protected readonly joinForm = this.fb.group({
     team: ['team_a', Validators.required],
@@ -338,6 +364,52 @@ export class MatchDetail {
   protected canDeleteResult(result: MatchResultReport): boolean {
     const userId = this.apiSession.user()?.id;
     return userId !== undefined && result.reported_by.id === userId;
+  }
+
+  protected pairPlayers(match: Match, pair: MatchPairSide): (string | null)[] {
+    return pairPlayerNames(match, pair);
+  }
+
+  protected pairSlots(match: Match, pair: MatchPairSide) {
+    return pairPlayerSlots(match, pair);
+  }
+
+  protected scoreboardPlayerLabel(name: string | null): string {
+    if (!name) {
+      return this.translate.instant('MATCHES.PLAYER_SLOT_EMPTY');
+    }
+
+    return name;
+  }
+
+  protected scoreboardClubName(match: Match): string {
+    return match.court.club?.name ?? match.court.name;
+  }
+
+  protected formatSetScore(
+    set: { team_a_games: number; team_b_games: number },
+    pair: MatchPairSide,
+  ): string {
+    if (!this.scoreboardHasData()) {
+      return '—';
+    }
+
+    return String(gamesForPair(set, pair));
+  }
+
+  protected setWinner(
+    set: { team_a_games: number; team_b_games: number },
+    pair: MatchPairSide,
+  ): boolean {
+    if (!this.scoreboardHasData()) {
+      return false;
+    }
+
+    return isSetWinnerForPair(set, pair);
+  }
+
+  protected formatResultSets(result: MatchResultReport): string {
+    return result.sets.map((set) => `${set.team_a_games}-${set.team_b_games}`).join(' · ');
   }
 
   private applyMatchResponse(response: MatchResponse): void {

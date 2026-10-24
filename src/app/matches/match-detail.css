@@ -320,9 +320,211 @@
   padding: 0 1rem 1rem !important;
 }
 
-.results-list {
+.roster-pairs {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 520px) {
+  .roster-pairs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.roster-pair-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.roster-pair-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.roster-pair-list {
+  list-style: none;
   margin: 0;
-  padding-left: 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.roster-pair-slot--empty {
+  color: #94a3b8;
+}
+
+.results-card mat-card-content {
+  padding-top: 1rem !important;
+}
+
+.scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scoreboard-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  justify-content: space-between;
+}
+
+.scoreboard-venue,
+.scoreboard-heading,
+.scoreboard-player,
+.scoreboard-score,
+.scoreboard-duration-value {
+  font-family: 'Oswald', 'Roboto', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.scoreboard-venue {
+  color: #3d4a54;
+  font-size: clamp(1.1rem, 3vw, 1.45rem);
+  line-height: 1.1;
+}
+
+.scoreboard-heading {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.scoreboard-panel {
+  background: linear-gradient(180deg, #dbe4ea 0%, #d2dce4 100%);
+  border: 1px solid #b8c9d4;
+  border-left: 0.35rem solid #149a61;
+  border-radius: 1rem;
+  overflow: hidden;
+  padding: 0.75rem 0.85rem 0.65rem;
+}
+
+.scoreboard-columns-head {
+  align-items: end;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(2.25rem, 3rem));
+  margin-bottom: 0.35rem;
+  padding-right: 0.15rem;
+}
+
+.scoreboard-names-spacer {
+  min-width: 0;
+}
+
+.scoreboard-set-label {
+  color: #5c6b78;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.scoreboard-row {
+  align-items: center;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(2.25rem, 3rem));
+  padding: 0.35rem 0;
+}
+
+.scoreboard-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.scoreboard-player {
+  color: #3d4a54;
+  font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreboard-player--empty {
+  color: #7b8794;
+  font-size: 0.95rem;
+}
+
+.scoreboard-scores {
+  display: contents;
+}
+
+.scoreboard-score {
+  color: #3d4a54;
+  font-size: clamp(1.35rem, 4vw, 1.85rem);
+  line-height: 1;
+  text-align: center;
+}
+
+.scoreboard-score--winner {
+  color: #103b50;
+  font-size: clamp(1.55rem, 4.5vw, 2.05rem);
+}
+
+.scoreboard-divider {
+  border: none;
+  border-top: 1px solid #a8b8c4;
+  margin: 0.15rem 0;
+}
+
+.scoreboard-duration {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.scoreboard-duration-label {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scoreboard-duration-value {
+  color: #3d4a54;
+  font-size: clamp(1.25rem, 3.5vw, 1.65rem);
+  line-height: 1;
+}
+
+.results-empty {
+  color: #64748b;
+  margin: 1rem 0 0;
+}
+
+.results-reports {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.results-report-item {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  justify-content: space-between;
+  font-size: 0.9rem;
 }
 
 .consensus-line {
@@ -337,7 +539,36 @@
   gap: 0.5rem;
 }
 
+.result-form-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.set-form-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin: 0.25rem 0 0;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .set-row {
   display: flex;
   gap: 0.5rem;
+}
+
+.set-row mat-form-field {
+  flex: 1;
+}
+
+@media (max-width: 420px) {
+  .scoreboard-panel {
+    overflow-x: auto;
+  }
+
+  .scoreboard-columns-head,
+  .scoreboard-row {
+    min-width: 18rem;
+  }
 }
