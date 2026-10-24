@@ -139,15 +139,7 @@ export class MatchDetail {
     return this.match()?.match_results ?? [];
   });
 
-  protected readonly showResultsSection = computed(() => {
-    const current = this.match();
-    if (!current) {
-      return false;
-    }
-
-    const userId = this.apiSession.user()?.id;
-    return this.results().length > 0 || isUserEnrolled(current, userId);
-  });
+  protected readonly showResultsSection = computed(() => Boolean(this.match()));
 
   protected readonly scoreboardSetIndexes = Array.from(
     { length: SCOREBOARD_SET_COLUMNS },
@@ -386,14 +378,23 @@ export class MatchDetail {
     return match.court.club?.name ?? match.court.name;
   }
 
+  protected scoreboardStageLabel(match: Match): string {
+    return `${this.categoryLabel(match)} · ${match.court.name}`;
+  }
+
+  protected formatDurationClock(minutes: number): string {
+    const safe = Math.max(0, Math.floor(minutes || 0));
+    const hrs = Math.floor(safe / 60)
+      .toString()
+      .padStart(2, '0');
+    const mins = (safe % 60).toString().padStart(2, '0');
+    return `${hrs}:${mins}`;
+  }
+
   protected formatSetScore(
     set: { team_a_games: number; team_b_games: number },
     pair: MatchPairSide,
   ): string {
-    if (!this.scoreboardHasData()) {
-      return '—';
-    }
-
     return String(gamesForPair(set, pair));
   }
 

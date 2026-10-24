@@ -260,11 +260,27 @@
             <header class="scoreboard-header">
               <span class="scoreboard-venue">{{ scoreboardClubName(current) }}</span>
               <span class="scoreboard-heading">{{ 'MATCHES.RESULTS' | translate }}</span>
+              <div class="scoreboard-brands" aria-hidden="true">
+                <div class="scoreboard-brand-wpt">
+                  <svg class="scoreboard-wpt-icon" viewBox="0 0 28 36" fill="none">
+                    <polygon points="2,7 24,0 24,36 2,29" fill="currentColor" />
+                  </svg>
+                  <span class="scoreboard-wpt-text">OK<br />PADEL<br />TOUR</span>
+                </div>
+                <div class="scoreboard-brand-star">
+                  <svg class="scoreboard-star-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon
+                      points="12,1.5 14.9,8.5 22.5,9.2 16.7,14.1 18.5,21.5 12,17.5 5.5,21.5 7.3,14.1 1.5,9.2 9.1,8.5"
+                    />
+                  </svg>
+                  <span class="scoreboard-star-text">PADEL<br /><small>MATCH</small></span>
+                </div>
+              </div>
             </header>
 
-            <div class="scoreboard-panel">
+            <div class="scoreboard-table">
               <div class="scoreboard-columns-head" aria-hidden="true">
-                <span class="scoreboard-names-spacer"></span>
+                <span class="scoreboard-stage">{{ scoreboardStageLabel(current) }}</span>
                 @for (setIndex of scoreboardSetIndexes; track setIndex) {
                   <span class="scoreboard-set-label">
                     {{ 'MATCHES.SET_N' | translate: { n: setIndex + 1 } }}
@@ -272,45 +288,47 @@
                 }
               </div>
 
-              <div class="scoreboard-row">
-                <div class="scoreboard-names">
-                  @for (name of pairPlayers(current, 'a'); track $index) {
-                    <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
-                      {{ scoreboardPlayerLabel(name) }}
-                    </span>
-                  }
+              <div class="scoreboard-panel">
+                <div class="scoreboard-row">
+                  <div class="scoreboard-names">
+                    @for (name of pairPlayers(current, 'a'); track $index) {
+                      <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
+                        {{ scoreboardPlayerLabel(name) }}
+                      </span>
+                    }
+                  </div>
+                  <div class="scoreboard-scores">
+                    @for (set of scoreboardSets(); track $index) {
+                      <span
+                        class="scoreboard-score"
+                        [class.scoreboard-score--winner]="setWinner(set, 'a')"
+                      >
+                        {{ formatSetScore(set, 'a') }}
+                      </span>
+                    }
+                  </div>
                 </div>
-                <div class="scoreboard-scores">
-                  @for (set of scoreboardSets(); track $index) {
-                    <span
-                      class="scoreboard-score"
-                      [class.scoreboard-score--winner]="setWinner(set, 'a')"
-                    >
-                      {{ formatSetScore(set, 'a') }}
-                    </span>
-                  }
-                </div>
-              </div>
 
-              <hr class="scoreboard-divider" />
+                <hr class="scoreboard-divider" />
 
-              <div class="scoreboard-row">
-                <div class="scoreboard-names">
-                  @for (name of pairPlayers(current, 'b'); track $index) {
-                    <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
-                      {{ scoreboardPlayerLabel(name) }}
-                    </span>
-                  }
-                </div>
-                <div class="scoreboard-scores">
-                  @for (set of scoreboardSets(); track $index) {
-                    <span
-                      class="scoreboard-score"
-                      [class.scoreboard-score--winner]="setWinner(set, 'b')"
-                    >
-                      {{ formatSetScore(set, 'b') }}
-                    </span>
-                  }
+                <div class="scoreboard-row">
+                  <div class="scoreboard-names">
+                    @for (name of pairPlayers(current, 'b'); track $index) {
+                      <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
+                        {{ scoreboardPlayerLabel(name) }}
+                      </span>
+                    }
+                  </div>
+                  <div class="scoreboard-scores">
+                    @for (set of scoreboardSets(); track $index) {
+                      <span
+                        class="scoreboard-score"
+                        [class.scoreboard-score--winner]="setWinner(set, 'b')"
+                      >
+                        {{ formatSetScore(set, 'b') }}
+                      </span>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -320,7 +338,9 @@
                 'MATCHES.DURATION_LABEL' | translate
               }}</span>
               <span class="scoreboard-duration-value">
-                {{ 'MATCHES.DURATION_MIN' | translate: { min: current.duration } }}
+                {{
+                  'MATCHES.DURATION_MIN' | translate: { min: formatDurationClock(current.duration) }
+                }}
               </span>
             </footer>
           </section>
