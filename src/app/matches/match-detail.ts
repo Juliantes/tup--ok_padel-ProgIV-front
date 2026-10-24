@@ -36,12 +36,14 @@ import {
   scoreboardSourceSets,
 } from './match-scoreboard.utils';
 import {
+  applyReportGameDelta,
   buildReportResultSets,
+  canIncrementReportGame,
   canSubmitMatchReport,
-  clampReportGames,
   createEmptyReportSets,
   isReportSet3Enabled,
   ReportSetGames,
+  ReportSetSide,
 } from './match-report.utils';
 
 const STATUS_I18N_KEYS: Record<string, string> = {
@@ -378,12 +380,19 @@ export class MatchDetail {
     const index = setNumber - 1;
     const sets = [...this.reportSets()] as ReportSetGames[];
     const current = sets[index];
-    const key = pair === 'a' ? 'teamA' : 'teamB';
-    sets[index] = {
-      ...current,
-      [key]: clampReportGames(current[key] + delta),
-    };
+    const side: ReportSetSide = pair === 'a' ? 'teamA' : 'teamB';
+    sets[index] = applyReportGameDelta(current, side, delta);
     this.reportSets.set(sets);
+  }
+
+  protected canIncreaseReportGame(setNumber: number, pair: MatchPairSide): boolean {
+    if (this.isReportSetDisabled(setNumber)) {
+      return false;
+    }
+
+    const set = this.reportSets()[setNumber - 1];
+    const side: ReportSetSide = pair === 'a' ? 'teamA' : 'teamB';
+    return canIncrementReportGame(set, side);
   }
 
   protected canDecreaseReportGame(setNumber: number, pair: MatchPairSide): boolean {

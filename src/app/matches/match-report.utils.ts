@@ -4,7 +4,10 @@ export interface ReportSetGames {
 }
 
 export const REPORT_SET_COUNT = 3;
-export const REPORT_GAMES_MAX = 99;
+/** Máximo de juegos por lado en un set (6 con ventaja o 7-5 / 7-6). */
+export const REPORT_SET_GAMES_MAX = 7;
+
+export type ReportSetSide = 'teamA' | 'teamB';
 
 export function isValidPadelSetScore(teamA: number, teamB: number): boolean {
   if (teamA === teamB) {
@@ -14,20 +17,47 @@ export function isValidPadelSetScore(teamA: number, teamB: number): boolean {
   const winner = Math.max(teamA, teamB);
   const loser = Math.min(teamA, teamB);
 
+  if (winner > REPORT_SET_GAMES_MAX) {
+    return false;
+  }
+
   if (winner === 6 && loser <= 4) {
     return true;
   }
-  if (winner === 7 && loser === 5) {
-    return true;
-  }
-  if (winner === 7 && loser === 6) {
-    return true;
-  }
-  if (winner >= 8 && winner - loser === 2 && loser >= 6) {
+  if (winner === 7 && loser >= 5) {
     return true;
   }
 
   return false;
+}
+
+/**
+ * Tope al subir el marcador: no se puede llegar a 7 si el rival tiene menos de 5;
+ * con rival 0-4 el máximo es 6 (cierre 6-0 … 6-4).
+ */
+export function maxGamesForReportSide(set: ReportSetGames, side: ReportSetSide): number {
+  const opponent = side === 'teamA' ? set.teamB : set.teamA;
+  if (opponent <= 4) {
+    return 6;
+  }
+
+  return REPORT_SET_GAMES_MAX;
+}
+
+export function applyReportGameDelta(
+  set: ReportSetGames,
+  side: ReportSetSide,
+  delta: number,
+): ReportSetGames {
+  const key = side;
+  const next = set[key] + delta;
+  const clamped = Math.min(maxGamesForReportSide(set, side), Math.max(0, next));
+  return { ...set, [key]: clamped };
+}
+
+export function canIncrementReportGame(set: ReportSetGames, side: ReportSetSide): boolean {
+  const key = side;
+  return set[key] < maxGamesForReportSide(set, side);
 }
 
 export function setWinnerTeam(set: ReportSetGames): 'team_a' | 'team_b' | null {
@@ -106,10 +136,6 @@ export function canSubmitMatchReport(sets: ReportSetGames[], set3Enabled: boolea
 
   const wins = countSetWins([set1, set2]);
   return wins.teamA === 2 || wins.teamB === 2;
-}
-
-export function clampReportGames(value: number): number {
-  return Math.min(REPORT_GAMES_MAX, Math.max(0, value));
 }
 
 export function createEmptyReportSets(): ReportSetGames[] {

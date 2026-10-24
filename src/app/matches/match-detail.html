@@ -396,7 +396,7 @@
                         <button
                           type="button"
                           class="report-step-btn"
-                          [disabled]="isReportSetDisabled(setNumber)"
+                          [disabled]="!canIncreaseReportGame(setNumber, 'a')"
                           (click)="adjustReportSetGame(setNumber, 'a', 1)"
                         >
                           +
@@ -414,7 +414,7 @@
                         <button
                           type="button"
                           class="report-step-btn"
-                          [disabled]="isReportSetDisabled(setNumber)"
+                          [disabled]="!canIncreaseReportGame(setNumber, 'b')"
                           (click)="adjustReportSetGame(setNumber, 'b', 1)"
                         >
                           +
