@@ -222,6 +222,98 @@
   font-size: 0.9rem;
 }
 
+.match-cta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-error {
+  color: #b42318;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cta-row .cta-button {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.cta-button {
+  background: #dfff9b;
+  border: none;
+  border-radius: 999px;
+  color: #103b50;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1rem;
+  text-transform: uppercase;
+  width: 100%;
+}
+
+.cta-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.cta-button--secondary {
+  background: #f3f4f6;
+  text-transform: none;
+}
+
+.join-team-form {
+  width: 100%;
+}
+
+.join-team-form mat-form-field {
+  width: 100%;
+}
+
+.roster-panel {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.player-slots {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.player-slot {
+  align-items: center;
+  background: #e8f5e9;
+  border-radius: 50%;
+  color: #103b50;
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 700;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.player-slot--empty {
+  background: transparent;
+  border: 0.125rem dashed rgba(16, 59, 80, 0.2);
+  color: transparent;
+}
+
+.roster-count {
+  margin: 0;
+}
+
 .action-row {
   flex-wrap: wrap;
   gap: 0.5rem;
