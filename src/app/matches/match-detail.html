@@ -371,39 +371,82 @@
           }
 
           @if (isActivePlayer()) {
-            <form [formGroup]="resultForm" (ngSubmit)="reportResult()" class="result-form">
+            <form (ngSubmit)="reportResult()" class="result-form">
               <p class="result-form-title">{{ 'MATCHES.REPORT_RESULT' | translate }}</p>
 
-              <p class="set-form-heading">
-                {{ 'MATCHES.SET_N' | translate: { n: 1 } }}
-              </p>
-              <div class="set-row">
-                <mat-form-field>
-                  <mat-label>{{ 'MATCHES.PAIR_1' | translate }}</mat-label>
-                  <input matInput type="number" formControlName="set1A" />
-                </mat-form-field>
-                <mat-form-field>
-                  <mat-label>{{ 'MATCHES.PAIR_2' | translate }}</mat-label>
-                  <input matInput type="number" formControlName="set1B" />
-                </mat-form-field>
-              </div>
+              @for (setNumber of reportSetIndexes; track setNumber) {
+                <div
+                  class="report-set-block"
+                  [class.report-set-block--disabled]="isReportSetDisabled(setNumber)"
+                >
+                  <p class="set-form-heading">
+                    {{ 'MATCHES.SET_N' | translate: { n: setNumber } }}
+                  </p>
 
-              <p class="set-form-heading">
-                {{ 'MATCHES.SET_N' | translate: { n: 2 } }}
-              </p>
-              <div class="set-row">
-                <mat-form-field>
-                  <mat-label>{{ 'MATCHES.PAIR_1' | translate }}</mat-label>
-                  <input matInput type="number" formControlName="set2A" />
-                </mat-form-field>
-                <mat-form-field>
-                  <mat-label>{{ 'MATCHES.PAIR_2' | translate }}</mat-label>
-                  <input matInput type="number" formControlName="set2B" />
-                </mat-form-field>
-              </div>
+                  <div class="report-set-card">
+                    <div class="report-set-side">
+                      <span class="report-set-pair-label">{{ 'MATCHES.PAIR_1' | translate }}</span>
+                      <span class="report-set-score" aria-live="polite">
+                        {{ displayReportSetGame(setNumber, 'a') }}
+                      </span>
+                    </div>
 
-              <button mat-raised-button color="primary" type="submit" [disabled]="actionLoading()">
-                {{ 'MATCHES.SUBMIT_RESULT' | translate }}
+                    <div class="report-set-controls" aria-hidden="false">
+                      <div class="report-set-control-col">
+                        <button
+                          type="button"
+                          class="report-step-btn"
+                          [disabled]="isReportSetDisabled(setNumber)"
+                          (click)="adjustReportSetGame(setNumber, 'a', 1)"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          class="report-step-btn"
+                          [disabled]="!canDecreaseReportGame(setNumber, 'a')"
+                          (click)="adjustReportSetGame(setNumber, 'a', -1)"
+                        >
+                          −
+                        </button>
+                      </div>
+                      <div class="report-set-control-col">
+                        <button
+                          type="button"
+                          class="report-step-btn"
+                          [disabled]="isReportSetDisabled(setNumber)"
+                          (click)="adjustReportSetGame(setNumber, 'b', 1)"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          class="report-step-btn"
+                          [disabled]="!canDecreaseReportGame(setNumber, 'b')"
+                          (click)="adjustReportSetGame(setNumber, 'b', -1)"
+                        >
+                          −
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="report-set-side report-set-side--right">
+                      <span class="report-set-pair-label">{{ 'MATCHES.PAIR_2' | translate }}</span>
+                      <span class="report-set-score" aria-live="polite">
+                        {{ displayReportSetGame(setNumber, 'b') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <button
+                type="submit"
+                class="result-submit-btn"
+                [disabled]="actionLoading() || !canSubmitReport()"
+              >
+                <span class="result-submit-label">{{ 'MATCHES.SUBMIT_RESULT' | translate }}</span>
+                <span class="result-submit-badge" aria-hidden="true">Ok</span>
               </button>
             </form>
           }
