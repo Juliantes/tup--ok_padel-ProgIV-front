@@ -62,10 +62,56 @@ beforeAll(() => {
   registerLocaleData(localeEsAr);
 });
 
+function fullRosterMatch(overrides: Partial<Match> = {}): Match {
+  return buildMatch({
+    players_count: 4,
+    status: 'confirmed',
+    match_players: [
+      {
+        id: 1,
+        user_id: 10,
+        team: 'team_a',
+        status: 'confirmed',
+        joined_at: '2026-10-20T12:00:00.000-03:00',
+        user: { id: 10, name: 'Organizador Test' },
+      },
+      {
+        id: 2,
+        user_id: 11,
+        team: 'team_a',
+        status: 'confirmed',
+        joined_at: '2026-10-20T12:00:00.000-03:00',
+        user: { id: 11, name: 'Compañero A' },
+      },
+      {
+        id: 3,
+        user_id: 12,
+        team: 'team_b',
+        status: 'confirmed',
+        joined_at: '2026-10-20T12:00:00.000-03:00',
+        user: { id: 12, name: 'Rival 1' },
+      },
+      {
+        id: 4,
+        user_id: 13,
+        team: 'team_b',
+        status: 'confirmed',
+        joined_at: '2026-10-20T12:00:00.000-03:00',
+        user: { id: 13, name: 'Rival 2' },
+      },
+    ],
+    ...overrides,
+  });
+}
+
 describe('MatchDetail', () => {
   let fixture: ComponentFixture<MatchDetail>;
   let matchesApi: { getMatch: ReturnType<typeof vi.fn>; joinMatch: ReturnType<typeof vi.fn> };
   let apiSession: { user: ReturnType<typeof vi.fn> };
+  let resultsApi: {
+    reportResult: ReturnType<typeof vi.fn>;
+    deleteResult: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     matchesApi = {
@@ -109,10 +155,10 @@ describe('MatchDetail', () => {
         { provide: MatchesApiService, useValue: matchesApi },
         {
           provide: MatchResultsApiService,
-          useValue: {
-            reportResult: vi.fn(),
+          useValue: (resultsApi = {
+            reportResult: vi.fn(() => of({ match: buildMatch() })),
             deleteResult: vi.fn(),
-          },
+          }),
         },
         { provide: ApiSessionService, useValue: apiSession },
       ],
@@ -227,5 +273,95 @@ describe('MatchDetail', () => {
     expect(root.textContent).not.toContain('team_b');
     expect(root.textContent).toContain('MATCHES.PAIR_1');
     expect(root.querySelectorAll('.scoreboard-score--winner').length).toBeGreaterThan(0);
+  });
+
+  it('renders result stepper starting at 0 with set 3 disabled', async () => {
+    apiSession.user.mockReturnValue({ id: 10, name: 'Organizador Test', roles: ['player'] });
+    matchesApi.getMatch = vi.fn(() => of({ match: fullRosterMatch() }));
+
+    fixture = TestBed.createComponent(MatchDetail);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const disabledSet = root.querySelector('.report-set-block--disabled');
+    expect(disabledSet).toBeTruthy();
+    expect(root.querySelectorAll('.report-set-card').length).toBe(3);
+    expect(root.querySelector('.result-submit-btn')?.hasAttribute('disabled')).toBe(true);
+
+    const component = fixture.componentInstance as MatchDetail & {
+      displayReportSetGame: (setNumber: number, pair: 'a' | 'b') => string;
+    };
+    expect(component.displayReportSetGame(1, 'a')).toBe('0');
+    expect(component.displayReportSetGame(3, 'a')).toBe('MATCHES.PLAYER_SLOT_EMPTY');
+  });
+
+  it('enables set 3 on 1-1 and posts two or three sets', async () => {
+    apiSession.user.mockReturnValue({ id: 10, name: 'Organizador Test', roles: ['player'] });
+    matchesApi.getMatch = vi.fn(() => of({ match: fullRosterMatch() }));
+
+    fixture = TestBed.createComponent(MatchDetail);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance as MatchDetail & {
+      adjustReportSetGame: (setNumber: number, pair: 'a' | 'b', delta: number) => void;
+      canSubmitReport: () => boolean;
+      reportResult: () => void;
+    };
+
+    for (let i = 0; i < 6; i += 1) {
+      component.adjustReportSetGame(1, 'a', 1);
+    }
+    for (let i = 0; i < 4; i += 1) {
+      component.adjustReportSetGame(1, 'b', 1);
+    }
+    for (let i = 0; i < 6; i += 1) {
+      component.adjustReportSetGame(2, 'a', 1);
+    }
+    for (let i = 0; i < 3; i += 1) {
+      component.adjustReportSetGame(2, 'b', 1);
+    }
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.report-set-block--disabled')).toBeTruthy();
+    expect(component.canSubmitReport()).toBe(true);
+
+    component.reportResult();
+    expect(resultsApi.reportResult).toHaveBeenCalledWith(4, {
+      sets: [
+        { team_a_games: 6, team_b_games: 4 },
+        { team_a_games: 6, team_b_games: 3 },
+      ],
+    });
+
+    component.adjustReportSetGame(2, 'a', -3);
+    for (let i = 0; i < 3; i += 1) {
+      component.adjustReportSetGame(2, 'b', 1);
+    }
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.report-set-block--disabled')).toBeNull();
+    fixture.detectChanges();
+    expect(component.canSubmitReport()).toBe(false);
+
+    for (let i = 0; i < 6; i += 1) {
+      component.adjustReportSetGame(3, 'a', 1);
+    }
+    for (let i = 0; i < 2; i += 1) {
+      component.adjustReportSetGame(3, 'b', 1);
+    }
+    fixture.detectChanges();
+    expect(component.canSubmitReport()).toBe(true);
+
+    component.reportResult();
+    expect(resultsApi.reportResult).toHaveBeenLastCalledWith(4, {
+      sets: [
+        { team_a_games: 6, team_b_games: 4 },
+        { team_a_games: 3, team_b_games: 6 },
+        { team_a_games: 6, team_b_games: 2 },
+      ],
+    });
   });
 });

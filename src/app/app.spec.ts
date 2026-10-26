@@ -1,14 +1,27 @@
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { EMPTY, of } from 'rxjs';
 
 import { routes } from './app.routes';
+import { provideTranslateTesting } from './testing/translate-testing';
+import { AuthService } from './login/auth.service';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        ...provideTranslateTesting(),
+        {
+          provide: AuthService,
+          useValue: {
+            whenReady: () => of(undefined),
+            authStateChanges$: EMPTY,
+          },
+        },
+      ],
     }).compileComponents();
   });
 

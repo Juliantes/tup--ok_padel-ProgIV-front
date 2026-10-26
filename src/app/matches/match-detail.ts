@@ -7,7 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -36,6 +35,16 @@ import {
   SCOREBOARD_SET_COLUMNS,
   scoreboardSourceSets,
 } from './match-scoreboard.utils';
+import {
+  applyReportGameDelta,
+  buildReportResultSets,
+  canIncrementReportGame,
+  canSubmitMatchReport,
+  createEmptyReportSets,
+  isReportSet3Enabled,
+  ReportSetGames,
+  ReportSetSide,
+} from './match-report.utils';
 
 const STATUS_I18N_KEYS: Record<string, string> = {
   open: 'MATCHES.STATUS_OPEN',
@@ -61,7 +70,6 @@ type RouteLoadState =
     MatCardModule,
     MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     RouterLink,
@@ -139,15 +147,7 @@ export class MatchDetail {
     return this.match()?.match_results ?? [];
   });
 
-  protected readonly showResultsSection = computed(() => {
-    const current = this.match();
-    if (!current) {
-      return false;
-    }
-
-    const userId = this.apiSession.user()?.id;
-    return this.results().length > 0 || isUserEnrolled(current, userId);
-  });
+  protected readonly showResultsSection = computed(() => Boolean(this.match()));
 
   protected readonly scoreboardSetIndexes = Array.from(
     { length: SCOREBOARD_SET_COLUMNS },
@@ -168,13 +168,18 @@ export class MatchDetail {
     team: ['team_a', Validators.required],
   });
 
-  protected readonly resultForm = this.fb.group({
-    set1A: [6, [Validators.required, Validators.min(0)]],
-    set1B: [4, [Validators.required, Validators.min(0)]],
-    set2A: [6, [Validators.required, Validators.min(0)]],
-    set2B: [3, [Validators.required, Validators.min(0)]],
-    team: ['team_a'],
+  protected readonly reportSetIndexes = [1, 2, 3];
+
+  private readonly reportSets = signal<ReportSetGames[]>(createEmptyReportSets());
+
+  protected readonly reportSet3Enabled = computed(() => {
+    const sets = this.reportSets();
+    return isReportSet3Enabled(sets[0], sets[1]);
   });
+
+  protected readonly canSubmitReport = computed(() =>
+    canSubmitMatchReport(this.reportSets(), this.reportSet3Enabled()),
+  );
 
   constructor() {
     effect(() => {
@@ -183,6 +188,24 @@ export class MatchDetail {
         this.matchOverride.set(null);
         this.resultsOverride.set(null);
         this.actionError.set('');
+        this.reportSets.set(createEmptyReportSets());
+      });
+    });
+
+    effect(() => {
+      if (this.reportSet3Enabled()) {
+        return;
+      }
+
+      untracked(() => {
+        const sets = this.reportSets();
+        if (sets[2].teamA === 0 && sets[2].teamB === 0) {
+          return;
+        }
+
+        const next = [...sets] as ReportSetGames[];
+        next[2] = { teamA: 0, teamB: 0 };
+        this.reportSets.set(next);
       });
     });
 
@@ -322,24 +345,62 @@ export class MatchDetail {
 
   protected reportResult(): void {
     const current = this.match();
-    if (!current || this.resultForm.invalid) {
+    if (!current || !this.canSubmitReport()) {
       return;
     }
 
-    this.runAction(() =>
-      this.resultsApi.reportResult(current.id, {
-        sets: [
-          {
-            team_a_games: this.resultForm.controls.set1A.value ?? 0,
-            team_b_games: this.resultForm.controls.set1B.value ?? 0,
-          },
-          {
-            team_a_games: this.resultForm.controls.set2A.value ?? 0,
-            team_b_games: this.resultForm.controls.set2B.value ?? 0,
-          },
-        ],
-      }),
-    );
+    const set3Enabled = this.reportSet3Enabled();
+    const sets = buildReportResultSets(this.reportSets(), set3Enabled);
+
+    this.runAction(() => this.resultsApi.reportResult(current.id, { sets }));
+  }
+
+  protected isReportSetDisabled(setNumber: number): boolean {
+    return setNumber === 3 && !this.reportSet3Enabled();
+  }
+
+  protected reportSetGames(setNumber: number, pair: MatchPairSide): number {
+    const set = this.reportSets()[setNumber - 1];
+    return pair === 'a' ? set.teamA : set.teamB;
+  }
+
+  protected displayReportSetGame(setNumber: number, pair: MatchPairSide): string {
+    if (this.isReportSetDisabled(setNumber)) {
+      return this.translate.instant('MATCHES.PLAYER_SLOT_EMPTY');
+    }
+
+    return String(this.reportSetGames(setNumber, pair));
+  }
+
+  protected adjustReportSetGame(setNumber: number, pair: MatchPairSide, delta: number): void {
+    if (this.isReportSetDisabled(setNumber)) {
+      return;
+    }
+
+    const index = setNumber - 1;
+    const sets = [...this.reportSets()] as ReportSetGames[];
+    const current = sets[index];
+    const side: ReportSetSide = pair === 'a' ? 'teamA' : 'teamB';
+    sets[index] = applyReportGameDelta(current, side, delta);
+    this.reportSets.set(sets);
+  }
+
+  protected canIncreaseReportGame(setNumber: number, pair: MatchPairSide): boolean {
+    if (this.isReportSetDisabled(setNumber)) {
+      return false;
+    }
+
+    const set = this.reportSets()[setNumber - 1];
+    const side: ReportSetSide = pair === 'a' ? 'teamA' : 'teamB';
+    return canIncrementReportGame(set, side);
+  }
+
+  protected canDecreaseReportGame(setNumber: number, pair: MatchPairSide): boolean {
+    if (this.isReportSetDisabled(setNumber)) {
+      return false;
+    }
+
+    return this.reportSetGames(setNumber, pair) > 0;
   }
 
   protected deleteResult(resultId: number): void {
@@ -386,14 +447,23 @@ export class MatchDetail {
     return match.court.club?.name ?? match.court.name;
   }
 
+  protected scoreboardStageLabel(match: Match): string {
+    return `${this.categoryLabel(match)} · ${match.court.name}`;
+  }
+
+  protected formatDurationClock(minutes: number): string {
+    const safe = Math.max(0, Math.floor(minutes || 0));
+    const hrs = Math.floor(safe / 60)
+      .toString()
+      .padStart(2, '0');
+    const mins = (safe % 60).toString().padStart(2, '0');
+    return `${hrs}:${mins}`;
+  }
+
   protected formatSetScore(
     set: { team_a_games: number; team_b_games: number },
     pair: MatchPairSide,
   ): string {
-    if (!this.scoreboardHasData()) {
-      return '—';
-    }
-
     return String(gamesForPair(set, pair));
   }
 

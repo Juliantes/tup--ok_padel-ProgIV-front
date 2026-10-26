@@ -1,12 +1,17 @@
+import { registerLocaleData } from '@angular/common';
+import localeEsAr from '@angular/common/locales/es-AR';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   ErrorHandler,
+  LOCALE_ID,
   inject,
   isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+
+registerLocaleData(localeEsAr);
 import { provideRouter, Router } from '@angular/router';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import * as Sentry from '@sentry/angular';
@@ -24,6 +29,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideNativeDateAdapter(),
+    { provide: LOCALE_ID, useValue: 'es-AR' },
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideTranslateService({
       lang: 'es',

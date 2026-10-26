@@ -45,10 +45,15 @@ Abrí **http://localhost:4200** (mismo host que el CORS del backend).
 
 ## Flujo de sesión
 
-1. Login con Google (Firebase).
-2. El front envía el Firebase ID token a `POST /api/v1/oauth/google`.
-3. Se guarda el JWT Rails en `localStorage` y se usa en `Authorization: Bearer` para el resto de la API.
-4. Si el JWT expira, el front renueva con un nuevo Firebase ID token sin volver a mostrar el popup.
+Hay **dos tokens**. La API Rails no usa el de Firebase en cada request.
+
+1. Login con Google en el cliente (Firebase Auth: popup en web, plugin en Capacitor, OAuth+PKCE en Tauri).
+2. El front canjea el Firebase ID token (~1 h) en `POST /api/v1/oauth/google`. Rails verifica el token y devuelve **su** JWT.
+3. Ese JWT (24 h) se guarda en `localStorage` y el interceptor lo manda en `Authorization: Bearer` al resto de `/api/v1`.
+4. Ante `401` `token_expired` / `token_invalid`, se pide un ID token fresco a Firebase y se vuelve a canjear, sin popup. No se refresca Firebase “antes de cada llamada”.
+5. Logout borra el JWT en el cliente. Rails no revoca Bearers ya emitidos; valen hasta `exp`.
+
+Contrato completo (web vs API, linking por email): README de ok_padel → Autenticación: web vs API.
 
 ## API consumida
 

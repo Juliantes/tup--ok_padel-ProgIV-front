@@ -14,6 +14,17 @@ export function pairTeamKey(pair: MatchPairSide): 'team_a' | 'team_b' {
 }
 
 export function pairPlayerNames(match: Match, pair: MatchPairSide): (string | null)[] {
+  const hasAssignedTeams = match.match_players.some(
+    (player) => player.team === 'team_a' || player.team === 'team_b',
+  );
+  if (!hasAssignedTeams) {
+    const offset = pair === 'a' ? 0 : 2;
+    const fallback = match.match_players
+      .slice(offset, offset + 2)
+      .map((player) => player.user.name);
+    return [fallback[0] ?? null, fallback[1] ?? null];
+  }
+
   const team = pairTeamKey(pair);
   const names = match.match_players
     .filter((player) => player.team === team)
