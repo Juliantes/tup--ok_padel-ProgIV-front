@@ -8,11 +8,16 @@ import {
   GoogleAuthProvider,
   User,
   browserLocalPersistence,
+  createUserWithEmailAndPassword,
   getAuth,
   indexedDBLocalPersistence,
   initializeAuth,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithCredential,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
@@ -191,6 +196,66 @@ export class AuthService {
     await this.exchangeFirebaseForRailsSession();
   }
 
+  async signUpWithEmail(email: string, password: string): Promise<void> {
+    if (!this.auth) {
+      return;
+    }
+
+    const { user } = await createUserWithEmailAndPassword(this.auth, email.trim(), password);
+    this.publishFirebaseUser(user);
+    await sendEmailVerification(user);
+  }
+
+  async signInWithEmail(email: string, password: string): Promise<void> {
+    if (!this.auth) {
+      return;
+    }
+
+    const { user } = await signInWithEmailAndPassword(this.auth, email.trim(), password);
+    this.publishFirebaseUser(user);
+
+    if (!user.emailVerified) {
+      const error = new Error('Email not verified') as Error & { code: string };
+      error.code = 'auth/email-not-verified';
+      throw error;
+    }
+
+    await this.exchangeFirebaseForRailsSession();
+  }
+
+  async resendVerificationEmail(): Promise<void> {
+    const user = this.auth?.currentUser;
+    if (!user) {
+      throw new Error('auth/no-current-user');
+    }
+
+    await sendEmailVerification(user);
+  }
+
+  async completeEmailVerification(): Promise<boolean> {
+    const user = this.auth?.currentUser;
+    if (!user) {
+      return false;
+    }
+
+    await reload(user);
+    this.publishFirebaseUser(this.auth!.currentUser);
+
+    if (!user.emailVerified) {
+      return false;
+    }
+
+    return this.exchangeFirebaseForRailsSession(true);
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    if (!this.auth) {
+      return;
+    }
+
+    await sendPasswordResetEmail(this.auth, email.trim());
+  }
+
   async signOut(): Promise<void> {
     this.apiSession.clear();
     this.userRole.set(null);
@@ -223,9 +288,13 @@ export class AuthService {
       return;
     }
 
-    if (!this.apiSession.hasToken()) {
+    if (!this.apiSession.hasToken() && this.canExchangeRailsSession(user)) {
       await this.exchangeFirebaseForRailsSession();
     }
+  }
+
+  private canExchangeRailsSession(user: User): boolean {
+    return user.emailVerified;
   }
 
   private async exchangeFirebaseForRailsSession(forceRefresh = false): Promise<boolean> {
@@ -241,6 +310,11 @@ export class AuthService {
   }
 
   private async performRailsExchange(forceRefresh: boolean): Promise<boolean> {
+    const firebaseUser = this.auth?.currentUser;
+    if (firebaseUser && !this.canExchangeRailsSession(firebaseUser)) {
+      return false;
+    }
+
     const idToken = await this.getIdToken(forceRefresh);
     if (!idToken) {
       return false;

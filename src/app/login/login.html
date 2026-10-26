@@ -12,17 +12,159 @@
       @if (errorMessage()) {
         <p class="login-error" role="alert">{{ errorMessage() }}</p>
       }
+      @if (infoMessage()) {
+        <p class="login-info" role="status">{{ infoMessage() }}</p>
+      }
 
-      <button
-        mat-flat-button
-        type="button"
-        class="sign-in-button"
-        [disabled]="isLoading()"
-        (click)="signIn()"
-      >
-        @if (isLoading()) {
-          <mat-spinner diameter="22" />
-        } @else {
+      @switch (view()) {
+        @case ('signin') {
+          <form class="login-form" [formGroup]="signInForm" (ngSubmit)="submitSignIn()">
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.EMAIL' | translate }}</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.PASSWORD' | translate }}</mat-label>
+              <input
+                matInput
+                type="password"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+            </mat-form-field>
+
+            <button mat-flat-button type="submit" class="primary-action" [disabled]="isLoading()">
+              @if (isLoading()) {
+                <mat-spinner diameter="22" />
+              } @else {
+                <span>{{ 'LOGIN.SIGN_IN' | translate }}</span>
+              }
+            </button>
+          </form>
+
+          <div class="login-links">
+            <button type="button" class="link-button" (click)="setView('reset')">
+              {{ 'LOGIN.FORGOT_PASSWORD' | translate }}
+            </button>
+            <button type="button" class="link-button" (click)="setView('signup')">
+              {{ 'LOGIN.CREATE_ACCOUNT' | translate }}
+            </button>
+          </div>
+        }
+
+        @case ('signup') {
+          <form class="login-form" [formGroup]="signUpForm" (ngSubmit)="submitSignUp()">
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.EMAIL' | translate }}</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.PASSWORD' | translate }}</mat-label>
+              <input
+                matInput
+                type="password"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.CONFIRM_PASSWORD' | translate }}</mat-label>
+              <input
+                matInput
+                type="password"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+              />
+              @if (signUpForm.hasError('passwordMismatch') && signUpForm.touched) {
+                <mat-error>{{ 'LOGIN.ERROR_PASSWORD_MISMATCH' | translate }}</mat-error>
+              }
+            </mat-form-field>
+
+            <button mat-flat-button type="submit" class="primary-action" [disabled]="isLoading()">
+              @if (isLoading()) {
+                <mat-spinner diameter="22" />
+              } @else {
+                <span>{{ 'LOGIN.SIGN_UP' | translate }}</span>
+              }
+            </button>
+          </form>
+
+          <button type="button" class="link-button" (click)="setView('signin')">
+            {{ 'LOGIN.BACK_TO_SIGN_IN' | translate }}
+          </button>
+        }
+
+        @case ('verification') {
+          <p class="verification-text">{{ 'LOGIN.VERIFICATION_INSTRUCTIONS' | translate }}</p>
+
+          <button
+            mat-flat-button
+            type="button"
+            class="primary-action"
+            [disabled]="isLoading()"
+            (click)="confirmVerification()"
+          >
+            @if (isLoading()) {
+              <mat-spinner diameter="22" />
+            } @else {
+              <span>{{ 'LOGIN.VERIFICATION_CONFIRM' | translate }}</span>
+            }
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            class="secondary-action"
+            [disabled]="isLoading()"
+            (click)="resendVerification()"
+          >
+            {{ 'LOGIN.VERIFICATION_RESEND' | translate }}
+          </button>
+
+          <button type="button" class="link-button" (click)="setView('signin')">
+            {{ 'LOGIN.BACK_TO_SIGN_IN' | translate }}
+          </button>
+        }
+
+        @case ('reset') {
+          <form class="login-form" [formGroup]="resetForm" (ngSubmit)="submitPasswordReset()">
+            <p class="reset-text">{{ 'LOGIN.RESET_INSTRUCTIONS' | translate }}</p>
+
+            <mat-form-field class="full-width">
+              <mat-label>{{ 'LOGIN.EMAIL' | translate }}</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+            </mat-form-field>
+
+            <button mat-flat-button type="submit" class="primary-action" [disabled]="isLoading()">
+              @if (isLoading()) {
+                <mat-spinner diameter="22" />
+              } @else {
+                <span>{{ 'LOGIN.RESET_SEND' | translate }}</span>
+              }
+            </button>
+          </form>
+
+          <button type="button" class="link-button" (click)="setView('signin')">
+            {{ 'LOGIN.BACK_TO_SIGN_IN' | translate }}
+          </button>
+        }
+      }
+
+      @if (view() === 'signin' || view() === 'signup') {
+        <div class="divider" aria-hidden="true">
+          <span>{{ 'LOGIN.OR' | translate }}</span>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="google-button"
+          [disabled]="isLoading()"
+          (click)="signInWithGoogle()"
+        >
           <svg class="google-icon" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
             <path
               fill="#FFC107"
@@ -42,8 +184,8 @@
             />
           </svg>
           <span>{{ 'LOGIN.SIGN_IN_GOOGLE' | translate }}</span>
-        }
-      </button>
+        </button>
+      }
     </mat-card-content>
   </mat-card>
 </section>
