@@ -36,12 +36,11 @@ import { TranslateService } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 
 import { environment } from '../../environments/environment';
-import { ApiUser } from '../core/api/api-user.model';
 import { ApiSessionService } from '../core/api/api-session.service';
 import { AuthApiService } from '../core/api/auth-api.service';
 import { isTauri } from '../core/platform';
 
-export type AppUserRole = 'player' | 'admin';
+export type AppUserRole = 'player' | 'admin' | 'club_owner';
 
 export interface UserProfile {
   name: string;
@@ -71,8 +70,10 @@ export class AuthService {
   readonly currentUser = signal<User | null>(null);
   readonly apiUser = computed(() => this.apiSession.user());
   readonly isLogged = computed(() => this.apiSession.hasToken());
-  readonly userRole = signal<AppUserRole | null>(null);
-  readonly isAdmin = computed(() => this.userRole() === 'admin');
+  readonly userRoles = computed(() => this.apiSession.user()?.roles ?? []);
+  readonly isAdmin = computed(() => this.userRoles().includes('admin'));
+  readonly isPlayer = computed(() => this.userRoles().includes('player'));
+  readonly isClubOwner = computed(() => this.userRoles().includes('club_owner'));
 
   readonly userProfile = computed<UserProfile | null>(() => {
     const apiUser = this.apiSession.user();
@@ -130,7 +131,6 @@ export class AuthService {
 
   async ensureRailsSession(): Promise<boolean> {
     if (this.apiSession.hasToken()) {
-      this.syncRoleFromApiUser(this.apiSession.user());
       return true;
     }
 
@@ -258,8 +258,6 @@ export class AuthService {
 
   async signOut(): Promise<void> {
     this.apiSession.clear();
-    this.userRole.set(null);
-
     if (!this.auth) {
       this.currentUser.set(null);
       return;
@@ -284,7 +282,6 @@ export class AuthService {
 
     if (!user) {
       this.apiSession.clear();
-      this.userRole.set(null);
       return;
     }
 
@@ -323,26 +320,11 @@ export class AuthService {
     try {
       const response = await firstValueFrom(this.authApi.exchangeFirebaseToken(idToken));
       this.apiSession.setSession(response.token, response.user);
-      this.syncRoleFromApiUser(response.user);
       return true;
     } catch (error) {
       console.warn('Rails session exchange failed:', error);
       return false;
     }
-  }
-
-  private syncRoleFromApiUser(user: ApiUser | null): void {
-    if (!user) {
-      this.userRole.set(null);
-      return;
-    }
-
-    const role: AppUserRole | null = user.roles.includes('admin')
-      ? 'admin'
-      : user.roles.includes('player')
-        ? 'player'
-        : null;
-    this.userRole.set(role);
   }
 
   private createAuth(app: FirebaseApp): Auth {

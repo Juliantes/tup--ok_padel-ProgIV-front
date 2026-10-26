@@ -5,7 +5,13 @@
   "NAV": {
     "HOME": "Inicio",
     "MATCHES": "Partidos",
+    "CLUB": "Mis canchas",
     "CONFIG": "Configuración"
+  },
+  "ROLES": {
+    "ADMIN": "Administrador",
+    "PLAYER": "Jugador",
+    "CLUB_OWNER": "Dueño de club"
   },
   "HEADER": {
     "MAIN_ARIA": "Principal",
@@ -94,6 +100,7 @@
     "PROFILE_IMAGE_ALT": "Foto de perfil",
     "NAME": "Nombre:",
     "EMAIL": "Email:",
+    "ROLES": "Roles:",
     "MEMBER_SINCE": "Miembro desde:",
     "LOGOUT": "Cerrar sesión",
     "LOGOUT_CONFIRM": "¿Estás seguro de que querés cerrar sesión?",
@@ -245,6 +252,36 @@
     "ERROR": "No pudimos cargar los partidos.",
     "CREATE_ERROR": "No se pudo crear el partido.",
     "ACTION_ERROR": "No se pudo completar la acción."
+  },
+  "CLUB_OWNER": {
+    "TITLE": "Mis canchas",
+    "LOADING": "Cargando clubes...",
+    "NO_CLUBS": "Todavía no tenés clubes. Creá uno para administrar canchas.",
+    "ADD_CLUB": "Nuevo club",
+    "NEW_CLUB_TITLE": "Alta de club",
+    "CLUB_DETAILS": "Datos del club",
+    "CLUB_NAME": "Nombre",
+    "CLUB_ADDRESS": "Dirección",
+    "CLUB_PHONE": "Teléfono",
+    "CLUB_EMAIL": "Email",
+    "SAVE_CLUB": "Crear club",
+    "UPDATE_CLUB": "Guardar club",
+    "COURTS_TITLE": "Canchas de {{club}}",
+    "ADD_COURT": "Nueva cancha",
+    "NEW_COURT": "Alta de cancha",
+    "EDIT_COURT": "Editar cancha",
+    "COURT_NAME": "Nombre de la cancha",
+    "COURT_TYPE": "Tipo",
+    "COURT_INDOOR": "Indoor",
+    "COURT_OUTDOOR": "Outdoor",
+    "COURT_PRICE": "Precio por hora",
+    "COURT_DESCRIPTION": "Descripción",
+    "COURT_STATUS": "Estado",
+    "STATUS_active": "Activa",
+    "STATUS_maintenance": "Mantenimiento",
+    "STATUS_inactive": "Inactiva",
+    "SAVE_COURT": "Guardar cancha",
+    "DELETE_COURT": "Eliminar cancha"
   },
   "AUTH": {
     "DEFAULT_USER": "Usuario"

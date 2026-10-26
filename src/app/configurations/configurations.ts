@@ -25,6 +25,17 @@ export class Configurations implements OnInit {
 
   protected readonly accountDetails = signal<UserAccountDetails | null>(null);
 
+  protected readonly roleLabels = computed(() => {
+    const roles = this.auth.userRoles();
+    const keys: Record<string, string> = {
+      admin: 'ROLES.ADMIN',
+      player: 'ROLES.PLAYER',
+      club_owner: 'ROLES.CLUB_OWNER',
+    };
+
+    return roles.map((role) => keys[role]).filter((key): key is string => Boolean(key));
+  });
+
   protected readonly userProfile = computed(() => {
     const profile = this.auth.userProfile();
     const emptyValue = this.translate.instant('CONFIG.EMPTY_VALUE');

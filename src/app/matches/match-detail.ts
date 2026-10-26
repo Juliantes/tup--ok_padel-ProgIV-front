@@ -17,6 +17,7 @@ import { Match, MatchResponse, MatchResultReport } from '../core/api/match.model
 import { MatchResultsApiService } from '../core/api/match-results-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
 import { ApiSessionService } from '../core/api/api-session.service';
+import { AuthService } from '../login/auth.service';
 import {
   canJoinMatch,
   isUserEnrolled,
@@ -83,6 +84,7 @@ export class MatchDetail {
   private readonly matchesApi = inject(MatchesApiService);
   private readonly resultsApi = inject(MatchResultsApiService);
   private readonly apiSession = inject(ApiSessionService);
+  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
 
@@ -423,8 +425,17 @@ export class MatchDetail {
   }
 
   protected canDeleteResult(result: MatchResultReport): boolean {
+    if (this.auth.isAdmin()) {
+      return true;
+    }
+
     const userId = this.apiSession.user()?.id;
-    return userId !== undefined && result.reported_by.id === userId;
+    const current = this.match();
+    if (userId === undefined || !current) {
+      return false;
+    }
+
+    return result.reported_by.id === userId && current.status === 'reported';
   }
 
   protected pairPlayers(match: Match, pair: MatchPairSide): (string | null)[] {

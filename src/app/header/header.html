@@ -19,7 +19,7 @@
   <div class="app-shell-body">
     <mat-toolbar class="navigation-bar" [attr.aria-label]="'HEADER.SECONDARY_NAV_ARIA' | translate">
       <nav class="navigation-links">
-        @for (item of navigationItems; track item.path) {
+        @for (item of navigationItems(); track item.path) {
           <a
             matButton
             [routerLink]="item.path"
@@ -39,7 +39,7 @@
   </div>
 
   <div class="bottom-bar-mobile">
-    @for (item of navigationItems; track item.path) {
+    @for (item of navigationItems(); track item.path) {
       <a
         [routerLink]="item.path"
         routerLinkActive="active"
