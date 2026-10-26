@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -7,6 +7,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs';
 
 import { AnalyticsService } from '../analytics/analytics.service';
+import { AuthService } from '../login/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -24,6 +25,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 })
 export class Header implements OnInit {
   private readonly analytics = inject(AnalyticsService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   protected readonly isHomeRoute = signal(this.router.url === '/home');
@@ -34,11 +36,19 @@ export class Header implements OnInit {
     });
   }
 
-  protected readonly navigationItems = [
-    { labelKey: 'NAV.HOME', path: '/home', analyticsName: 'inicio' },
-    { labelKey: 'NAV.MATCHES', path: '/matches', analyticsName: 'partidos' },
-    { labelKey: 'NAV.CONFIG', path: '/configurations', analyticsName: 'configuracion' },
-  ];
+  protected readonly navigationItems = computed(() => {
+    const items = [
+      { labelKey: 'NAV.HOME', path: '/home', analyticsName: 'inicio' },
+      { labelKey: 'NAV.MATCHES', path: '/matches', analyticsName: 'partidos' },
+    ];
+
+    if (this.auth.isClubOwner()) {
+      items.push({ labelKey: 'NAV.CLUB', path: '/club', analyticsName: 'mis-canchas' });
+    }
+
+    items.push({ labelKey: 'NAV.CONFIG', path: '/configurations', analyticsName: 'configuracion' });
+    return items;
+  });
 
   protected trackNavClick(analyticsName: string, location: 'header_nav' | 'mobile_nav'): void {
     this.analytics.trackButtonClick(analyticsName, location);

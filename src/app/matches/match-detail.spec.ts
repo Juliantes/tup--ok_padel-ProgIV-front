@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ApiSessionService } from '../core/api/api-session.service';
+import { AuthService } from '../login/auth.service';
 import { Match } from '../core/api/match.models';
 import { MatchResultsApiService } from '../core/api/match-results-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
@@ -112,8 +113,10 @@ describe('MatchDetail', () => {
     reportResult: ReturnType<typeof vi.fn>;
     deleteResult: ReturnType<typeof vi.fn>;
   };
+  let isAdminUser = false;
 
   beforeEach(async () => {
+    isAdminUser = false;
     matchesApi = {
       getMatch: vi.fn(() => of({ match: buildMatch() })),
       joinMatch: vi.fn(() =>
@@ -161,6 +164,7 @@ describe('MatchDetail', () => {
           }),
         },
         { provide: ApiSessionService, useValue: apiSession },
+        { provide: AuthService, useValue: { isAdmin: () => isAdminUser } },
       ],
     }).compileComponents();
 
@@ -362,6 +366,57 @@ describe('MatchDetail', () => {
         { team_a_games: 3, team_b_games: 6 },
         { team_a_games: 6, team_b_games: 2 },
       ],
+    });
+  });
+
+  describe('canDeleteResult', () => {
+    it('allows admin to delete any result on a completed match', async () => {
+      isAdminUser = true;
+      fixture = TestBed.createComponent(MatchDetail);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const harness = fixture.componentInstance as MatchDetail & {
+        canDeleteResult: (result: { reported_by: { id: number } }) => boolean;
+      };
+
+      matchesApi.getMatch = vi.fn(() =>
+        of({
+          match: buildMatch({ status: 'completed' }),
+        }),
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(
+        harness.canDeleteResult({
+          reported_by: { id: 999 },
+        } as never),
+      ).toBe(true);
+    });
+
+    it('blocks non-admin reporters on completed matches', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const harness = fixture.componentInstance as MatchDetail & {
+        canDeleteResult: (result: { reported_by: { id: number } }) => boolean;
+      };
+
+      matchesApi.getMatch = vi.fn(() =>
+        of({
+          match: buildMatch({ status: 'completed' }),
+        }),
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      apiSession.user.mockReturnValue({ id: 10, name: 'Organizador Test', roles: ['player'] });
+      expect(
+        harness.canDeleteResult({
+          reported_by: { id: 10 },
+        } as never),
+      ).toBe(false);
     });
   });
 });

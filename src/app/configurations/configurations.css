@@ -50,6 +50,22 @@
   margin: 0.5rem 0;
 }
 
+.role-badges {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.role-chip {
+  background: rgba(20, 154, 97, 0.12);
+  border-radius: 999px;
+  color: #149a61;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+}
+
 .logout-card mat-card-content {
   text-align: center;
   padding: 1.5rem;

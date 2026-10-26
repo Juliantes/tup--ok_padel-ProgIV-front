@@ -31,6 +31,7 @@ describe('Configurations', () => {
               memberSince: '1 de enero de 2025',
             })),
             isLogged: signal(false),
+            userRoles: signal(['club_owner']),
             signOut: () => Promise.resolve(),
           },
         },
@@ -63,5 +64,12 @@ describe('Configurations', () => {
   it('should render edit profile button', () => {
     const editButton = fixture.nativeElement.querySelector('.edit-profile-button');
     expect(editButton).toBeTruthy();
+  });
+
+  it('renders role chips for club_owner', () => {
+    fixture.detectChanges();
+    const chips = fixture.nativeElement.querySelectorAll('.role-chip');
+    expect(chips.length).toBeGreaterThan(0);
+    expect(fixture.nativeElement.textContent).toContain('ROLES.CLUB_OWNER');
   });
 });

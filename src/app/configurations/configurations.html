@@ -17,6 +17,14 @@
         <p>
           <strong>{{ 'CONFIG.EMAIL' | translate }}</strong> {{ userProfile().email }}
         </p>
+        @if (roleLabels().length > 0) {
+          <p class="role-badges">
+            <strong>{{ 'CONFIG.ROLES' | translate }}</strong>
+            @for (roleKey of roleLabels(); track roleKey) {
+              <span class="role-chip">{{ roleKey | translate }}</span>
+            }
+          </p>
+        }
         <p>
           <strong>{{ 'CONFIG.MEMBER_SINCE' | translate }}</strong> {{ userProfile().memberSince }}
         </p>

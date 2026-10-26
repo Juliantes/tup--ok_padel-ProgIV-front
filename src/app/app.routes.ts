@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { configurationsRoutes } from './configurations/configurations.routes';
 import { authGuard, guestGuard } from './login/auth.guard';
+import { clubRoutes } from './club/club.routes';
 import { matchesRoutes } from './matches/matches.routes';
 
 export const routes: Routes = [
@@ -20,6 +21,7 @@ export const routes: Routes = [
         loadComponent: () => import('./home/home').then((m) => m.Home),
       },
       ...matchesRoutes,
+      ...clubRoutes,
       ...configurationsRoutes,
     ],
   },
