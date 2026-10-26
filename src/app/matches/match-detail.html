@@ -46,7 +46,7 @@
           <div>
             <p class="info-label">{{ 'MATCHES.DATE_ONLY' | translate }}</p>
             <p class="info-value">
-              {{ current.date | date: "EEEE, d 'de' MMMM 'de' y" : '' : 'es' }}
+              {{ current.date | date: "EEEE, d 'de' MMMM 'de' y" }}
             </p>
           </div>
         </div>
@@ -105,7 +105,7 @@
           <div>
             <p class="info-label">{{ 'MATCHES.PRICE' | translate }}</p>
             <p class="info-value">
-              {{ current.court.price_per_hour | currency: 'ARS' : 'symbol' : '1.0-0' : 'es-AR' }}
+              {{ current.court.price_per_hour | currency: 'ARS' : 'symbol' : '1.0-0' }}
             </p>
           </div>
         </div>
@@ -131,112 +131,264 @@
       </section>
     </article>
 
-    <mat-card class="secondary-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'MATCHES.ROSTER' | translate }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <ul class="roster-list">
-          @for (player of current.match_players; track player.id) {
-            <li>
-              <span class="roster-name">{{ player.user.name }}</span>
-              @if (player.user.court_side_label) {
-                <span class="roster-meta">· {{ player.user.court_side_label }}</span>
-              }
-              <span class="roster-meta"> ({{ player.team ?? '—' }} · {{ player.status }}) </span>
-            </li>
-          }
-        </ul>
-      </mat-card-content>
-      <mat-card-actions class="action-row">
-        @if (canJoin(current)) {
-          <button mat-stroked-button type="button" [disabled]="actionLoading()" (click)="join()">
-            {{ 'MATCHES.JOIN' | translate }}
-          </button>
+    <section class="match-cta-block">
+      @if (actionError()) {
+        <p class="action-error">{{ actionError() }}</p>
+      }
+
+      @if (canJoin(current)) {
+        @if (current.roster_mode === 'pairs') {
+          <form [formGroup]="joinForm" class="join-team-form">
+            <mat-form-field>
+              <mat-label>{{ 'MATCHES.TEAM' | translate }}</mat-label>
+              <mat-select formControlName="team">
+                <mat-option value="team_a">{{ 'MATCHES.PAIR_1' | translate }}</mat-option>
+                <mat-option value="team_b">{{ 'MATCHES.PAIR_2' | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </form>
         }
-        @if (isActivePlayer()) {
-          <button mat-stroked-button type="button" [disabled]="actionLoading()" (click)="leave()">
+        <button type="button" class="cta-button" [disabled]="actionLoading()" (click)="join()">
+          {{ 'MATCHES.JOIN_MATCH' | translate }}
+        </button>
+      } @else if (isActivePlayer()) {
+        <div class="cta-row">
+          <button
+            type="button"
+            class="cta-button cta-button--secondary"
+            [disabled]="actionLoading()"
+            (click)="leave()"
+          >
             {{ 'MATCHES.LEAVE' | translate }}
           </button>
           <button
-            mat-stroked-button
             type="button"
+            class="cta-button cta-button--secondary"
             [disabled]="actionLoading()"
             (click)="markPlayed()"
           >
             {{ 'MATCHES.MARK_PLAYED' | translate }}
           </button>
-        }
-      </mat-card-actions>
-    </mat-card>
+        </div>
+      } @else if (isFullForViewer(current)) {
+        <button type="button" class="cta-button" disabled>
+          {{ 'MATCHES.STATUS_FULL' | translate }}
+        </button>
+      }
+    </section>
 
-    <mat-card class="secondary-card results-card">
+    <mat-card class="secondary-card">
       <mat-card-header>
-        <mat-card-title>{{ 'MATCHES.RESULTS' | translate }}</mat-card-title>
+        <mat-card-title>{{ 'MATCHES.ROSTER' | translate }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        @if (results().length === 0) {
-          <p>{{ 'MATCHES.NO_RESULTS' | translate }}</p>
-        } @else {
-          <ul class="results-list">
-            @for (result of results(); track result.id) {
-              <li>
-                {{ result.reported_by.name }} —
-                @for (set of result.sets; track $index) {
-                  <span>{{ set.team_a_games }}-{{ set.team_b_games }} </span>
+        <div class="roster-panel">
+          <div class="player-slots">
+            @for (slot of rosterSlots(current); track $index) {
+              <span
+                class="player-slot"
+                [class.player-slot--empty]="!slot.filled"
+                [attr.title]="slot.filled ? slot.filled.user.name : ''"
+              >
+                @if (slot.filled) {
+                  {{ playerInitials(slot.filled.user.name) }}
                 }
-                @if (canDeleteResult(result)) {
-                  <button mat-button type="button" (click)="deleteResult(result.id)">
-                    {{ 'MATCHES.DELETE_RESULT' | translate }}
-                  </button>
+              </span>
+            }
+          </div>
+          <p class="roster-count">
+            <strong>{{ current.players_count }}/{{ current.max_players }}</strong>
+          </p>
+        </div>
+
+        @if (current.roster_mode === 'pairs') {
+          <div class="roster-pairs">
+            <div class="roster-pair-block">
+              <p class="roster-pair-title">{{ 'MATCHES.PAIR_1' | translate }}</p>
+              <ul class="roster-pair-list">
+                @for (slot of pairSlots(current, 'a'); track $index) {
+                  <li [class.roster-pair-slot--empty]="!slot">
+                    @if (slot) {
+                      <span class="roster-name">{{ slot.user.name }}</span>
+                      @if (slot.user.court_side_label) {
+                        <span class="roster-meta">· {{ slot.user.court_side_label }}</span>
+                      }
+                    } @else {
+                      <span class="roster-meta">{{ 'MATCHES.PLAYER_SLOT_EMPTY' | translate }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+            <div class="roster-pair-block">
+              <p class="roster-pair-title">{{ 'MATCHES.PAIR_2' | translate }}</p>
+              <ul class="roster-pair-list">
+                @for (slot of pairSlots(current, 'b'); track $index) {
+                  <li [class.roster-pair-slot--empty]="!slot">
+                    @if (slot) {
+                      <span class="roster-name">{{ slot.user.name }}</span>
+                      @if (slot.user.court_side_label) {
+                        <span class="roster-meta">· {{ slot.user.court_side_label }}</span>
+                      }
+                    } @else {
+                      <span class="roster-meta">{{ 'MATCHES.PLAYER_SLOT_EMPTY' | translate }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        } @else {
+          <ul class="roster-list">
+            @for (player of current.match_players; track player.id) {
+              <li>
+                <span class="roster-name">{{ player.user.name }}</span>
+                @if (player.user.court_side_label) {
+                  <span class="roster-meta">· {{ player.user.court_side_label }}</span>
                 }
               </li>
             }
           </ul>
         }
-
-        @if (current.consensus) {
-          <p class="consensus-line">
-            {{ 'MATCHES.CONSENSUS' | translate }}:
-            {{ 'MATCHES.CONSENSUS_VOTES' | translate }}
-            {{ current.consensus.votes }}/{{ current.consensus.total }}
-          </p>
-        }
-
-        @if (isActivePlayer()) {
-          <form [formGroup]="resultForm" (ngSubmit)="reportResult()" class="result-form">
-            <p>{{ 'MATCHES.REPORT_RESULT' | translate }}</p>
-            @if (current.roster_mode === 'pairs') {
-              <mat-form-field>
-                <mat-label>{{ 'MATCHES.TEAM' | translate }}</mat-label>
-                <mat-select formControlName="team">
-                  <mat-option value="team_a">team_a</mat-option>
-                  <mat-option value="team_b">team_b</mat-option>
-                </mat-select>
-              </mat-form-field>
-            }
-            <div class="set-row">
-              <mat-form-field>
-                <input matInput type="number" formControlName="set1A" />
-              </mat-form-field>
-              <mat-form-field>
-                <input matInput type="number" formControlName="set1B" />
-              </mat-form-field>
-            </div>
-            <div class="set-row">
-              <mat-form-field>
-                <input matInput type="number" formControlName="set2A" />
-              </mat-form-field>
-              <mat-form-field>
-                <input matInput type="number" formControlName="set2B" />
-              </mat-form-field>
-            </div>
-            <button mat-raised-button color="primary" type="submit" [disabled]="actionLoading()">
-              {{ 'MATCHES.SUBMIT_RESULT' | translate }}
-            </button>
-          </form>
-        }
       </mat-card-content>
     </mat-card>
+
+    @if (showResultsSection()) {
+      <mat-card class="secondary-card results-card">
+        <mat-card-content>
+          <section class="scoreboard" [attr.aria-label]="'MATCHES.RESULTS' | translate">
+            <header class="scoreboard-header">
+              <span class="scoreboard-venue">{{ scoreboardClubName(current) }}</span>
+              <span class="scoreboard-heading">{{ 'MATCHES.RESULTS' | translate }}</span>
+            </header>
+
+            <div class="scoreboard-panel">
+              <div class="scoreboard-columns-head" aria-hidden="true">
+                <span class="scoreboard-names-spacer"></span>
+                @for (setIndex of scoreboardSetIndexes; track setIndex) {
+                  <span class="scoreboard-set-label">
+                    {{ 'MATCHES.SET_N' | translate: { n: setIndex + 1 } }}
+                  </span>
+                }
+              </div>
+
+              <div class="scoreboard-row">
+                <div class="scoreboard-names">
+                  @for (name of pairPlayers(current, 'a'); track $index) {
+                    <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
+                      {{ scoreboardPlayerLabel(name) }}
+                    </span>
+                  }
+                </div>
+                <div class="scoreboard-scores">
+                  @for (set of scoreboardSets(); track $index) {
+                    <span
+                      class="scoreboard-score"
+                      [class.scoreboard-score--winner]="setWinner(set, 'a')"
+                    >
+                      {{ formatSetScore(set, 'a') }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <hr class="scoreboard-divider" />
+
+              <div class="scoreboard-row">
+                <div class="scoreboard-names">
+                  @for (name of pairPlayers(current, 'b'); track $index) {
+                    <span class="scoreboard-player" [class.scoreboard-player--empty]="!name">
+                      {{ scoreboardPlayerLabel(name) }}
+                    </span>
+                  }
+                </div>
+                <div class="scoreboard-scores">
+                  @for (set of scoreboardSets(); track $index) {
+                    <span
+                      class="scoreboard-score"
+                      [class.scoreboard-score--winner]="setWinner(set, 'b')"
+                    >
+                      {{ formatSetScore(set, 'b') }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <footer class="scoreboard-duration">
+              <span class="scoreboard-duration-label">{{
+                'MATCHES.DURATION_LABEL' | translate
+              }}</span>
+              <span class="scoreboard-duration-value">
+                {{ 'MATCHES.DURATION_MIN' | translate: { min: current.duration } }}
+              </span>
+            </footer>
+          </section>
+
+          @if (results().length === 0) {
+            <p class="results-empty">{{ 'MATCHES.NO_RESULTS' | translate }}</p>
+          } @else {
+            <ul class="results-reports">
+              @for (result of results(); track result.id) {
+                <li class="results-report-item">
+                  <span> {{ result.reported_by.name }} — {{ formatResultSets(result) }} </span>
+                  @if (canDeleteResult(result)) {
+                    <button mat-button type="button" (click)="deleteResult(result.id)">
+                      {{ 'MATCHES.DELETE_RESULT' | translate }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+
+          @if (current.consensus) {
+            <p class="consensus-line">
+              {{ 'MATCHES.CONSENSUS' | translate }}:
+              {{ 'MATCHES.CONSENSUS_VOTES' | translate }}
+              {{ current.consensus.votes }}/{{ current.consensus.total }}
+            </p>
+          }
+
+          @if (isActivePlayer()) {
+            <form [formGroup]="resultForm" (ngSubmit)="reportResult()" class="result-form">
+              <p class="result-form-title">{{ 'MATCHES.REPORT_RESULT' | translate }}</p>
+
+              <p class="set-form-heading">
+                {{ 'MATCHES.SET_N' | translate: { n: 1 } }}
+              </p>
+              <div class="set-row">
+                <mat-form-field>
+                  <mat-label>{{ 'MATCHES.PAIR_1' | translate }}</mat-label>
+                  <input matInput type="number" formControlName="set1A" />
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>{{ 'MATCHES.PAIR_2' | translate }}</mat-label>
+                  <input matInput type="number" formControlName="set1B" />
+                </mat-form-field>
+              </div>
+
+              <p class="set-form-heading">
+                {{ 'MATCHES.SET_N' | translate: { n: 2 } }}
+              </p>
+              <div class="set-row">
+                <mat-form-field>
+                  <mat-label>{{ 'MATCHES.PAIR_1' | translate }}</mat-label>
+                  <input matInput type="number" formControlName="set2A" />
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>{{ 'MATCHES.PAIR_2' | translate }}</mat-label>
+                  <input matInput type="number" formControlName="set2B" />
+                </mat-form-field>
+              </div>
+
+              <button mat-raised-button color="primary" type="submit" [disabled]="actionLoading()">
+                {{ 'MATCHES.SUBMIT_RESULT' | translate }}
+              </button>
+            </form>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
   }
 </section>

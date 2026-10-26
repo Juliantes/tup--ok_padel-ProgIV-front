@@ -21,7 +21,7 @@
   border: 0.0625rem solid rgba(0, 168, 150, 0.18);
   border-radius: 1.25rem;
   box-shadow: 0 1rem 2.5rem rgba(10, 29, 55, 0.18);
-  max-width: 24rem;
+  max-width: 26rem;
   width: 100%;
 }
 
@@ -39,13 +39,81 @@
   height: auto;
 }
 
-.sign-in-button {
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.primary-action,
+.google-button,
+.secondary-action {
   width: 100%;
   min-height: 3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+}
+
+.google-button {
+  margin-top: 0.25rem;
+}
+
+.login-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #006a62;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
+.link-button:hover {
+  color: #004d47;
+}
+
+.divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(10, 29, 55, 0.55);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 0.0625rem;
+  background: rgba(10, 29, 55, 0.15);
+}
+
+.verification-text,
+.reset-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-align: center;
+  color: rgba(10, 29, 55, 0.85);
 }
 
 .google-icon {
@@ -55,6 +123,13 @@
 .login-error {
   margin: 0;
   color: #b3261e;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.login-info {
+  margin: 0;
+  color: #0d5c54;
   font-size: 0.875rem;
   text-align: center;
 }
