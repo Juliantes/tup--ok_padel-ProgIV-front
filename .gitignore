@@ -21,6 +21,7 @@ android/
 
 # Cursor / agents (local only)
 .agents/
+.cursor/rules/
 skills-lock.json
 
 # Firebase CLI cache
