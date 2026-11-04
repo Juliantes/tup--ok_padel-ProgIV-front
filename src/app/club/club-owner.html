@@ -1,183 +1,130 @@
-<section class="club-owner-page">
-  <header class="club-owner-header">
-    <h1>{{ 'CLUB_OWNER.TITLE' | translate }}</h1>
-    <div class="club-owner-actions">
-      <button type="button" class="action-link" (click)="toggleNewClubForm()">
-        {{ 'CLUB_OWNER.ADD_CLUB' | translate }}
-      </button>
-    </div>
-  </header>
-
+<section class="club-schedule-page">
   @if (errorMessage()) {
     <p class="state-message error" role="alert">{{ errorMessage() }}</p>
   }
 
-  @if (isLoading() && clubs().length === 0) {
+  @if (isLoading() && !schedule()) {
     <p class="state-message">{{ 'CLUB_OWNER.LOADING' | translate }}</p>
   } @else if (clubs().length === 0) {
     <p class="state-message">{{ 'CLUB_OWNER.NO_CLUBS' | translate }}</p>
-  } @else {
-    <div class="filter-row filter-row--wrap">
-      @for (club of clubs(); track club.id) {
-        <button
-          type="button"
-          class="filter-chip"
-          [class.active]="selectedClubId() === club.id"
-          (click)="selectClub(club.id)"
-        >
-          {{ club.name }}
-        </button>
-      }
-    </div>
-  }
-
-  @if (showNewClubForm()) {
-    <mat-card class="club-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'CLUB_OWNER.NEW_CLUB_TITLE' | translate }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form class="club-form" [formGroup]="newClubForm" (ngSubmit)="createClub()">
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_NAME' | translate }}</mat-label>
-            <input matInput formControlName="name" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_ADDRESS' | translate }}</mat-label>
-            <input matInput formControlName="address" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_PHONE' | translate }}</mat-label>
-            <input matInput formControlName="phone" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_EMAIL' | translate }}</mat-label>
-            <input matInput formControlName="email" />
-          </mat-form-field>
-          <button mat-raised-button color="primary" type="submit" [disabled]="isLoading()">
-            {{ 'CLUB_OWNER.SAVE_CLUB' | translate }}
+  } @else if (selectedClub(); as club) {
+    @if (clubs().length > 1) {
+      <div
+        class="club-switcher"
+        role="tablist"
+        [attr.aria-label]="'CLUB_OWNER.SWITCH_CLUB' | translate"
+      >
+        @for (item of clubs(); track item.id) {
+          <button
+            type="button"
+            class="club-switcher__chip"
+            role="tab"
+            [class.club-switcher__chip--active]="selectedClubId() === item.id"
+            [attr.aria-selected]="selectedClubId() === item.id"
+            (click)="selectClub(item.id)"
+          >
+            {{ item.name }}
           </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  }
+        }
+      </div>
+    }
 
-  @if (selectedClub(); as club) {
-    <mat-card class="club-card club-card--secondary">
-      <mat-card-header>
-        <mat-card-title>{{ 'CLUB_OWNER.CLUB_DETAILS' | translate }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form class="club-form" [formGroup]="clubForm" (ngSubmit)="saveClubDetails()">
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_NAME' | translate }}</mat-label>
-            <input matInput formControlName="name" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_ADDRESS' | translate }}</mat-label>
-            <input matInput formControlName="address" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_PHONE' | translate }}</mat-label>
-            <input matInput formControlName="phone" />
-          </mat-form-field>
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.CLUB_EMAIL' | translate }}</mat-label>
-            <input matInput formControlName="email" />
-          </mat-form-field>
-          <button mat-stroked-button type="submit" [disabled]="isLoading()">
-            {{ 'CLUB_OWNER.UPDATE_CLUB' | translate }}
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-
-    <header class="courts-header">
-      <h2>{{ 'CLUB_OWNER.COURTS_TITLE' | translate: { club: club.name } }}</h2>
-      <button type="button" class="action-link action-link--primary" (click)="startNewCourt()">
-        {{ 'CLUB_OWNER.ADD_COURT' | translate }}
-      </button>
+    <header class="club-hero">
+      <div class="club-hero__brand">
+        <div class="club-hero__logo" aria-hidden="true">OP</div>
+        <div>
+          <h1 class="club-hero__title">{{ club.name }}</h1>
+          <p class="club-hero__address">{{ club.address }}</p>
+        </div>
+      </div>
+      <a
+        class="club-hero__whatsapp"
+        [href]="whatsappHref(club)"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <mat-icon aria-hidden="true">chat</mat-icon>
+        {{ 'CLUB_OWNER.WHATSAPP' | translate }}
+      </a>
     </header>
 
-    <div class="filter-row filter-row--wrap">
-      @for (court of courts(); track court.id) {
+    <div class="date-strip" role="tablist" [attr.aria-label]="'CLUB_OWNER.DATE_STRIP' | translate">
+      @for (option of dateOptions; track option.isoDate) {
         <button
           type="button"
-          class="filter-chip filter-chip--compact"
-          [class.active]="selectedCourtId() === court.id"
-          (click)="selectCourt(court.id)"
+          class="date-chip"
+          role="tab"
+          [class.date-chip--active]="selectedDate() === option.isoDate"
+          [attr.aria-selected]="selectedDate() === option.isoDate"
+          (click)="selectDate(option.isoDate)"
         >
-          {{ court.name }} ({{ 'CLUB_OWNER.STATUS_' + court.status | translate }})
+          <span class="date-chip__weekday">
+            {{ option.isToday ? ('CLUB_OWNER.TODAY' | translate) : option.weekdayLabel }}
+          </span>
+          <span class="date-chip__day">{{ option.dayMonthLabel }}</span>
         </button>
       }
     </div>
 
-    <mat-card class="club-card">
-      <mat-card-header>
-        <mat-card-title>
-          {{
-            selectedCourtId()
-              ? ('CLUB_OWNER.EDIT_COURT' | translate)
-              : ('CLUB_OWNER.NEW_COURT' | translate)
-          }}
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form class="club-form" [formGroup]="courtForm" (ngSubmit)="saveCourt()">
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.COURT_NAME' | translate }}</mat-label>
-            <input matInput formControlName="name" />
-            @if (courtForm.controls.name.hasError('server')) {
-              <mat-error>{{ courtForm.controls.name.getError('server') }}</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.COURT_TYPE' | translate }}</mat-label>
-            <mat-select formControlName="court_type">
-              <mat-option value="indoor">{{ 'CLUB_OWNER.COURT_INDOOR' | translate }}</mat-option>
-              <mat-option value="outdoor">{{ 'CLUB_OWNER.COURT_OUTDOOR' | translate }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.COURT_PRICE' | translate }}</mat-label>
-            <input matInput type="number" min="1" formControlName="price_per_hour" />
-            @if (courtForm.controls.price_per_hour.hasError('server')) {
-              <mat-error>{{ courtForm.controls.price_per_hour.getError('server') }}</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.COURT_DESCRIPTION' | translate }}</mat-label>
-            <textarea matInput rows="2" formControlName="description"></textarea>
-          </mat-form-field>
-
-          <mat-form-field class="full-width">
-            <mat-label>{{ 'CLUB_OWNER.COURT_STATUS' | translate }}</mat-label>
-            <mat-select formControlName="status">
-              <mat-option value="active">{{ 'CLUB_OWNER.STATUS_active' | translate }}</mat-option>
-              <mat-option value="maintenance">{{
-                'CLUB_OWNER.STATUS_maintenance' | translate
-              }}</mat-option>
-              <mat-option value="inactive">{{
-                'CLUB_OWNER.STATUS_inactive' | translate
-              }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <div class="form-actions">
-            @if (selectedCourtId()) {
-              <button mat-button type="button" color="warn" (click)="deleteSelectedCourt()">
-                {{ 'CLUB_OWNER.DELETE_COURT' | translate }}
-              </button>
-            }
-            <button mat-raised-button color="primary" type="submit" [disabled]="isLoading()">
-              {{ 'CLUB_OWNER.SAVE_COURT' | translate }}
-            </button>
-          </div>
-        </form>
-      </mat-card-content>
-    </mat-card>
+    @if (schedule(); as grid) {
+      @if (grid.rows.length === 0) {
+        <p class="state-message">{{ 'CLUB_OWNER.NO_SLOTS' | translate }}</p>
+      } @else {
+        <div class="schedule-scroll">
+          <table class="schedule-grid">
+            <thead>
+              <tr>
+                <th scope="col" class="schedule-grid__time-head">
+                  {{ 'CLUB_OWNER.GRID_TIME' | translate }}
+                </th>
+                @for (court of grid.courts; track court.id) {
+                  <th scope="col" class="schedule-grid__court-head">
+                    <span class="schedule-grid__court-name">{{ court.name }}</span>
+                    <span class="schedule-grid__court-price">{{
+                      formatPrice(court.price_per_hour)
+                    }}</span>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of grid.rows; track row.start_time) {
+                <tr>
+                  <th scope="row" class="schedule-grid__time">{{ row.start_time }}</th>
+                  @for (court of grid.courts; track court.id) {
+                    @if (cellFor(court.id, row.start_time); as cell) {
+                      <td class="schedule-grid__cell">
+                        @switch (cell.state) {
+                          @case ('available') {
+                            <button
+                              type="button"
+                              class="slot-btn slot-btn--available"
+                              [attr.title]="'CLUB_OWNER.SLOT_AVAILABLE' | translate"
+                              (click)="reserveViaWhatsApp(club, court.name, row.start_time)"
+                            >
+                              {{ 'CLUB_OWNER.RESERVE' | translate }}
+                            </button>
+                          }
+                          @case ('booked') {
+                            <span
+                              class="slot-empty slot-empty--booked"
+                              [attr.title]="'CLUB_OWNER.SLOT_BOOKED' | translate"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                          @default {
+                            <span class="slot-empty" aria-hidden="true"></span>
+                          }
+                        }
+                      </td>
+                    }
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
   }
 </section>

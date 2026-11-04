@@ -10,6 +10,7 @@ import {
   OwnerCourtPayload,
   OwnerCourtResponse,
   OwnerCourtsResponse,
+  ClubScheduleResponse,
 } from './club.models';
 
 @Injectable({
@@ -55,5 +56,11 @@ export class ClubsApiService {
 
   deleteCourt(clubId: number, courtId: number): Observable<void> {
     return this.http.delete<void>(apiV1Url(`clubs/${clubId}/courts/${courtId}`));
+  }
+
+  getSchedule(clubId: number, date: string): Observable<ClubScheduleResponse> {
+    return this.http.get<ClubScheduleResponse>(apiV1Url(`clubs/${clubId}/schedule`), {
+      params: { date },
+    });
   }
 }

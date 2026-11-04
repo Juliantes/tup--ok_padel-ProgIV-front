@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { provideTranslateTesting } from '../testing/translate-testing';
 import { ClubOwner } from './club-owner';
+import { todayIsoDate } from './club-schedule.utils';
 
 describe('ClubOwner', () => {
   let fixture: ComponentFixture<ClubOwner>;
@@ -24,31 +25,41 @@ describe('ClubOwner', () => {
     http.verify();
   });
 
-  it('loads clubs and courts for the selected club', async () => {
+  it('loads schedule grid for the first club', async () => {
     fixture.detectChanges();
 
-    const clubsReq = http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs`);
-    clubsReq.flush({
+    http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs`).flush({
       clubs: [
-        { id: 1, name: 'Alpha', address: 'A', phone: '1', email: null },
-        { id: 2, name: 'Beta', address: 'B', phone: '2', email: null },
+        { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123', phone: '1144556677', email: null },
       ],
     });
 
     await fixture.whenStable();
-    fixture.detectChanges();
 
-    const courtsReq = http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs/1/courts`);
-    courtsReq.flush({
-      courts: [
+    const scheduleReq = http.expectOne(
+      (req) =>
+        req.url === `${environment.apiBaseUrl}/api/v1/clubs/1/schedule` &&
+        req.params.get('date') === todayIsoDate(),
+    );
+    scheduleReq.flush({
+      club: {
+        id: 1,
+        name: 'Ok Padel Club',
+        address: 'Av. Test 123',
+        phone: '1144556677',
+        email: null,
+      },
+      date: todayIsoDate(),
+      courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active' }],
+      rows: [{ start_time: '10:00', end_time: '11:30' }],
+      cells: [
         {
-          id: 10,
-          name: 'Cancha 1',
-          description: null,
-          court_type: 'indoor',
-          price_per_hour: 5000,
-          status: 'active',
-          club: { id: 1, name: 'Alpha', address: 'A' },
+          court_id: 10,
+          start_time: '10:00',
+          state: 'available',
+          time_slot_id: 5,
+          end_time: '11:30',
+          match_id: null,
         },
       ],
     });
@@ -56,7 +67,9 @@ describe('ClubOwner', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Alpha');
-    expect(fixture.nativeElement.textContent).toContain('Cancha 1');
+    expect(fixture.nativeElement.textContent).toContain('Ok Padel Club');
+    expect(fixture.nativeElement.textContent).toContain('Av. Test 123');
+    expect(fixture.nativeElement.textContent).toContain('10:00');
+    expect(fixture.nativeElement.textContent).toContain('CLUB_OWNER.RESERVE');
   });
 });
