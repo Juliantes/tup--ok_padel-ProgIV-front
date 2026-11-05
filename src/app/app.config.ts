@@ -13,6 +13,7 @@ import {
 
 registerLocaleData(localeEsAr);
 import { provideRouter, Router } from '@angular/router';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import * as Sentry from '@sentry/angular';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -28,6 +29,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    provideAnimationsAsync(),
     provideNativeDateAdapter(),
     { provide: LOCALE_ID, useValue: 'es-AR' },
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),

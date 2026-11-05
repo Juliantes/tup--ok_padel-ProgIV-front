@@ -1,79 +1,85 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import {
-  FormControl,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { TranslatePipe } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Court } from '../core/api/match.models';
-import { OwnerClub } from '../core/api/club.models';
+import {
+  ClubScheduleCell,
+  ClubScheduleCourt,
+  ClubScheduleResponse,
+  OwnerClub,
+} from '../core/api/club.models';
 import { ClubsApiService } from '../core/api/clubs-api.service';
-import { readApiErrorMessage, readApiFieldErrors } from '../core/api/api-errors';
+import { readApiErrorMessage } from '../core/api/api-errors';
+import { Court } from '../core/api/match.models';
+import {
+  CourtFormDialog,
+  CourtFormDialogData,
+  CourtFormDialogResult,
+} from './court-form-dialog/court-form-dialog';
+import {
+  TimeSlotsPanel,
+  TimeSlotsPanelData,
+  TimeSlotsPanelResult,
+} from './time-slots-panel/time-slots-panel';
+import {
+  WalkInBookingDialog,
+  WalkInBookingDialogData,
+  WalkInBookingDialogResult,
+} from './walk-in-booking-dialog/walk-in-booking-dialog';
+import {
+  buildScheduleDateOptions,
+  formatClubPrice,
+  indexScheduleCells,
+  scheduleCellKey,
+  todayIsoDate,
+  whatsappClubUrl,
+} from './club-schedule.utils';
 
 @Component({
   selector: 'app-club-owner',
-  imports: [
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    TranslatePipe,
-  ],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './club-owner.html',
   styleUrl: './club-owner.css',
 })
 export class ClubOwner implements OnInit {
   private readonly clubsApi = inject(ClubsApiService);
-  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly clubs = signal<OwnerClub[]>([]);
-  protected readonly courts = signal<Court[]>([]);
   protected readonly selectedClubId = signal<number | null>(null);
-  protected readonly selectedCourtId = signal<number | null>(null);
+  protected readonly selectedDate = signal(todayIsoDate());
+  protected readonly schedule = signal<ClubScheduleResponse | null>(null);
+  protected readonly courts = signal<ClubScheduleCourt[]>([]);
+  private readonly fullCourts = signal<Court[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly showNewClubForm = signal(false);
+
+  /** 14 días: permite ver dos ocurrencias del mismo día de la semana (p. ej. dos lunes). */
+  protected readonly dateOptions = buildScheduleDateOptions(14);
 
   protected readonly selectedClub = computed(() => {
     const id = this.selectedClubId();
     return this.clubs().find((club) => club.id === id) ?? null;
   });
 
-  protected readonly clubForm = this.fb.group({
-    name: this.fb.control('', { validators: [Validators.required] }),
-    address: this.fb.control('', { validators: [Validators.required] }),
-    phone: this.fb.control('', { validators: [Validators.required] }),
-    email: this.fb.control(''),
+  protected readonly cellIndex = computed(() => {
+    const current = this.schedule();
+    return current ? indexScheduleCells(current.cells) : new Map<string, ClubScheduleCell>();
   });
 
-  protected readonly newClubForm = this.fb.group({
-    name: this.fb.control('', { validators: [Validators.required] }),
-    address: this.fb.control('', { validators: [Validators.required] }),
-    phone: this.fb.control('', { validators: [Validators.required] }),
-    email: this.fb.control(''),
+  protected readonly displayCourts = computed((): ClubScheduleCourt[] => {
+    const fromSchedule = this.schedule()?.courts ?? [];
+    if (fromSchedule.length > 0) {
+      return fromSchedule;
+    }
+    return this.courts();
   });
 
-  protected readonly courtForm = this.fb.group({
-    name: this.fb.control('', { validators: [Validators.required] }),
-    court_type: this.fb.control<'indoor' | 'outdoor'>('indoor', {
-      validators: [Validators.required],
-    }),
-    price_per_hour: this.fb.control(5000, { validators: [Validators.required, Validators.min(1)] }),
-    description: this.fb.control(''),
-    status: this.fb.control<'active' | 'maintenance' | 'inactive'>('active', {
-      validators: [Validators.required],
-    }),
-  });
+  protected readonly scheduleRows = computed(() => this.schedule()?.rows ?? []);
 
   ngOnInit(): void {
     void this.loadClubs();
@@ -81,221 +87,202 @@ export class ClubOwner implements OnInit {
 
   protected selectClub(clubId: number): void {
     this.selectedClubId.set(clubId);
-    this.selectedCourtId.set(null);
-    this.patchClubForm();
-    void this.loadCourts(clubId);
+    void this.loadSchedule();
   }
 
-  protected selectCourt(courtId: number): void {
-    this.selectedCourtId.set(courtId);
-    const court = this.courts().find((item) => item.id === courtId);
-    if (!court) {
-      return;
-    }
+  protected selectDate(isoDate: string): void {
+    this.selectedDate.set(isoDate);
+    void this.loadSchedule();
+  }
 
-    this.courtForm.patchValue({
-      name: court.name,
-      court_type: court.court_type as 'indoor' | 'outdoor',
-      price_per_hour: court.price_per_hour,
-      description: court.description ?? '',
-      status: court.status as 'active' | 'maintenance' | 'inactive',
+  protected formatPrice(value: number): string {
+    return formatClubPrice(value);
+  }
+
+  protected cellFor(courtId: number, startTime: string): ClubScheduleCell | undefined {
+    return this.cellIndex().get(scheduleCellKey(courtId, startTime));
+  }
+
+  protected cellState(courtId: number, startTime: string): ClubScheduleCell['state'] {
+    return this.cellFor(courtId, startTime)?.state ?? 'empty';
+  }
+
+  protected whatsappHref(club: OwnerClub): string {
+    const message = this.translate.instant('CLUB_OWNER.WHATSAPP_MESSAGE', {
+      club: club.name,
     });
-    this.clearCourtFieldErrors();
+    return whatsappClubUrl(club.phone, message);
   }
 
-  protected startNewCourt(): void {
-    this.selectedCourtId.set(null);
-    this.courtForm.reset({
-      name: '',
-      court_type: 'indoor',
-      price_per_hour: 5000,
-      description: '',
-      status: 'active',
-    });
-    this.clearCourtFieldErrors();
-  }
-
-  protected toggleNewClubForm(): void {
-    this.showNewClubForm.update((value) => !value);
-    this.newClubForm.reset({ name: '', address: '', phone: '', email: '' });
-  }
-
-  protected async saveClubDetails(): Promise<void> {
-    const club = this.selectedClub();
-    if (!club || this.clubForm.invalid) {
-      this.clubForm.markAllAsTouched();
-      return;
-    }
-
-    const raw = this.clubForm.getRawValue();
-    await this.runAction(async () => {
-      const response = await firstValueFrom(
-        this.clubsApi.updateClub(club.id, {
-          name: raw.name.trim(),
-          address: raw.address.trim(),
-          phone: raw.phone.trim(),
-          email: raw.email.trim() || null,
-        }),
-      );
-      this.upsertClub(response.club);
-    });
-  }
-
-  protected async createClub(): Promise<void> {
-    if (this.newClubForm.invalid) {
-      this.newClubForm.markAllAsTouched();
-      return;
-    }
-
-    const raw = this.newClubForm.getRawValue();
-    await this.runAction(async () => {
-      const response = await firstValueFrom(
-        this.clubsApi.createClub({
-          name: raw.name.trim(),
-          address: raw.address.trim(),
-          phone: raw.phone.trim(),
-          email: raw.email.trim() || null,
-        }),
-      );
-      this.upsertClub(response.club);
-      this.showNewClubForm.set(false);
-      this.selectClub(response.club.id);
-    });
-  }
-
-  protected async saveCourt(): Promise<void> {
+  protected openCreateCourt(): void {
     const clubId = this.selectedClubId();
-    if (!clubId || this.courtForm.invalid) {
-      this.courtForm.markAllAsTouched();
+    if (!clubId) {
       return;
     }
+    this.openCourtDialog({ clubId });
+  }
 
-    const raw = this.courtForm.getRawValue();
-    const payload = {
-      name: raw.name.trim(),
-      court_type: raw.court_type,
-      price_per_hour: raw.price_per_hour,
-      description: raw.description.trim() || null,
-      status: raw.status,
-    };
+  protected openEditCourt(court: ClubScheduleCourt, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    const clubId = this.selectedClubId();
+    if (!clubId) {
+      return;
+    }
+    const fullCourt = this.fullCourts().find((item) => item.id === court.id);
+    if (!fullCourt) {
+      return;
+    }
+    this.openCourtDialog({ clubId, court: fullCourt });
+  }
 
-    const courtId = this.selectedCourtId();
-    await this.runAction(async () => {
-      if (courtId) {
-        const response = await firstValueFrom(this.clubsApi.updateCourt(clubId, courtId, payload));
-        this.replaceCourt(response.court);
-      } else {
-        const response = await firstValueFrom(this.clubsApi.createCourt(clubId, payload));
-        this.courts.update((items) =>
-          [...items, response.court].sort((a, b) => a.name.localeCompare(b.name)),
-        );
-        this.selectCourt(response.court.id);
+  protected openTimeSlots(court: ClubScheduleCourt): void {
+    const clubId = this.selectedClubId();
+    if (!clubId) {
+      return;
+    }
+    const ref = this.dialog.open<TimeSlotsPanel, TimeSlotsPanelData, TimeSlotsPanelResult>(
+      TimeSlotsPanel,
+      {
+        data: {
+          clubId,
+          courtId: court.id,
+          courtName: court.name,
+          initialDate: this.selectedDate(),
+          dateOptions: this.dateOptions,
+          onScheduleChanged: () => {
+            void this.refreshAfterMutation();
+          },
+        },
+        width: 'min(96vw, 36rem)',
+      },
+    );
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'changed') {
+        void this.refreshAfterMutation();
       }
-    }, true);
+    });
   }
 
-  protected async deleteSelectedCourt(): Promise<void> {
+  protected openWalkInBooking(court: ClubScheduleCourt, startTime: string): void {
     const clubId = this.selectedClubId();
-    const courtId = this.selectedCourtId();
-    if (!clubId || !courtId) {
+    const cell = this.cellFor(court.id, startTime);
+    if (!clubId || !cell?.time_slot_id) {
       return;
     }
 
-    await this.runAction(async () => {
-      await firstValueFrom(this.clubsApi.deleteCourt(clubId, courtId));
-      this.courts.update((items) => items.filter((item) => item.id !== courtId));
-      this.startNewCourt();
-    }, true);
+    const ref = this.dialog.open<
+      WalkInBookingDialog,
+      WalkInBookingDialogData,
+      WalkInBookingDialogResult
+    >(WalkInBookingDialog, {
+      data: {
+        clubId,
+        courtId: court.id,
+        courtName: court.name,
+        timeSlotId: cell.time_slot_id,
+        date: this.selectedDate(),
+        startTime,
+      },
+      width: 'min(96vw, 24rem)',
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'confirmed') {
+        void this.refreshAfterMutation();
+      }
+    });
+  }
+
+  protected async cancelWalkIn(court: ClubScheduleCourt, startTime: string): Promise<void> {
+    const clubId = this.selectedClubId();
+    const cell = this.cellFor(court.id, startTime);
+    if (!clubId || !cell?.match_id || !cell.walk_in) {
+      return;
+    }
+
+    const confirmed = window.confirm(this.translate.instant('CLUB_OWNER.CANCEL.CONFIRM'));
+    if (!confirmed) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    try {
+      await firstValueFrom(this.clubsApi.cancelWalkInBooking(clubId, cell.match_id));
+      await this.refreshAfterMutation();
+    } catch (error: unknown) {
+      this.errorMessage.set(readApiErrorMessage(error));
+      await this.refreshAfterMutation();
+    }
+  }
+
+  async refreshAfterMutation(): Promise<void> {
+    await this.loadSchedule();
+  }
+
+  private openCourtDialog(data: CourtFormDialogData): void {
+    const ref = this.dialog.open<CourtFormDialog, CourtFormDialogData, CourtFormDialogResult>(
+      CourtFormDialog,
+      {
+        data,
+        width: 'min(96vw, 26rem)',
+      },
+    );
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'saved' || result === 'deleted') {
+        void this.refreshAfterMutation();
+      }
+    });
   }
 
   private async loadClubs(): Promise<void> {
-    await this.runAction(async () => {
-      const response = await firstValueFrom(this.clubsApi.listClubs());
-      this.clubs.set(response.clubs);
-      if (response.clubs.length > 0) {
-        this.selectClub(response.clubs[0].id);
-      }
-    });
-  }
-
-  private async loadCourts(clubId: number): Promise<void> {
-    await this.runAction(async () => {
-      const response = await firstValueFrom(this.clubsApi.listCourts(clubId));
-      this.courts.set(response.courts);
-      if (response.courts.length > 0) {
-        this.selectCourt(response.courts[0].id);
-      } else {
-        this.startNewCourt();
-      }
-    });
-  }
-
-  private patchClubForm(): void {
-    const club = this.selectedClub();
-    if (!club) {
-      return;
-    }
-
-    this.clubForm.patchValue({
-      name: club.name,
-      address: club.address,
-      phone: club.phone,
-      email: club.email ?? '',
-    });
-  }
-
-  private upsertClub(club: OwnerClub): void {
-    this.clubs.update((items) => {
-      const next = items.filter((item) => item.id !== club.id);
-      next.push(club);
-      return next.sort((a, b) => a.name.localeCompare(b.name));
-    });
-  }
-
-  private replaceCourt(court: Court): void {
-    this.courts.update((items) => items.map((item) => (item.id === court.id ? court : item)));
-  }
-
-  private async runAction(action: () => Promise<void>, applyFieldErrors = false): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
     try {
-      await action();
-    } catch (error: unknown) {
-      if (applyFieldErrors) {
-        this.applyCourtErrors(error);
+      const response = await firstValueFrom(this.clubsApi.listClubs());
+      this.clubs.set(response.clubs);
+      if (response.clubs.length > 0) {
+        this.selectClub(response.clubs[0].id);
       } else {
-        this.errorMessage.set(this.readErrorMessage(error));
+        this.isLoading.set(false);
       }
-    } finally {
+    } catch (error: unknown) {
+      this.errorMessage.set(readApiErrorMessage(error));
       this.isLoading.set(false);
     }
   }
 
-  private applyCourtErrors(error: unknown): void {
-    const fieldErrors = readApiFieldErrors(error);
-    if (fieldErrors) {
-      Object.entries(fieldErrors).forEach(([key, messages]) => {
-        const control = this.courtForm.get(key) as FormControl | null;
-        if (control && messages.length > 0) {
-          control.setErrors({ server: messages.join(', ') });
-        }
-      });
+  private async loadSchedule(): Promise<void> {
+    const clubId = this.selectedClubId();
+    if (!clubId) {
       return;
     }
 
-    this.errorMessage.set(this.readErrorMessage(error));
-  }
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
 
-  private clearCourtFieldErrors(): void {
-    Object.values(this.courtForm.controls).forEach((control) => {
-      control.setErrors(null);
-      control.updateValueAndValidity({ emitEvent: false });
-    });
-  }
+    try {
+      const courtsResponse = await firstValueFrom(this.clubsApi.listCourts(clubId));
+      this.fullCourts.set(courtsResponse.courts);
+      this.courts.set(
+        courtsResponse.courts.map((court) => ({
+          id: court.id,
+          name: court.name,
+          price_per_hour: court.price_per_hour,
+          status: court.status as ClubScheduleCourt['status'],
+        })),
+      );
 
-  private readErrorMessage(error: unknown): string {
-    return readApiErrorMessage(error);
+      const scheduleResponse = await firstValueFrom(
+        this.clubsApi.getSchedule(clubId, this.selectedDate()),
+      );
+      this.schedule.set(scheduleResponse);
+    } catch (error: unknown) {
+      this.schedule.set(null);
+      this.errorMessage.set(readApiErrorMessage(error));
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 }

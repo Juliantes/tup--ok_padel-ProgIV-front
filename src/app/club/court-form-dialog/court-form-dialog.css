@@ -1,0 +1,15 @@
+.dialog-error {
+  color: #c62828;
+  margin: 0 0 0.75rem;
+}
+
+.court-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: min(100%, 22rem);
+}
+
+.court-form mat-form-field {
+  width: 100%;
+}
