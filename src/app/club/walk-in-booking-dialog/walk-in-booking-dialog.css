@@ -1,0 +1,17 @@
+.walk-in-summary {
+  margin: 0 0 1rem;
+}
+
+.dialog-error {
+  color: #c62828;
+}
+
+.walk-in-form {
+  display: flex;
+  flex-direction: column;
+  min-width: min(100%, 20rem);
+}
+
+.walk-in-form mat-form-field {
+  width: 100%;
+}

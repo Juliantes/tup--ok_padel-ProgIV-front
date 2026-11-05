@@ -11,6 +11,11 @@ import {
   OwnerCourtResponse,
   OwnerCourtsResponse,
   ClubScheduleResponse,
+  OwnerTimeSlotPayload,
+  OwnerTimeSlotResponse,
+  OwnerTimeSlotsResponse,
+  WalkInBookingPayload,
+  WalkInBookingResponse,
 } from './club.models';
 
 @Injectable({
@@ -62,5 +67,54 @@ export class ClubsApiService {
     return this.http.get<ClubScheduleResponse>(apiV1Url(`clubs/${clubId}/schedule`), {
       params: { date },
     });
+  }
+
+  listTimeSlots(clubId: number, courtId: number): Observable<OwnerTimeSlotsResponse> {
+    return this.http.get<OwnerTimeSlotsResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots`),
+    );
+  }
+
+  createTimeSlot(
+    clubId: number,
+    courtId: number,
+    payload: OwnerTimeSlotPayload,
+  ): Observable<OwnerTimeSlotResponse> {
+    return this.http.post<OwnerTimeSlotResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots`),
+      payload,
+    );
+  }
+
+  updateTimeSlot(
+    clubId: number,
+    courtId: number,
+    timeSlotId: number,
+    payload: Partial<OwnerTimeSlotPayload>,
+  ): Observable<OwnerTimeSlotResponse> {
+    return this.http.patch<OwnerTimeSlotResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/${timeSlotId}`),
+      payload,
+    );
+  }
+
+  deleteTimeSlot(clubId: number, courtId: number, timeSlotId: number): Observable<void> {
+    return this.http.delete<void>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/${timeSlotId}`),
+    );
+  }
+
+  createWalkInBooking(
+    clubId: number,
+    payload: WalkInBookingPayload,
+  ): Observable<WalkInBookingResponse> {
+    return this.http.post<WalkInBookingResponse>(
+      apiV1Url(`clubs/${clubId}/walk_in_bookings`),
+      payload,
+    );
+  }
+
+  cancelWalkInBooking(clubId: number, matchId: number): Observable<void> {
+    return this.http.delete<void>(apiV1Url(`clubs/${clubId}/walk_in_bookings/${matchId}`));
   }
 }

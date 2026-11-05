@@ -258,6 +258,8 @@
     "LOADING": "Cargando clubes...",
     "NO_CLUBS": "Todavía no tenés clubes. Creá uno para administrar canchas.",
     "NO_SLOTS": "No hay turnos configurados para este día.",
+    "NO_COURTS_IN_CLUB": "Este club todavía no tiene canchas.",
+    "COURTS_OVERVIEW": "Canchas del club",
     "SWITCH_CLUB": "Elegir club",
     "DATE_STRIP": "Elegir fecha",
     "TODAY": "Hoy",
@@ -292,7 +294,56 @@
     "STATUS_maintenance": "Mantenimiento",
     "STATUS_inactive": "Inactiva",
     "SAVE_COURT": "Guardar cancha",
-    "DELETE_COURT": "Eliminar cancha"
+    "DELETE_COURT": "Eliminar cancha",
+    "SLOT_BLOCKED": "Turno no disponible",
+    "SLOT_EMPTY": "Sin turno configurado",
+    "COURT_FORM": {
+      "MANAGE": "Gestionar canchas",
+      "CREATE_TITLE": "Nueva cancha",
+      "EDIT_TITLE": "Editar cancha",
+      "EDIT_ACTION": "Editar cancha",
+      "NAME": "Nombre",
+      "TYPE": "Tipo",
+      "PRICE": "Precio por hora",
+      "STATUS": "Estado",
+      "DESCRIPTION": "Descripción",
+      "SAVE": "Guardar",
+      "CANCEL": "Cancelar",
+      "DELETE": "Eliminar",
+      "DELETE_CONFIRM": "¿Eliminar esta cancha? Esta acción no se puede deshacer."
+    },
+    "TIME_SLOTS": {
+      "SHORT": "Turnos",
+      "TITLE": "Turnos de {{court}}",
+      "DAY": "Día",
+      "DAY_0": "Domingo",
+      "DAY_1": "Lunes",
+      "DAY_2": "Martes",
+      "DAY_3": "Miércoles",
+      "DAY_4": "Jueves",
+      "DAY_5": "Viernes",
+      "DAY_6": "Sábado",
+      "START": "Inicio",
+      "END": "Fin",
+      "AVAILABLE": "Disponible",
+      "BLOCKED": "No disponible",
+      "ADD": "Agregar turno",
+      "SAVE": "Guardar turno",
+      "DELETE": "Eliminar",
+      "CLOSE": "Cerrar",
+      "EMPTY": "Todavía no hay turnos para esta cancha."
+    },
+    "WALK_IN": {
+      "TITLE": "Confirmar alquiler presencial",
+      "GUEST_NAME": "Nombre (opcional)",
+      "GUEST_PHONE": "Teléfono (opcional)",
+      "CONFIRM": "Confirmar",
+      "CANCEL": "Cancelar"
+    },
+    "CANCEL": {
+      "CONFIRM": "¿Anular este alquiler y liberar el turno?",
+      "ACTION": "Liberar"
+    }
   },
   "AUTH": {
     "DEFAULT_USER": "Usuario"

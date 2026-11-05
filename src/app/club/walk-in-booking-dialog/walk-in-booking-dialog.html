@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>{{ 'CLUB_OWNER.WALK_IN.TITLE' | translate }}</h2>
+
+<mat-dialog-content>
+  <p class="walk-in-summary">{{ data.courtName }} · {{ data.startTime }} · {{ data.date }}</p>
+
+  @if (errorMessage()) {
+    <p class="dialog-error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <form [formGroup]="form" class="walk-in-form">
+    <mat-form-field>
+      <mat-label>{{ 'CLUB_OWNER.WALK_IN.GUEST_NAME' | translate }}</mat-label>
+      <input matInput formControlName="walk_in_guest_name" />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>{{ 'CLUB_OWNER.WALK_IN.GUEST_PHONE' | translate }}</mat-label>
+      <input matInput formControlName="walk_in_guest_phone" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button type="button" mat-button (click)="close()">
+    {{ 'CLUB_OWNER.WALK_IN.CANCEL' | translate }}
+  </button>
+  <button type="button" mat-flat-button color="primary" [disabled]="isSaving()" (click)="confirm()">
+    {{ 'CLUB_OWNER.WALK_IN.CONFIRM' | translate }}
+  </button>
+</mat-dialog-actions>

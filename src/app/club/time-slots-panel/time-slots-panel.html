@@ -1,0 +1,85 @@
+<h2 mat-dialog-title>
+  {{ 'CLUB_OWNER.TIME_SLOTS.TITLE' | translate: { court: data.courtName } }}
+</h2>
+
+<mat-dialog-content>
+  @if (errorMessage()) {
+    <p class="dialog-error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>{{ 'CLUB_OWNER.LOADING' | translate }}</p>
+  } @else {
+    <ul class="slot-list">
+      @for (slot of slots(); track slot.id) {
+        <li>
+          <span
+            >{{ weekdayLabel(slot.day_of_week) | translate }} {{ slot.start_time }}–{{
+              slot.end_time
+            }}</span
+          >
+          <span class="slot-list__meta">
+            {{
+              (slot.is_available
+                ? 'CLUB_OWNER.TIME_SLOTS.AVAILABLE'
+                : 'CLUB_OWNER.TIME_SLOTS.BLOCKED'
+              ) | translate
+            }}
+          </span>
+          <button
+            type="button"
+            mat-button
+            color="warn"
+            [disabled]="isSaving()"
+            (click)="deleteSlot(slot)"
+          >
+            {{ 'CLUB_OWNER.TIME_SLOTS.DELETE' | translate }}
+          </button>
+        </li>
+      } @empty {
+        <li class="slot-list__empty">{{ 'CLUB_OWNER.TIME_SLOTS.EMPTY' | translate }}</li>
+      }
+    </ul>
+
+    <h3 class="slot-form-title">{{ 'CLUB_OWNER.TIME_SLOTS.ADD' | translate }}</h3>
+    @if (formError()) {
+      <p class="dialog-error" role="alert">{{ formError() }}</p>
+    }
+    <form [formGroup]="form" class="slot-form">
+      <mat-form-field>
+        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.DAY' | translate }}</mat-label>
+        <mat-select formControlName="day_of_week">
+          @for (key of weekdayKeys; track key; let i = $index) {
+            <mat-option [value]="i">{{ key | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.START' | translate }}</mat-label>
+        <input matInput type="time" formControlName="start_time" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.END' | translate }}</mat-label>
+        <input matInput type="time" formControlName="end_time" />
+      </mat-form-field>
+      <mat-checkbox formControlName="is_available">
+        {{ 'CLUB_OWNER.TIME_SLOTS.AVAILABLE' | translate }}
+      </mat-checkbox>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button type="button" mat-button (click)="close()">
+    {{ 'CLUB_OWNER.TIME_SLOTS.CLOSE' | translate }}
+  </button>
+  <button
+    type="button"
+    mat-flat-button
+    color="primary"
+    [disabled]="isSaving() || isLoading()"
+    (click)="createSlot()"
+  >
+    {{ 'CLUB_OWNER.TIME_SLOTS.SAVE' | translate }}
+  </button>
+</mat-dialog-actions>

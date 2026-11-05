@@ -60,6 +60,7 @@ export interface ClubScheduleCell {
   time_slot_id: number | null;
   end_time: string | null;
   match_id: number | null;
+  walk_in?: boolean;
 }
 
 export interface ClubScheduleResponse {
@@ -75,4 +76,49 @@ export interface ScheduleDateOption {
   weekdayLabel: string;
   dayMonthLabel: string;
   isToday: boolean;
+}
+
+export interface OwnerTimeSlot {
+  id: number;
+  court_id: number;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+export interface OwnerTimeSlotsResponse {
+  time_slots: OwnerTimeSlot[];
+}
+
+export interface OwnerTimeSlotResponse {
+  time_slot: OwnerTimeSlot;
+}
+
+export interface OwnerTimeSlotPayload {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+export interface WalkInBookingPayload {
+  court_id: number;
+  time_slot_id: number;
+  date: string;
+  walk_in_guest_name?: string | null;
+  walk_in_guest_phone?: string | null;
+}
+
+export interface WalkInBookingResponse {
+  match: {
+    id: number;
+    court_id: number;
+    time_slot_id: number;
+    date: string;
+    status: string;
+    walk_in?: boolean;
+    walk_in_guest_name?: string | null;
+    walk_in_guest_phone?: string | null;
+  };
 }

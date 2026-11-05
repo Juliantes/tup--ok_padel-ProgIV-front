@@ -1,12 +1,34 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ClubScheduleCell, ClubScheduleResponse, OwnerClub } from '../core/api/club.models';
+import {
+  ClubScheduleCell,
+  ClubScheduleCourt,
+  ClubScheduleResponse,
+  OwnerClub,
+} from '../core/api/club.models';
 import { ClubsApiService } from '../core/api/clubs-api.service';
 import { readApiErrorMessage } from '../core/api/api-errors';
+import { Court } from '../core/api/match.models';
+import {
+  CourtFormDialog,
+  CourtFormDialogData,
+  CourtFormDialogResult,
+} from './court-form-dialog/court-form-dialog';
+import {
+  TimeSlotsPanel,
+  TimeSlotsPanelData,
+  TimeSlotsPanelResult,
+} from './time-slots-panel/time-slots-panel';
+import {
+  WalkInBookingDialog,
+  WalkInBookingDialogData,
+  WalkInBookingDialogResult,
+} from './walk-in-booking-dialog/walk-in-booking-dialog';
 import {
   buildScheduleDateOptions,
   formatClubPrice,
@@ -25,11 +47,14 @@ import {
 export class ClubOwner implements OnInit {
   private readonly clubsApi = inject(ClubsApiService);
   private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly clubs = signal<OwnerClub[]>([]);
   protected readonly selectedClubId = signal<number | null>(null);
   protected readonly selectedDate = signal(todayIsoDate());
   protected readonly schedule = signal<ClubScheduleResponse | null>(null);
+  protected readonly courts = signal<ClubScheduleCourt[]>([]);
+  private readonly fullCourts = signal<Court[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -44,6 +69,16 @@ export class ClubOwner implements OnInit {
     const current = this.schedule();
     return current ? indexScheduleCells(current.cells) : new Map<string, ClubScheduleCell>();
   });
+
+  protected readonly displayCourts = computed((): ClubScheduleCourt[] => {
+    const fromSchedule = this.schedule()?.courts ?? [];
+    if (fromSchedule.length > 0) {
+      return fromSchedule;
+    }
+    return this.courts();
+  });
+
+  protected readonly scheduleRows = computed(() => this.schedule()?.rows ?? []);
 
   ngOnInit(): void {
     void this.loadClubs();
@@ -67,6 +102,10 @@ export class ClubOwner implements OnInit {
     return this.cellIndex().get(scheduleCellKey(courtId, startTime));
   }
 
+  protected cellState(courtId: number, startTime: string): ClubScheduleCell['state'] {
+    return this.cellFor(courtId, startTime)?.state ?? 'empty';
+  }
+
   protected whatsappHref(club: OwnerClub): string {
     const message = this.translate.instant('CLUB_OWNER.WHATSAPP_MESSAGE', {
       club: club.name,
@@ -74,14 +113,116 @@ export class ClubOwner implements OnInit {
     return whatsappClubUrl(club.phone, message);
   }
 
-  protected reserveViaWhatsApp(club: OwnerClub, courtName: string, startTime: string): void {
-    const message = this.translate.instant('CLUB_OWNER.RESERVE_WHATSAPP_MESSAGE', {
-      club: club.name,
-      court: courtName,
-      time: startTime,
-      date: this.selectedDate(),
+  protected openCreateCourt(): void {
+    const clubId = this.selectedClubId();
+    if (!clubId) {
+      return;
+    }
+    this.openCourtDialog({ clubId });
+  }
+
+  protected openEditCourt(court: ClubScheduleCourt, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    const clubId = this.selectedClubId();
+    if (!clubId) {
+      return;
+    }
+    const fullCourt = this.fullCourts().find((item) => item.id === court.id);
+    if (!fullCourt) {
+      return;
+    }
+    this.openCourtDialog({ clubId, court: fullCourt });
+  }
+
+  protected openTimeSlots(court: ClubScheduleCourt): void {
+    const clubId = this.selectedClubId();
+    if (!clubId) {
+      return;
+    }
+    const ref = this.dialog.open<TimeSlotsPanel, TimeSlotsPanelData, TimeSlotsPanelResult>(
+      TimeSlotsPanel,
+      {
+        data: { clubId, courtId: court.id, courtName: court.name },
+        width: 'min(96vw, 28rem)',
+      },
+    );
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'changed') {
+        void this.refreshAfterMutation();
+      }
     });
-    window.open(whatsappClubUrl(club.phone, message), '_blank', 'noopener,noreferrer');
+  }
+
+  protected openWalkInBooking(court: ClubScheduleCourt, startTime: string): void {
+    const clubId = this.selectedClubId();
+    const cell = this.cellFor(court.id, startTime);
+    if (!clubId || !cell?.time_slot_id) {
+      return;
+    }
+
+    const ref = this.dialog.open<
+      WalkInBookingDialog,
+      WalkInBookingDialogData,
+      WalkInBookingDialogResult
+    >(WalkInBookingDialog, {
+      data: {
+        clubId,
+        courtId: court.id,
+        courtName: court.name,
+        timeSlotId: cell.time_slot_id,
+        date: this.selectedDate(),
+        startTime,
+      },
+      width: 'min(96vw, 24rem)',
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'confirmed') {
+        void this.refreshAfterMutation();
+      }
+    });
+  }
+
+  protected async cancelWalkIn(court: ClubScheduleCourt, startTime: string): Promise<void> {
+    const clubId = this.selectedClubId();
+    const cell = this.cellFor(court.id, startTime);
+    if (!clubId || !cell?.match_id || !cell.walk_in) {
+      return;
+    }
+
+    const confirmed = window.confirm(this.translate.instant('CLUB_OWNER.CANCEL.CONFIRM'));
+    if (!confirmed) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    try {
+      await firstValueFrom(this.clubsApi.cancelWalkInBooking(clubId, cell.match_id));
+      await this.refreshAfterMutation();
+    } catch (error: unknown) {
+      this.errorMessage.set(readApiErrorMessage(error));
+      await this.refreshAfterMutation();
+    }
+  }
+
+  async refreshAfterMutation(): Promise<void> {
+    await this.loadSchedule();
+  }
+
+  private openCourtDialog(data: CourtFormDialogData): void {
+    const ref = this.dialog.open<CourtFormDialog, CourtFormDialogData, CourtFormDialogResult>(
+      CourtFormDialog,
+      {
+        data,
+        width: 'min(96vw, 26rem)',
+      },
+    );
+    ref.afterClosed().subscribe((result) => {
+      if (result === 'saved' || result === 'deleted') {
+        void this.refreshAfterMutation();
+      }
+    });
   }
 
   private async loadClubs(): Promise<void> {
@@ -112,8 +253,21 @@ export class ClubOwner implements OnInit {
     this.errorMessage.set(null);
 
     try {
-      const response = await firstValueFrom(this.clubsApi.getSchedule(clubId, this.selectedDate()));
-      this.schedule.set(response);
+      const courtsResponse = await firstValueFrom(this.clubsApi.listCourts(clubId));
+      this.fullCourts.set(courtsResponse.courts);
+      this.courts.set(
+        courtsResponse.courts.map((court) => ({
+          id: court.id,
+          name: court.name,
+          price_per_hour: court.price_per_hour,
+          status: court.status as ClubScheduleCourt['status'],
+        })),
+      );
+
+      const scheduleResponse = await firstValueFrom(
+        this.clubsApi.getSchedule(clubId, this.selectedDate()),
+      );
+      this.schedule.set(scheduleResponse);
     } catch (error: unknown) {
       this.schedule.set(null);
       this.errorMessage.set(readApiErrorMessage(error));
