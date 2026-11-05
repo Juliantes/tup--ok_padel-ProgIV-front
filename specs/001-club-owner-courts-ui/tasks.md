@@ -124,6 +124,11 @@ description: 'Task list for 001-club-owner-courts-ui (Padel Match frontend + ok_
 
 **Checkpoint**: US3 + manual quickstart §5.
 
+### Bulk time slots (FR-015)
+
+- [x] T026b [US3] Implement `TimeSlots::BulkReplace` + `POST .../time_slots/bulk` in **ok_padel** (request spec + rswag)
+- [x] T026c [P] [US3] `bulkCreateTimeSlots` in `ClubsApiService` + preview util + bulk section in `time-slots-panel` + i18n `CLUB_OWNER.TIME_SLOTS.BULK_*` + specs
+
 ---
 
 ## Phase 6: User Story 4 — Alquiler presencial desde la grilla (Priority: P4)

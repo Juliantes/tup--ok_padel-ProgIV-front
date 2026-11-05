@@ -39,7 +39,7 @@
       </div>
       <div class="club-hero__actions">
         <button type="button" mat-flat-button color="primary" (click)="openCreateCourt()">
-          {{ 'CLUB_OWNER.COURT_FORM.MANAGE' | translate }}
+          {{ 'CLUB_OWNER.COURT_FORM.CREATE' | translate }}
         </button>
         <a
           class="club-hero__whatsapp"
@@ -74,28 +74,39 @@
     @if (displayCourts().length === 0 && !isLoading()) {
       <p class="state-message">{{ 'CLUB_OWNER.NO_COURTS_IN_CLUB' | translate }}</p>
     } @else if (displayCourts().length > 0) {
-      <div class="courts-overview" [attr.aria-label]="'CLUB_OWNER.COURTS_OVERVIEW' | translate">
-        @for (court of displayCourts(); track court.id) {
-          <div class="court-pill">
-            <button type="button" class="court-pill__main" (click)="openTimeSlots(court)">
-              <span class="court-pill__name">{{ court.name }}</span>
-              <span class="court-pill__price">{{ formatPrice(court.price_per_hour) }}</span>
-              <span class="court-pill__hint">{{ 'CLUB_OWNER.TIME_SLOTS.SHORT' | translate }}</span>
-            </button>
-            <button
-              type="button"
-              class="court-pill__edit"
-              [attr.aria-label]="'CLUB_OWNER.COURT_FORM.EDIT_ACTION' | translate"
-              (click)="openEditCourt(court, $event)"
-            >
-              <mat-icon aria-hidden="true">edit</mat-icon>
-            </button>
-          </div>
-        }
+      <div class="courts-overview">
+        <h2 class="courts-overview__title">{{ 'CLUB_OWNER.COURTS_OVERVIEW' | translate }}</h2>
+        <div class="courts-overview__list">
+          @for (court of displayCourts(); track court.id) {
+            <div class="court-pill">
+              <button type="button" class="court-pill__main" (click)="openTimeSlots(court)">
+                <span class="court-pill__kind">{{ 'CLUB_OWNER.GRID_COURT' | translate }}</span>
+                <span class="court-pill__name">{{ court.name }}</span>
+                <span class="court-pill__price">{{ formatPrice(court.price_per_hour) }}</span>
+                <span class="court-pill__hint">{{
+                  'CLUB_OWNER.TIME_SLOTS.SHORT' | translate
+                }}</span>
+              </button>
+              <button
+                type="button"
+                class="court-pill__edit"
+                [attr.aria-label]="'CLUB_OWNER.COURT_FORM.EDIT_ACTION' | translate"
+                (click)="openEditCourt(court, $event)"
+              >
+                <mat-icon aria-hidden="true">edit</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
       </div>
 
       <div class="schedule-scroll">
         <table class="schedule-grid">
+          <caption class="schedule-grid__caption">
+            {{
+              'CLUB_OWNER.SCHEDULE_GRID_HINT' | translate
+            }}
+          </caption>
           <thead>
             <tr>
               <th scope="col" class="schedule-grid__time-head">
@@ -109,6 +120,9 @@
                       class="schedule-grid__court-btn"
                       (click)="openTimeSlots(court)"
                     >
+                      <span class="schedule-grid__court-label">{{
+                        'CLUB_OWNER.GRID_COURT' | translate
+                      }}</span>
                       <span class="schedule-grid__court-name">{{ court.name }}</span>
                       <span class="schedule-grid__court-price">{{
                         formatPrice(court.price_per_hour)

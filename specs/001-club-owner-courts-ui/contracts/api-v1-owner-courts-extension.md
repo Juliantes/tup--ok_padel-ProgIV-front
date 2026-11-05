@@ -46,6 +46,41 @@ Base: `/api/v1/clubs/:club_id/courts/:court_id/time_slots`
 
 List wrapper: `{ "time_slots": [ ... ] }`.
 
+### Bulk replace (generator)
+
+**POST** `.../time_slots/bulk`
+
+Replaces **all** time slots for the given weekdays on that court with consecutive slots from open to close.
+
+**Body:**
+
+```json
+{
+  "open_time": "08:00",
+  "close_time": "23:00",
+  "duration_minutes": 90,
+  "day_of_weeks": [1, 2, 3, 4, 5]
+}
+```
+
+| Field                     | Rules                                                   |
+| ------------------------- | ------------------------------------------------------- |
+| `open_time`, `close_time` | `HH:MM`; `open_time` < `close_time` (same calendar day) |
+| `duration_minutes`        | Integer > 0                                             |
+| `day_of_weeks`            | 1–7 unique integers, each 0–6                           |
+
+**Generation:** For each day, create slots `[open, open+dur)`, `[open+dur, open+2dur)`, … while `end <= close`. Partial remainder at the end is dropped. All created with `is_available: true`.
+
+**Transaction:** Delete existing slots on those weekdays for the court, then insert new ones. **422 without changes** if any slot to delete has a non-cancelled match with `date >= today`. Past/cancelled matches are nullified on slot delete (existing behavior).
+
+**Success 201:** `{ "time_slots": [ ... ] }` — **all** slots for the court (same shape as GET list), ordered by `day_of_week`, `start_time`.
+
+**422 examples:**
+
+- No full slot fits in `[open, close]` with given duration
+- Invalid params (empty days, bad times, duration ≤ 0)
+- Future bookings block replace (`base` or dedicated key)
+
 ## Walk-in booking (owner)
 
 **POST** `/api/v1/clubs/:club_id/walk_in_bookings`

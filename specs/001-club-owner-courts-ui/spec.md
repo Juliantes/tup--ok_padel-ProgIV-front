@@ -96,6 +96,8 @@ Como dueño, quiero definir y mantener los horarios en los que cada cancha se of
 1. **Given** una cancha seleccionada, **When** crea un turno con inicio anterior al fin en un día de la semana, **Then** el turno queda guardado y la grilla de una fecha coincidente muestra la celda en estado ofrecible (si la cancha está activa).
 2. **Given** turnos existentes, **When** marca un turno como no disponible o lo elimina, **Then** las celdas correspondientes dejan de ofrecer alquiler en fechas futuras.
 3. **Given** un intento inválido (horarios incoherentes o duplicados según reglas del sistema), **When** guarda, **Then** recibe errores de validación accionables sin perder el resto del formulario.
+4. **Given** una cancha con turnos en días seleccionados, **When** usa carga masiva (apertura, cierre, duración, varios días) y confirma reemplazo, **Then** los turnos de esos días se regeneran en franjas consecutivas y la grilla refleja las nuevas filas.
+5. **Given** turnos a reemplazar con reservas futuras no canceladas, **When** confirma carga masiva, **Then** la operación falla sin borrar turnos y se informa al dueño.
 
 ---
 
@@ -137,6 +139,7 @@ Como dueño, cuando una persona llega al club y paga el turno en mostrador, quie
 - **FR-004**: El sistema MUST distinguir visualmente al menos tres situaciones de celda: turno libre para alquiler, turno ocupado, y celda sin turno o no ofrecida.
 - **FR-005**: El dueño MUST poder crear, actualizar y eliminar canchas de su club con validación de campos obligatorios y mensajes de error comprensibles.
 - **FR-006**: El dueño MUST poder crear, actualizar y eliminar turnos recurrentes por cancha (día de semana, hora inicio, hora fin, disponibilidad).
+- **FR-015**: El dueño MUST poder generar turnos en lote por cancha indicando hora de apertura, cierre, duración de cada turno y uno o más días de la semana; el sistema MUST reemplazar los turnos existentes de esos días en esa cancha por las franjas generadas y MUST rechazar el reemplazo si hay reservas futuras no canceladas vinculadas a turnos que se borrarían.
 - **FR-007**: El dueño MUST poder registrar un alquiler presencial sobre un turno libre para la fecha visible creando un **partido cerrado/privado** (sin convocatoria abierta) vinculado a cancha, turno y fecha; la celda MUST mostrarse ocupada mientras ese partido mantenga la reserva del turno.
 - **FR-011**: El dueño MUST poder anular o liberar un alquiler presencial confirmado desde Mis canchas, con confirmación explícita; tras éxito, la celda MUST volver a libre para esa fecha y turno.
 - **FR-008**: Tras cualquier mutación exitosa (cancha, turno o reserva), la grilla o listados MUST actualizarse para reflejar el estado actual sin exigir cierre de sesión.

@@ -74,4 +74,64 @@ describe('TimeSlotsPanel', () => {
     expect(fixture.componentInstance['formError']()).toBeTruthy();
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
+
+  it('bulk replace reloads list and notifies schedule without closing', async () => {
+    const onScheduleChanged = vi.fn();
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [TimeSlotsPanel],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        ...provideTranslateTesting(),
+        { provide: MatDialogRef, useValue: dialogRef },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            clubId: 1,
+            courtId: 10,
+            courtName: 'Cancha 1',
+            onScheduleChanged,
+          },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TimeSlotsPanel);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http
+      .expectOne(`${environment.apiBaseUrl}/api/v1/clubs/1/courts/10/time_slots`)
+      .flush({ time_slots: [] });
+    await fixture.whenStable();
+
+    void fixture.componentInstance['bulkReplace']();
+    const bulkReq = http.expectOne(
+      `${environment.apiBaseUrl}/api/v1/clubs/1/courts/10/time_slots/bulk`,
+    );
+    expect(bulkReq.request.body).toMatchObject({
+      open_time: '08:00',
+      close_time: '23:00',
+      duration_minutes: 90,
+      day_of_weeks: [1, 2, 3, 4, 5],
+    });
+    bulkReq.flush({
+      time_slots: [
+        {
+          id: 2,
+          court_id: 10,
+          day_of_week: 1,
+          start_time: '08:00',
+          end_time: '09:30',
+          is_available: true,
+        },
+      ],
+    });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['slots']().length).toBe(1);
+    expect(onScheduleChanged).toHaveBeenCalled();
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
 });

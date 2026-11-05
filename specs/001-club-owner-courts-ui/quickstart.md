@@ -49,8 +49,9 @@ API: `contracts/api-v1-owner-courts-extension.md` (CRUD existente).
 ## 5. Manual — turnos (P3)
 
 1. Abrir panel de turnos de una cancha.
-2. Crear turno lunes 10:00–11:30.
-3. Elegir un lunes en date strip → fila visible, celda `available` si cancha activa.
+2. Crear turno lunes 10:00–11:30 **o** carga masiva: apertura 08:00, cierre 23:00, duración 1.5 h, marcar lun–vie → confirmar (reemplaza turnos de esos días).
+3. Elegir un lunes en date strip → filas visibles (p. ej. 10 franjas de 90 min hasta 23:00), celda `available` si cancha activa.
+4. Con reserva walk-in futura en un turno a reemplazar → bulk debe fallar con mensaje claro y sin borrar turnos.
 
 ## 6. Manual — walk-in (P4)
 

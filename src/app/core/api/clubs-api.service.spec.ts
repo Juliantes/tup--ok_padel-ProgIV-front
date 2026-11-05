@@ -79,6 +79,34 @@ describe('ClubsApiService', () => {
     req.flush(null);
   });
 
+  it('bulk replaces time slots', () => {
+    const payload = {
+      open_time: '08:00',
+      close_time: '23:00',
+      duration_minutes: 90,
+      day_of_weeks: [1, 2, 3, 4, 5],
+    };
+    service.bulkCreateTimeSlots(1, 10, payload).subscribe((response) => {
+      expect(response.time_slots.length).toBeGreaterThan(0);
+    });
+
+    const req = httpMock.expectOne(`${base}/clubs/1/courts/10/time_slots/bulk`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({
+      time_slots: [
+        {
+          id: 1,
+          court_id: 10,
+          day_of_week: 1,
+          start_time: '08:00',
+          end_time: '09:30',
+          is_available: true,
+        },
+      ],
+    });
+  });
+
   it('creates a walk-in booking', () => {
     const payload = {
       court_id: 10,

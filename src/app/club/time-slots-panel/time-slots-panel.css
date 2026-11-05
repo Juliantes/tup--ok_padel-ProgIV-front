@@ -39,3 +39,23 @@
 .slot-form mat-form-field {
   width: 100%;
 }
+
+.slot-bulk-hint {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+.slot-bulk-days {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.slot-bulk-preview {
+  color: #374151;
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+  word-break: break-word;
+}

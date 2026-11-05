@@ -260,6 +260,8 @@
     "NO_SLOTS": "No hay turnos configurados para este día.",
     "NO_COURTS_IN_CLUB": "Este club todavía no tiene canchas.",
     "COURTS_OVERVIEW": "Canchas del club",
+    "SCHEDULE_GRID_HINT": "En la grilla, cada columna es una cancha y cada fila un horario.",
+    "GRID_COURT": "Cancha",
     "SWITCH_CLUB": "Elegir club",
     "DATE_STRIP": "Elegir fecha",
     "TODAY": "Hoy",
@@ -298,7 +300,7 @@
     "SLOT_BLOCKED": "Turno no disponible",
     "SLOT_EMPTY": "Sin turno configurado",
     "COURT_FORM": {
-      "MANAGE": "Gestionar canchas",
+      "CREATE": "Crear cancha",
       "CREATE_TITLE": "Nueva cancha",
       "EDIT_TITLE": "Editar cancha",
       "EDIT_ACTION": "Editar cancha",
@@ -331,7 +333,16 @@
       "SAVE": "Guardar turno",
       "DELETE": "Eliminar",
       "CLOSE": "Cerrar",
-      "EMPTY": "Todavía no hay turnos para esta cancha."
+      "EMPTY": "Todavía no hay turnos para esta cancha.",
+      "BULK_TITLE": "Carga masiva",
+      "BULK_HINT": "Se reemplazarán todos los turnos de los días seleccionados en esta cancha.",
+      "BULK_OPEN": "Apertura",
+      "BULK_CLOSE": "Cierre",
+      "BULK_DURATION": "Duración (horas)",
+      "BULK_WEEKDAYS": "Lun–vie",
+      "BULK_PREVIEW": "{{count}} turnos por día:",
+      "BULK_CONFIRM": "Generar turnos",
+      "BULK_NO_FIT": "Con esos horarios no entra ningún turno completo. Revisá apertura, cierre y duración."
     },
     "WALK_IN": {
       "TITLE": "Confirmar alquiler presencial",

@@ -143,7 +143,14 @@ export class ClubOwner implements OnInit {
     const ref = this.dialog.open<TimeSlotsPanel, TimeSlotsPanelData, TimeSlotsPanelResult>(
       TimeSlotsPanel,
       {
-        data: { clubId, courtId: court.id, courtName: court.name },
+        data: {
+          clubId,
+          courtId: court.id,
+          courtName: court.name,
+          onScheduleChanged: () => {
+            void this.refreshAfterMutation();
+          },
+        },
         width: 'min(96vw, 28rem)',
       },
     );

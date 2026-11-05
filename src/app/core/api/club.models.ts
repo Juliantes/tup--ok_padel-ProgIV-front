@@ -102,6 +102,13 @@ export interface OwnerTimeSlotPayload {
   is_available: boolean;
 }
 
+export interface OwnerBulkTimeSlotsPayload {
+  open_time: string;
+  close_time: string;
+  duration_minutes: number;
+  day_of_weeks: number[];
+}
+
 export interface WalkInBookingPayload {
   court_id: number;
   time_slot_id: number;

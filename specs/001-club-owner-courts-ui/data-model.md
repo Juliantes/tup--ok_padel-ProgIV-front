@@ -33,6 +33,8 @@ Relación: `Club` 1—N `Court`.
 
 Relación: `Court` 1—N `TimeSlot`.
 
+**Bulk replace (comando):** No persiste fila aparte. Parámetros `open_time`, `close_time`, `duration_minutes`, `day_of_weeks[]` generan N `TimeSlot` por día seleccionado tras borrar los existentes de esos días en la cancha (ver contrato bulk). Bloqueo si hay `Match` no cancelado con `date >= hoy` referenciando un slot a borrar.
+
 ### Match (walk-in / alquiler presencial)
 
 | Campo                        | Validación / notas                                  |

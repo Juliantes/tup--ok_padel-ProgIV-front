@@ -14,6 +14,7 @@ import {
   OwnerTimeSlotPayload,
   OwnerTimeSlotResponse,
   OwnerTimeSlotsResponse,
+  OwnerBulkTimeSlotsPayload,
   WalkInBookingPayload,
   WalkInBookingResponse,
 } from './club.models';
@@ -101,6 +102,17 @@ export class ClubsApiService {
   deleteTimeSlot(clubId: number, courtId: number, timeSlotId: number): Observable<void> {
     return this.http.delete<void>(
       apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/${timeSlotId}`),
+    );
+  }
+
+  bulkCreateTimeSlots(
+    clubId: number,
+    courtId: number,
+    payload: OwnerBulkTimeSlotsPayload,
+  ): Observable<OwnerTimeSlotsResponse> {
+    return this.http.post<OwnerTimeSlotsResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/bulk`),
+      payload,
     );
   }
 
