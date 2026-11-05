@@ -58,7 +58,8 @@ export class ClubOwner implements OnInit {
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
-  protected readonly dateOptions = buildScheduleDateOptions();
+  /** 14 días: permite ver dos ocurrencias del mismo día de la semana (p. ej. dos lunes). */
+  protected readonly dateOptions = buildScheduleDateOptions(14);
 
   protected readonly selectedClub = computed(() => {
     const id = this.selectedClubId();
@@ -147,11 +148,13 @@ export class ClubOwner implements OnInit {
           clubId,
           courtId: court.id,
           courtName: court.name,
+          initialDate: this.selectedDate(),
+          dateOptions: this.dateOptions,
           onScheduleChanged: () => {
             void this.refreshAfterMutation();
           },
         },
-        width: 'min(96vw, 28rem)',
+        width: 'min(96vw, 36rem)',
       },
     );
     ref.afterClosed().subscribe((result) => {

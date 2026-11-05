@@ -82,6 +82,7 @@ export interface OwnerTimeSlot {
   id: number;
   court_id: number;
   day_of_week: number;
+  effective_on?: string | null;
   start_time: string;
   end_time: string;
   is_available: boolean;
@@ -107,6 +108,24 @@ export interface OwnerBulkTimeSlotsPayload {
   close_time: string;
   duration_minutes: number;
   day_of_weeks: number[];
+}
+
+export interface OwnerDayOverrideSlotPayload {
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+export interface OwnerDayOverridePayload {
+  date: string;
+  slots: OwnerDayOverrideSlotPayload[];
+}
+
+export interface OwnerTimeSlotsForDateResponse {
+  date: string;
+  day_of_week: number;
+  customized: boolean;
+  time_slots: OwnerTimeSlot[];
 }
 
 export interface WalkInBookingPayload {

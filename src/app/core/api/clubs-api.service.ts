@@ -15,6 +15,8 @@ import {
   OwnerTimeSlotResponse,
   OwnerTimeSlotsResponse,
   OwnerBulkTimeSlotsPayload,
+  OwnerDayOverridePayload,
+  OwnerTimeSlotsForDateResponse,
   WalkInBookingPayload,
   WalkInBookingResponse,
 } from './club.models';
@@ -73,6 +75,35 @@ export class ClubsApiService {
   listTimeSlots(clubId: number, courtId: number): Observable<OwnerTimeSlotsResponse> {
     return this.http.get<OwnerTimeSlotsResponse>(
       apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots`),
+    );
+  }
+
+  listTimeSlotsForDate(
+    clubId: number,
+    courtId: number,
+    date: string,
+  ): Observable<OwnerTimeSlotsForDateResponse> {
+    return this.http.get<OwnerTimeSlotsForDateResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots`),
+      { params: { date } },
+    );
+  }
+
+  replaceDayOverride(
+    clubId: number,
+    courtId: number,
+    payload: OwnerDayOverridePayload,
+  ): Observable<OwnerTimeSlotsForDateResponse> {
+    return this.http.put<OwnerTimeSlotsForDateResponse>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/day_override`),
+      payload,
+    );
+  }
+
+  clearDayOverride(clubId: number, courtId: number, date: string): Observable<void> {
+    return this.http.delete<void>(
+      apiV1Url(`clubs/${clubId}/courts/${courtId}/time_slots/day_override`),
+      { params: { date } },
     );
   }
 

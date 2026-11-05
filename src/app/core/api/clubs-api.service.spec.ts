@@ -43,6 +43,65 @@ describe('ClubsApiService', () => {
     });
   });
 
+  it('lists time slots effective on a date', () => {
+    service.listTimeSlotsForDate(1, 10, '2026-11-10').subscribe((response) => {
+      expect(response.customized).toBe(false);
+      expect(response.time_slots.length).toBe(1);
+    });
+
+    const req = httpMock.expectOne(
+      (request) =>
+        request.url === `${base}/clubs/1/courts/10/time_slots` &&
+        request.params.get('date') === '2026-11-10',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      date: '2026-11-10',
+      day_of_week: 1,
+      customized: false,
+      time_slots: [
+        {
+          id: 5,
+          court_id: 10,
+          day_of_week: 1,
+          start_time: '10:00',
+          end_time: '11:30',
+          is_available: true,
+        },
+      ],
+    });
+  });
+
+  it('replaces day override slots', () => {
+    const payload = {
+      date: '2026-11-10',
+      slots: [{ start_time: '09:00', end_time: '10:00', is_available: true }],
+    };
+    service.replaceDayOverride(1, 10, payload).subscribe();
+
+    const req = httpMock.expectOne(`${base}/clubs/1/courts/10/time_slots/day_override`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({
+      date: '2026-11-10',
+      day_of_week: 1,
+      customized: true,
+      time_slots: [],
+    });
+  });
+
+  it('clears day override', () => {
+    service.clearDayOverride(1, 10, '2026-11-10').subscribe();
+
+    const req = httpMock.expectOne(
+      (request) =>
+        request.url === `${base}/clubs/1/courts/10/time_slots/day_override` &&
+        request.params.get('date') === '2026-11-10',
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
   it('creates a time slot', () => {
     const payload = { day_of_week: 1, start_time: '10:00', end_time: '11:30', is_available: true };
     service.createTimeSlot(1, 10, payload).subscribe();

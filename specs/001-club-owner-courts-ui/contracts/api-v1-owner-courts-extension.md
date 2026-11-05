@@ -7,12 +7,15 @@
 
 Base: `/api/v1/clubs/:club_id/courts/:court_id/time_slots`
 
-| Method | Path                 | Description                     |
-| ------ | -------------------- | ------------------------------- |
-| GET    | `.../time_slots`     | List slots for court (all days) |
-| POST   | `.../time_slots`     | Create slot                     |
-| PATCH  | `.../time_slots/:id` | Update slot                     |
-| DELETE | `.../time_slots/:id` | Delete slot                     |
+| Method | Path                                | Description                                      |
+| ------ | ----------------------------------- | ------------------------------------------------ |
+| GET    | `.../time_slots`                    | List weekly template slots (`effective_on` null) |
+| GET    | `.../time_slots?date=`              | Effective slots for one calendar date            |
+| POST   | `.../time_slots`                    | Create weekly template slot                      |
+| PATCH  | `.../time_slots/:id`                | Update weekly template slot                      |
+| DELETE | `.../time_slots/:id`                | Delete weekly template slot                      |
+| PUT    | `.../time_slots/day_override`       | Replace slots for one date only                  |
+| DELETE | `.../time_slots/day_override?date=` | Remove date override (back to weekly)            |
 
 **Authorization:** `require_club_owner!` + court belongs to `club_id` owned by user.
 
@@ -37,6 +40,7 @@ Base: `/api/v1/clubs/:club_id/courts/:court_id/time_slots`
     "id": 1,
     "court_id": 10,
     "day_of_week": 1,
+    "effective_on": null,
     "start_time": "10:00",
     "end_time": "11:30",
     "is_available": true
@@ -45,6 +49,10 @@ Base: `/api/v1/clubs/:club_id/courts/:court_id/time_slots`
 ```
 
 List wrapper: `{ "time_slots": [ ... ] }`.
+
+**GET with `date`:** `{ "date", "day_of_week", "customized", "time_slots" }` where `time_slots` are either weekly template for that weekday or override slots when `customized` is true.
+
+**PUT day_override body:** `{ "date": "2026-11-10", "slots": [{ "start_time", "end_time", "is_available" }] }`. Empty `slots` closes the court that date. **422** if the date has active bookings.
 
 ### Bulk replace (generator)
 
@@ -71,7 +79,7 @@ Replaces **all** time slots for the given weekdays on that court with consecutiv
 
 **Generation:** For each day, create slots `[open, open+dur)`, `[open+dur, open+2dur)`, … while `end <= close`. Partial remainder at the end is dropped. All created with `is_available: true`.
 
-**Transaction:** Delete existing slots on those weekdays for the court, then insert new ones. **422 without changes** if any slot to delete has a non-cancelled match with `date >= today`. Past/cancelled matches are nullified on slot delete (existing behavior).
+**Transaction:** Delete existing **weekly** slots (`effective_on` null) on those weekdays for the court, then insert new ones. Does not remove date overrides. **422 without changes** if any slot to delete has a non-cancelled match with `date >= today`. Past/cancelled matches are nullified on slot delete (existing behavior).
 
 **Success 201:** `{ "time_slots": [ ... ] }` — **all** slots for the court (same shape as GET list), ordered by `day_of_week`, `start_time`.
 

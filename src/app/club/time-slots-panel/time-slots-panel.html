@@ -7,66 +7,190 @@
     <p class="dialog-error" role="alert">{{ errorMessage() }}</p>
   }
 
-  @if (isLoading()) {
-    <p>{{ 'CLUB_OWNER.LOADING' | translate }}</p>
-  } @else {
-    <ul class="slot-list">
-      @for (slot of slots(); track slot.id) {
-        <li>
-          <span
-            >{{ weekdayLabel(slot.day_of_week) | translate }} {{ slot.start_time }}–{{
-              slot.end_time
-            }}</span
-          >
-          <span class="slot-list__meta">
-            {{
-              (slot.is_available
-                ? 'CLUB_OWNER.TIME_SLOTS.AVAILABLE'
-                : 'CLUB_OWNER.TIME_SLOTS.BLOCKED'
-              ) | translate
-            }}
-          </span>
+  @if (panelView() === 'home') {
+    <p class="slot-intro">{{ 'CLUB_OWNER.TIME_SLOTS.HOME_HINT' | translate }}</p>
+    <div class="slot-home-actions">
+      <button type="button" mat-flat-button color="primary" (click)="startEditDay()">
+        {{ 'CLUB_OWNER.TIME_SLOTS.MODE_EDIT_DAY' | translate }}
+      </button>
+      <button type="button" mat-stroked-button (click)="startBulk()">
+        {{ 'CLUB_OWNER.TIME_SLOTS.MODE_BULK' | translate }}
+      </button>
+    </div>
+  }
+
+  @if (panelView() === 'editDay') {
+    <div class="slot-step-nav">
+      <button type="button" mat-button (click)="backEditStep()">
+        {{ 'CLUB_OWNER.TIME_SLOTS.BACK' | translate }}
+      </button>
+    </div>
+
+    @if (editStep() === 'date') {
+      <h3 class="slot-form-title">{{ 'CLUB_OWNER.TIME_SLOTS.PICK_DATE' | translate }}</h3>
+      <div class="slot-date-strip">
+        @for (option of data.dateOptions; track option.isoDate) {
           <button
             type="button"
-            mat-button
-            color="warn"
-            [disabled]="isSaving()"
-            (click)="deleteSlot(slot)"
+            class="slot-date-chip"
+            [class.slot-date-chip--active]="selectedDateIso() === option.isoDate"
+            (click)="pickDate(option.isoDate)"
           >
-            {{ 'CLUB_OWNER.TIME_SLOTS.DELETE' | translate }}
+            <span class="slot-date-chip__weekday">{{ option.weekdayLabel }}</span>
+            <span class="slot-date-chip__day">{{ option.dayMonthLabel }}</span>
           </button>
-        </li>
-      } @empty {
-        <li class="slot-list__empty">{{ 'CLUB_OWNER.TIME_SLOTS.EMPTY' | translate }}</li>
-      }
-    </ul>
-
-    <h3 class="slot-form-title">{{ 'CLUB_OWNER.TIME_SLOTS.ADD' | translate }}</h3>
-    @if (formError()) {
-      <p class="dialog-error" role="alert">{{ formError() }}</p>
+        }
+      </div>
     }
-    <form [formGroup]="form" class="slot-form">
-      <mat-form-field>
-        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.DAY' | translate }}</mat-label>
-        <mat-select formControlName="day_of_week">
-          @for (key of weekdayKeys; track key; let i = $index) {
-            <mat-option [value]="i">{{ key | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.START' | translate }}</mat-label>
-        <input matInput type="time" formControlName="start_time" />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.END' | translate }}</mat-label>
-        <input matInput type="time" formControlName="end_time" />
-      </mat-form-field>
-      <mat-checkbox formControlName="is_available">
-        {{ 'CLUB_OWNER.TIME_SLOTS.AVAILABLE' | translate }}
-      </mat-checkbox>
-    </form>
 
+    @if (editStep() === 'scope' && selectedDateOption(); as dateOption) {
+      <h3 class="slot-form-title">
+        {{ 'CLUB_OWNER.TIME_SLOTS.PICK_SCOPE' | translate: { date: dateOption.dayMonthLabel } }}
+      </h3>
+      <p class="slot-scope-hint">{{ 'CLUB_OWNER.TIME_SLOTS.SCOPE_HINT' | translate }}</p>
+      <div class="slot-scope-actions">
+        <button type="button" mat-stroked-button (click)="pickScope('once')">
+          {{ 'CLUB_OWNER.TIME_SLOTS.SCOPE_ONCE' | translate: { date: dateOption.dayMonthLabel } }}
+        </button>
+        <button type="button" mat-flat-button color="primary" (click)="pickScope('weekly')">
+          {{
+            'CLUB_OWNER.TIME_SLOTS.SCOPE_WEEKLY' | translate: { weekday: dateOption.weekdayLabel }
+          }}
+        </button>
+      </div>
+    }
+
+    @if (editStep() === 'editor') {
+      @if (editScope() === 'once') {
+        <p class="slot-recurrence-hint">{{ 'CLUB_OWNER.TIME_SLOTS.ONCE_HINT' | translate }}</p>
+      } @else {
+        <p class="slot-recurrence-hint">{{ 'CLUB_OWNER.TIME_SLOTS.WEEKLY_HINT' | translate }}</p>
+      }
+
+      @if (isLoading()) {
+        <p>{{ 'CLUB_OWNER.LOADING' | translate }}</p>
+      } @else {
+        @if (editScope() === 'once') {
+          <ul class="slot-list">
+            @for (slot of draftSlots(); track $index) {
+              <li>
+                <span>{{ slot.start_time }}–{{ slot.end_time }}</span>
+                <span class="slot-list__meta">
+                  {{
+                    (slot.is_available
+                      ? 'CLUB_OWNER.TIME_SLOTS.AVAILABLE'
+                      : 'CLUB_OWNER.TIME_SLOTS.BLOCKED'
+                    ) | translate
+                  }}
+                </span>
+                <button
+                  type="button"
+                  mat-button
+                  color="warn"
+                  [disabled]="isSaving()"
+                  (click)="removeDraftSlot($index)"
+                >
+                  {{ 'CLUB_OWNER.TIME_SLOTS.DELETE' | translate }}
+                </button>
+              </li>
+            } @empty {
+              <li class="slot-list__empty">{{ 'CLUB_OWNER.TIME_SLOTS.EMPTY_DAY' | translate }}</li>
+            }
+          </ul>
+
+          @if (dateCustomized()) {
+            <button type="button" mat-button [disabled]="isSaving()" (click)="clearDayOverride()">
+              {{ 'CLUB_OWNER.TIME_SLOTS.CLEAR_OVERRIDE' | translate }}
+            </button>
+          }
+        } @else {
+          <ul class="slot-list">
+            @for (slot of slots(); track slot.id) {
+              <li>
+                <span>{{ slot.start_time }}–{{ slot.end_time }}</span>
+                <span class="slot-list__meta">
+                  {{
+                    (slot.is_available
+                      ? 'CLUB_OWNER.TIME_SLOTS.AVAILABLE'
+                      : 'CLUB_OWNER.TIME_SLOTS.BLOCKED'
+                    ) | translate
+                  }}
+                </span>
+                <button
+                  type="button"
+                  mat-button
+                  color="warn"
+                  [disabled]="isSaving()"
+                  (click)="deleteWeeklySlot(slot)"
+                >
+                  {{ 'CLUB_OWNER.TIME_SLOTS.DELETE' | translate }}
+                </button>
+              </li>
+            } @empty {
+              <li class="slot-list__empty">{{ 'CLUB_OWNER.TIME_SLOTS.EMPTY' | translate }}</li>
+            }
+          </ul>
+        }
+
+        <h3 class="slot-form-title">{{ 'CLUB_OWNER.TIME_SLOTS.ADD' | translate }}</h3>
+        @if (formError()) {
+          <p class="dialog-error" role="alert">{{ formError() }}</p>
+        }
+        <form [formGroup]="form" class="slot-form">
+          <mat-form-field>
+            <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.START' | translate }}</mat-label>
+            <input matInput type="time" formControlName="start_time" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>{{ 'CLUB_OWNER.TIME_SLOTS.END' | translate }}</mat-label>
+            <input matInput type="time" formControlName="end_time" />
+          </mat-form-field>
+          <mat-checkbox formControlName="is_available">
+            {{ 'CLUB_OWNER.TIME_SLOTS.AVAILABLE' | translate }}
+          </mat-checkbox>
+        </form>
+
+        @if (editScope() === 'once') {
+          <div class="slot-editor-actions">
+            <button
+              type="button"
+              mat-stroked-button
+              [disabled]="isSaving()"
+              (click)="addDraftSlot()"
+            >
+              {{ 'CLUB_OWNER.TIME_SLOTS.ADD_TO_DRAFT' | translate }}
+            </button>
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              [disabled]="isSaving()"
+              (click)="saveDayOverride()"
+            >
+              {{ 'CLUB_OWNER.TIME_SLOTS.SAVE_DAY' | translate }}
+            </button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            [disabled]="isSaving()"
+            (click)="createWeeklySlot()"
+          >
+            {{ 'CLUB_OWNER.TIME_SLOTS.SAVE' | translate }}
+          </button>
+        }
+      }
+    }
+  }
+
+  @if (panelView() === 'bulk') {
+    <div class="slot-step-nav">
+      <button type="button" mat-button (click)="goHome()">
+        {{ 'CLUB_OWNER.TIME_SLOTS.BACK' | translate }}
+      </button>
+    </div>
     <h3 class="slot-form-title">{{ 'CLUB_OWNER.TIME_SLOTS.BULK_TITLE' | translate }}</h3>
     <p class="slot-bulk-hint">{{ 'CLUB_OWNER.TIME_SLOTS.BULK_HINT' | translate }}</p>
     @if (bulkError()) {
@@ -95,6 +219,9 @@
         <button type="button" mat-button (click)="selectBulkWeekdays()">
           {{ 'CLUB_OWNER.TIME_SLOTS.BULK_WEEKDAYS' | translate }}
         </button>
+        <button type="button" mat-button (click)="selectAllWeekdays()">
+          {{ 'CLUB_OWNER.TIME_SLOTS.BULK_ALL_WEEK' | translate }}
+        </button>
         @for (key of weekdayKeys; track key; let i = $index) {
           <mat-checkbox
             [checked]="isBulkDaySelected(i)"
@@ -114,7 +241,7 @@
         type="button"
         mat-flat-button
         color="primary"
-        [disabled]="isSaving() || isLoading() || selectedBulkDays().length === 0"
+        [disabled]="isSaving() || selectedBulkDays().length === 0"
         (click)="bulkReplace()"
       >
         {{ 'CLUB_OWNER.TIME_SLOTS.BULK_CONFIRM' | translate }}
@@ -126,14 +253,5 @@
 <mat-dialog-actions align="end">
   <button type="button" mat-button (click)="close()">
     {{ 'CLUB_OWNER.TIME_SLOTS.CLOSE' | translate }}
-  </button>
-  <button
-    type="button"
-    mat-flat-button
-    color="primary"
-    [disabled]="isSaving() || isLoading()"
-    (click)="createSlot()"
-  >
-    {{ 'CLUB_OWNER.TIME_SLOTS.SAVE' | translate }}
   </button>
 </mat-dialog-actions>
