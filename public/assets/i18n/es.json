@@ -6,6 +6,7 @@
     "HOME": "Inicio",
     "MATCHES": "Partidos",
     "CLUB": "Mis canchas",
+    "COURTS": "Canchas",
     "CONFIG": "Configuración"
   },
   "ROLES": {
@@ -371,6 +372,41 @@
     "CANCEL": {
       "CONFIRM": "¿Anular este alquiler y liberar el turno?",
       "ACTION": "Liberar"
+    }
+  },
+  "PLAYER_COURTS": {
+    "LOADING": "Cargando clubes...",
+    "NO_CLUBS": "No hay clubes con canchas disponibles por ahora.",
+    "SWITCH_CLUB": "Elegir club",
+    "DATE_STRIP": "Elegir fecha",
+    "TODAY": "Hoy",
+    "SCHEDULE_HINT": "Elegí un turno libre para reservar. Las columnas son canchas y las filas horarios.",
+    "GRID_TIME": "Hora",
+    "GRID_COURT": "Cancha",
+    "NO_SLOTS": "No hay turnos para este día en este club.",
+    "RESERVE": "Reservar",
+    "SLOT_AVAILABLE": "Turno libre",
+    "SLOT_BOOKED": "Ocupado",
+    "SLOT_BLOCKED": "No disponible",
+    "SLOT_EMPTY": "Sin turno",
+    "SLOT_PAST": "Horario pasado",
+    "BOOKING": {
+      "TITLE": "Confirmar reserva",
+      "CLUB": "Club",
+      "COURT": "Cancha",
+      "WHEN": "Fecha y hora",
+      "PRICE": "Total estimado",
+      "HINT": "La reserva queda confirmada al instante. Podés cancelarla hasta 2 horas antes del turno.",
+      "CONFIRM": "Confirmar reserva",
+      "CANCEL": "Volver"
+    },
+    "MY_BOOKINGS": {
+      "TITLE": "Mis reservas",
+      "CANCEL_POLICY": "Podés cancelar una reserva hasta 2 horas antes del horario de inicio.",
+      "EMPTY": "Todavía no tenés reservas de cancha.",
+      "UPCOMING": "Próximas",
+      "PAST": "Anteriores",
+      "CANCEL": "Cancelar reserva"
     }
   },
   "AUTH": {

@@ -16,9 +16,11 @@ describe('Header', () => {
   let fixture: ComponentFixture<Header>;
 
   const isClubOwner = signal(false);
+  const isPlayer = signal(false);
 
   beforeEach(async () => {
     isClubOwner.set(false);
+    isPlayer.set(false);
 
     await TestBed.configureTestingModule({
       imports: [Header, StubComponent],
@@ -29,6 +31,7 @@ describe('Header', () => {
           provide: AuthService,
           useValue: {
             isClubOwner: () => isClubOwner(),
+            isPlayer: () => isPlayer(),
           },
         },
       ],
@@ -54,5 +57,18 @@ describe('Header', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('NAV.CLUB');
+  });
+
+  it('shows Canchas nav only for players', async () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('NAV.COURTS');
+
+    isPlayer.set(true);
+    fixture = TestBed.createComponent(Header);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('NAV.COURTS');
   });
 });
