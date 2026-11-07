@@ -161,6 +161,8 @@ export interface PlayerAvailabilityCell {
   state: ClubScheduleCellState;
   time_slot_id: number | null;
   end_time: string | null;
+  /** Present only for booked slots tied to a roster match (not court-only player_booking). */
+  match_id?: number | null;
 }
 
 export interface PlayerAvailabilityResponse {

@@ -30,129 +30,312 @@
       </button>
     }
 
-    @if (clubs().length === 1) {
-      <app-club-browse-hero [club]="club" />
-    }
+    <div class="player-club-profile">
+      <header
+        class="player-club-profile__banner"
+        [class]="themeClass(club)"
+        [attr.aria-label]="club.name"
+      >
+        <span class="player-club-profile__badge">{{
+          'CLUB_BROWSE.ONLINE_BOOKING' | translate
+        }}</span>
+        <h1 class="player-club-profile__title">{{ club.name }}</h1>
+        <p class="player-club-profile__meta">
+          <mat-icon aria-hidden="true">place</mat-icon>
+          <span>{{ club.address }}</span>
+        </p>
+        @if (hoursRange(); as hours) {
+          <p class="player-club-profile__meta">
+            <mat-icon aria-hidden="true">schedule</mat-icon>
+            <span>{{ hours.startLabel }} – {{ hours.endLabel }}</span>
+          </p>
+        }
+      </header>
 
-    <header class="club-detail-header">
-      <h1 class="club-detail-header__title">{{ club.name }}</h1>
-      <p class="club-detail-header__address">{{ club.address }}</p>
-    </header>
+      <div class="player-club-profile__whatsapp-card">
+        <div class="player-club-profile__whatsapp-icon" aria-hidden="true">
+          <mat-icon>chat</mat-icon>
+        </div>
+        <h2 class="player-club-profile__whatsapp-title">
+          {{ 'PLAYER_COURTS.PROFILE.WHATSAPP_TITLE' | translate }}
+        </h2>
+        <p class="player-club-profile__whatsapp-text">
+          {{ 'PLAYER_COURTS.PROFILE.WHATSAPP_TEXT' | translate }}
+        </p>
+        @if (whatsappHrefFor(club); as waHref) {
+          <a
+            class="player-club-profile__whatsapp-btn"
+            [href]="waHref"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <mat-icon aria-hidden="true">chat</mat-icon>
+            {{ 'CLUB_BROWSE.WHATSAPP' | translate }}
+          </a>
+        } @else {
+          <p class="player-club-profile__whatsapp-missing">
+            {{ 'PLAYER_COURTS.PROFILE.WHATSAPP_MISSING' | translate }}
+          </p>
+        }
+      </div>
 
-    <div
-      class="date-strip"
-      role="tablist"
-      [attr.aria-label]="'PLAYER_COURTS.DATE_STRIP' | translate"
-    >
-      @for (option of dateOptions; track option.isoDate) {
-        <button
-          type="button"
-          class="date-chip"
-          role="tab"
-          [class.date-chip--active]="selectedDate() === option.isoDate"
-          [attr.aria-selected]="selectedDate() === option.isoDate"
-          (click)="selectDate(option.isoDate)"
-        >
-          <span class="date-chip__weekday">
-            {{ option.isToday ? ('PLAYER_COURTS.TODAY' | translate) : option.weekdayLabel }}
-          </span>
-          <span class="date-chip__day">{{ option.dayMonthLabel }}</span>
-        </button>
-      }
+      <div class="player-club-profile__cards">
+        <article class="player-club-profile__info-card">
+          <h2 class="player-club-profile__card-title">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            {{ 'PLAYER_COURTS.PROFILE.INFO_TITLE' | translate }}
+          </h2>
+          <p class="player-club-profile__stats">
+            {{
+              'PLAYER_COURTS.PROFILE.COURTS_STATS'
+                | translate
+                  : {
+                      total: clubCourtStats().total,
+                      indoor: clubCourtStats().indoor,
+                      outdoor: clubCourtStats().outdoor,
+                    }
+            }}
+          </p>
+          <ul class="player-club-profile__court-desc">
+            @for (court of selectedClubCourts(); track court.id) {
+              @if (court.description) {
+                <li>
+                  <strong>{{ court.name }}:</strong> {{ court.description }}
+                </li>
+              }
+            }
+          </ul>
+        </article>
+
+        <article class="player-club-profile__info-card">
+          <h2 class="player-club-profile__card-title">
+            <mat-icon aria-hidden="true">location_on</mat-icon>
+            {{ 'PLAYER_COURTS.PROFILE.LOCATION_TITLE' | translate }}
+          </h2>
+          <div class="player-club-profile__map-wrap">
+            <iframe
+              class="player-club-profile__map"
+              [title]="'PLAYER_COURTS.PROFILE.MAP_TITLE' | translate: { club: club.name }"
+              [src]="mapsEmbedUrl(club.address)"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+          <div class="player-club-profile__map-footer">
+            <span class="player-club-profile__map-address">{{ club.address }}</span>
+            <a
+              class="player-club-profile__map-link"
+              [href]="mapsSearchUrl(club.address)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ 'PLAYER_COURTS.PROFILE.MAP_LINK' | translate }}
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </div>
+        </article>
+      </div>
     </div>
 
-    <div class="schedule-scroll">
-      <table class="schedule-grid">
-        <caption class="schedule-grid__caption">
-          {{
-            'PLAYER_COURTS.SCHEDULE_HINT' | translate
-          }}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" class="schedule-grid__time-head">
-              {{ 'PLAYER_COURTS.GRID_TIME' | translate }}
-            </th>
-            @for (court of displayCourts(); track court.id) {
-              <th scope="col" class="schedule-grid__court-head">
-                <div
-                  class="schedule-grid__court-head-inner schedule-grid__court-head-inner--readonly"
-                  [class]="'schedule-grid__court-head-inner--color-' + court.color"
-                >
-                  <span class="schedule-grid__court-label">{{
-                    'PLAYER_COURTS.GRID_COURT' | translate
-                  }}</span>
-                  <span class="schedule-grid__court-name">{{ court.name }}</span>
-                  <span class="schedule-grid__court-price">{{
-                    formatPrice(court.price_per_hour)
-                  }}</span>
+    <section class="player-timeline" aria-labelledby="player-timeline-title">
+      <h2 id="player-timeline-title" class="player-timeline__title">
+        {{ 'PLAYER_COURTS.TIMELINE.TITLE' | translate }}
+      </h2>
+
+      <div class="player-timeline__panel">
+        <div class="player-timeline__toolbar">
+          <span class="player-timeline__sport">
+            <mat-icon aria-hidden="true">sports_tennis</mat-icon>
+            {{ 'PLAYER_COURTS.TIMELINE.SPORT' | translate }}
+          </span>
+
+          <div class="player-timeline__date-nav">
+            <button
+              type="button"
+              class="player-timeline__date-btn"
+              [disabled]="!canGoPrevDate()"
+              [attr.aria-label]="'PLAYER_COURTS.TIMELINE.PREV_DAY' | translate"
+              (click)="shiftDate(-1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <div class="player-timeline__date-pick">
+              <button
+                type="button"
+                class="player-timeline__date-label"
+                [attr.aria-label]="'PLAYER_COURTS.DATE_STRIP' | translate"
+                (click)="scheduleDatePicker.open()"
+              >
+                @if (selectedDateOption(); as dateOpt) {
+                  {{ dateOpt.isToday ? ('PLAYER_COURTS.TODAY' | translate) : dateOpt.weekdayLabel }}
+                  {{ dateOpt.dayMonthLabel }}
+                }
+              </button>
+              <input
+                matInput
+                class="player-timeline__date-input-hidden"
+                [formControl]="scheduleDateControl"
+                [matDatepicker]="scheduleDatePicker"
+                [min]="minSelectableDateObject"
+                [max]="maxSelectableDateObject"
+                (dateChange)="onScheduleDatePicked($event)"
+                tabindex="-1"
+                aria-hidden="true"
+              />
+              <mat-datepicker #scheduleDatePicker />
+            </div>
+            <button
+              type="button"
+              class="player-timeline__date-btn"
+              [disabled]="!canGoNextDate()"
+              [attr.aria-label]="'PLAYER_COURTS.TIMELINE.NEXT_DAY' | translate"
+              (click)="shiftDate(1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (isLoading() && !schedule()) {
+          <p class="state-message">{{ 'PLAYER_COURTS.LOADING' | translate }}</p>
+        } @else if (displayCourts().length === 0) {
+          <p class="state-message">{{ 'PLAYER_COURTS.NO_SLOTS' | translate }}</p>
+        } @else if (!hoursRange()) {
+          <p class="state-message">{{ 'PLAYER_COURTS.NO_SLOTS' | translate }}</p>
+        } @else {
+          <div class="player-timeline__scroll">
+            <div class="player-timeline__grid">
+              <div class="player-timeline__axis" aria-hidden="true">
+                <div class="player-timeline__axis-spacer"></div>
+                <div class="player-timeline__axis-hours" [style.--hour-count]="hourTicks().length">
+                  @for (hour of hourTicks(); track hour) {
+                    <span class="player-timeline__hour">{{ hour }}</span>
+                  }
                 </div>
-              </th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @if (scheduleRows().length === 0) {
-            <tr>
-              <td class="schedule-grid__empty" [attr.colspan]="displayCourts().length + 1">
-                {{ 'PLAYER_COURTS.NO_SLOTS' | translate }}
-              </td>
-            </tr>
-          } @else {
-            @for (row of scheduleRows(); track row.start_time) {
-              <tr>
-                <th scope="row" class="schedule-grid__time">{{ row.start_time }}</th>
-                @for (court of displayCourts(); track court.id) {
-                  <td class="schedule-grid__cell">
-                    @switch (cellState(court.id, row.start_time)) {
-                      @case ('available') {
-                        @if (canBookSlot(court.id, row.start_time)) {
-                          <button
-                            type="button"
-                            class="slot-btn slot-btn--available"
-                            [attr.title]="'PLAYER_COURTS.SLOT_AVAILABLE' | translate"
-                            (click)="openBooking(court.id, court.name, row.start_time)"
-                          >
-                            {{ 'PLAYER_COURTS.RESERVE' | translate }}
-                          </button>
-                        } @else {
-                          <span
-                            class="slot-empty slot-empty--booked"
-                            [attr.title]="'PLAYER_COURTS.SLOT_PAST' | translate"
-                            aria-hidden="true"
-                          ></span>
-                        }
+              </div>
+
+              @for (court of displayCourts(); track court.id) {
+                @let detail = courtDetail(court.id);
+                <div [class]="'player-timeline__row player-timeline__row--color-' + court.color">
+                  <div class="player-timeline__row-label">
+                    <span class="player-timeline__court-name">{{ court.name }}</span>
+                    <span class="player-timeline__court-meta">
+                      @if (detail?.court_type === 'indoor') {
+                        {{ 'CLUB_OWNER.COURT_INDOOR' | translate }}
+                      } @else {
+                        {{ 'CLUB_OWNER.COURT_OUTDOOR' | translate }}
                       }
-                      @case ('booked') {
+                      · {{ formatPrice(court.price_per_hour) }}
+                    </span>
+                  </div>
+                  <div class="player-timeline__track">
+                    @for (
+                      segment of timelineForCourt(court.id);
+                      track segment.startTime + segment.kind + (segment.matchId ?? '')
+                    ) {
+                      @if (segment.kind === 'available') {
+                        <button
+                          type="button"
+                          class="player-timeline__segment player-timeline__segment--available"
+                          [style.left.%]="segment.leftPercent"
+                          [style.width.%]="segment.widthPercent"
+                          [attr.title]="'PLAYER_COURTS.SLOT_AVAILABLE' | translate"
+                          [attr.aria-label]="'PLAYER_COURTS.RESERVE' | translate"
+                          (click)="openBookingSegment(court.id, court.name, segment)"
+                        >
+                          <span class="player-timeline__segment-label">{{
+                            'PLAYER_COURTS.RESERVE' | translate
+                          }}</span>
+                        </button>
+                      } @else if (segment.kind === 'match' && segment.matchId) {
+                        <a
+                          class="player-timeline__segment player-timeline__segment--match"
+                          [routerLink]="['/matches', segment.matchId]"
+                          [style.left.%]="segment.leftPercent"
+                          [style.width.%]="segment.widthPercent"
+                          [attr.title]="'PLAYER_COURTS.VIEW_MATCH' | translate"
+                          [attr.aria-label]="'PLAYER_COURTS.VIEW_MATCH' | translate"
+                        >
+                          <span class="player-timeline__segment-label">{{
+                            'PLAYER_COURTS.VIEW_MATCH' | translate
+                          }}</span>
+                        </a>
+                      } @else if (segment.kind === 'booked') {
                         <span
-                          class="slot-empty slot-empty--booked"
-                          [attr.title]="'PLAYER_COURTS.SLOT_BOOKED' | translate"
-                          aria-hidden="true"
-                        ></span>
-                      }
-                      @case ('blocked') {
+                          class="player-timeline__segment player-timeline__segment--unavailable player-timeline__segment--booked"
+                          [style.left.%]="segment.leftPercent"
+                          [style.width.%]="segment.widthPercent"
+                          [attr.aria-label]="'PLAYER_COURTS.RESERVED' | translate"
+                        >
+                          <span class="player-timeline__segment-label">{{
+                            'PLAYER_COURTS.RESERVED' | translate
+                          }}</span>
+                        </span>
+                      } @else {
                         <span
-                          class="slot-empty slot-empty--blocked"
-                          [attr.title]="'PLAYER_COURTS.SLOT_BLOCKED' | translate"
-                          aria-hidden="true"
-                        ></span>
-                      }
-                      @default {
-                        <span
-                          class="slot-empty slot-empty--empty"
-                          [attr.title]="'PLAYER_COURTS.SLOT_EMPTY' | translate"
-                          aria-hidden="true"
+                          class="player-timeline__segment"
+                          [class.player-timeline__segment--unavailable]="
+                            segment.kind === 'unavailable'
+                          "
+                          [class.player-timeline__segment--mine]="segment.kind === 'mine'"
+                          [style.left.%]="segment.leftPercent"
+                          [style.width.%]="segment.widthPercent"
+                          [attr.aria-hidden]="segment.kind === 'unavailable' ? 'true' : null"
+                          [attr.aria-label]="
+                            segment.kind === 'mine'
+                              ? ('PLAYER_COURTS.TIMELINE.LEGEND_MINE' | translate)
+                              : null
+                          "
                         ></span>
                       }
                     }
-                  </td>
-                }
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <footer class="player-timeline__footer">
+            <p class="player-timeline__note">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              {{ 'PLAYER_COURTS.TIMELINE.BOOKING_WINDOW' | translate }}
+            </p>
+            <ul
+              class="player-timeline__legend"
+              [attr.aria-label]="'PLAYER_COURTS.TIMELINE.LEGEND' | translate"
+            >
+              <li>
+                <span class="player-timeline__swatch player-timeline__swatch--available"></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_AVAILABLE' | translate }}
+              </li>
+              <li>
+                <span class="player-timeline__swatch player-timeline__swatch--booked"></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_RESERVED' | translate }}
+              </li>
+              <li>
+                <span class="player-timeline__swatch player-timeline__swatch--match"></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_MATCH' | translate }}
+              </li>
+              <li>
+                <span class="player-timeline__swatch player-timeline__swatch--unavailable"></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_UNAVAILABLE' | translate }}
+              </li>
+              <li>
+                <span class="player-timeline__swatch player-timeline__swatch--mine"></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_MINE' | translate }}
+              </li>
+              <li>
+                <span
+                  class="player-timeline__swatch player-timeline__swatch--court"
+                  aria-hidden="true"
+                ></span>
+                {{ 'PLAYER_COURTS.TIMELINE.LEGEND_COURT_COLOR' | translate }}
+              </li>
+            </ul>
+          </footer>
+        }
+      </div>
+    </section>
   }
 
   <section class="my-bookings" aria-labelledby="my-bookings-title">
