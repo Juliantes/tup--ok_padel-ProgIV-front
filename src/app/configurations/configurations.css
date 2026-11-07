@@ -26,6 +26,7 @@
 }
 
 .profile-card,
+.club-card-theme-card,
 .logout-card,
 .app-info-card {
   border-radius: 1rem;
@@ -99,6 +100,97 @@ button[color='warn'] {
   font-size: 1.5rem;
   font-weight: bold;
   color: #0b5278;
+}
+
+.club-card-theme-card mat-card-subtitle {
+  margin-bottom: 0.75rem;
+}
+
+.club-card-theme-card__content {
+  padding-top: 0.25rem;
+}
+
+.club-card-theme-field {
+  display: block;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.state-message {
+  margin: 0.75rem 0;
+}
+
+.state-message.muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.state-message.error {
+  color: #c62828;
+}
+
+.club-card-theme__label {
+  color: #4b5563;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin: 0 0 0.45rem;
+}
+
+.club-card-theme__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.club-card-theme__swatch {
+  border: 0.125rem solid transparent;
+  border-radius: 0.55rem;
+  cursor: pointer;
+  height: 2.25rem;
+  padding: 0;
+  width: 3.25rem;
+}
+
+.club-card-theme__swatch:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.club-card-theme__swatch--active {
+  border-color: #103b50;
+  box-shadow: 0 0 0 0.125rem rgba(16, 59, 80, 0.15);
+}
+
+.club-card-theme__swatch--theme-0 {
+  background: linear-gradient(155deg, #0b5278, #103b50);
+}
+
+.club-card-theme__swatch--theme-1 {
+  background: linear-gradient(155deg, #14532d, #15803d);
+}
+
+.club-card-theme__swatch--theme-2 {
+  background: linear-gradient(155deg, #9a3412, #c2410c);
+}
+
+.club-card-theme__swatch--theme-3 {
+  background: linear-gradient(155deg, #171717, #404040);
+}
+
+.club-card-theme__swatch--theme-4 {
+  background: linear-gradient(155deg, #be185d, #c026d3);
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .user-agent {

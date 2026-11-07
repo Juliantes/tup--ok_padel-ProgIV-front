@@ -1,3 +1,5 @@
+@import './club-browse/club-browse.css';
+
 :host {
   display: block;
 }

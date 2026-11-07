@@ -7,36 +7,36 @@
     <p class="state-message">{{ 'PLAYER_COURTS.LOADING' | translate }}</p>
   } @else if (clubs().length === 0) {
     <p class="state-message">{{ 'PLAYER_COURTS.NO_CLUBS' | translate }}</p>
+  } @else if (showClubBrowse()) {
+    <div class="club-browse-page">
+      <header class="club-browse-page__header">
+        <h1 class="club-browse-page__title">{{ 'CLUB_BROWSE.PLAYER_TITLE' | translate }}</h1>
+        <p class="club-browse-page__subtitle">
+          {{ 'CLUB_BROWSE.PLAYER_SUBTITLE_other' | translate: { count: clubs().length } }}
+        </p>
+      </header>
+
+      <app-club-browse-grid
+        [clubs]="browseClubs()"
+        [whatsappHrefFor]="whatsappHrefFor"
+        (clubSelected)="enterClub($event)"
+      />
+    </div>
   } @else if (selectedClub(); as club) {
     @if (clubs().length > 1) {
-      <div
-        class="club-switcher"
-        role="tablist"
-        [attr.aria-label]="'PLAYER_COURTS.SWITCH_CLUB' | translate"
-      >
-        @for (item of clubs(); track item.id) {
-          <button
-            type="button"
-            class="club-switcher__chip"
-            role="tab"
-            [class.club-switcher__chip--active]="selectedClubId() === item.id"
-            [attr.aria-selected]="selectedClubId() === item.id"
-            (click)="selectClub(item.id)"
-          >
-            {{ item.name }}
-          </button>
-        }
-      </div>
+      <button type="button" class="club-browse-back" (click)="backToClubBrowse()">
+        <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        {{ 'CLUB_BROWSE.BACK_TO_CLUBS' | translate }}
+      </button>
     }
 
-    <header class="club-hero">
-      <div class="club-hero__brand">
-        <div class="club-hero__logo" aria-hidden="true">OP</div>
-        <div>
-          <h1 class="club-hero__title">{{ club.name }}</h1>
-          <p class="club-hero__address">{{ club.address }}</p>
-        </div>
-      </div>
+    @if (clubs().length === 1) {
+      <app-club-browse-hero [club]="club" />
+    }
+
+    <header class="club-detail-header">
+      <h1 class="club-detail-header__title">{{ club.name }}</h1>
+      <p class="club-detail-header__address">{{ club.address }}</p>
     </header>
 
     <div

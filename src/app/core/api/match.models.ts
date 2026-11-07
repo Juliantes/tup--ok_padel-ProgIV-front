@@ -2,6 +2,7 @@ export interface ClubSummary {
   id: number;
   name: string;
   address: string | null;
+  card_theme?: number;
 }
 
 export interface Court {

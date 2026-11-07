@@ -55,6 +55,64 @@
     </mat-card-content>
   </mat-card>
 
+  @if (showClubCardTheme()) {
+    <mat-card class="club-card-theme-card">
+      <mat-card-header>
+        <mat-card-title>{{ 'CONFIG.CLUB_CARD_THEME.TITLE' | translate }}</mat-card-title>
+        <mat-card-subtitle>{{ 'CONFIG.CLUB_CARD_THEME.SUBTITLE' | translate }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="club-card-theme-card__content">
+        @if (clubsErrorMessage()) {
+          <p class="state-message error" role="alert">{{ clubsErrorMessage() }}</p>
+        }
+
+        @if (clubsLoading()) {
+          <p class="state-message muted">{{ 'CONFIG.CLUB_CARD_THEME.LOADING' | translate }}</p>
+        } @else if (clubs().length === 0) {
+          <p class="state-message muted">{{ 'CONFIG.CLUB_CARD_THEME.NO_CLUBS' | translate }}</p>
+        } @else {
+          @if (clubs().length > 1) {
+            <mat-form-field appearance="outline" class="club-card-theme-field">
+              <mat-label>{{ 'CONFIG.CLUB_CARD_THEME.CLUB_LABEL' | translate }}</mat-label>
+              <mat-select [value]="selectedClubId()" (selectionChange)="onClubSelect($event.value)">
+                @for (club of clubs(); track club.id) {
+                  <mat-option [value]="club.id">{{ club.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+
+          @if (selectedClub(); as club) {
+            <div class="club-card-theme">
+              <p class="club-card-theme__label">{{ 'CONFIG.CLUB_CARD_THEME.LABEL' | translate }}</p>
+              <div
+                class="club-card-theme__options"
+                role="radiogroup"
+                [attr.aria-label]="'CONFIG.CLUB_CARD_THEME.LABEL' | translate"
+              >
+                @for (theme of cardThemes; track theme) {
+                  <button
+                    type="button"
+                    role="radio"
+                    [class]="'club-card-theme__swatch club-card-theme__swatch--theme-' + theme"
+                    [class.club-card-theme__swatch--active]="club.card_theme === theme"
+                    [attr.aria-checked]="club.card_theme === theme"
+                    [disabled]="cardThemeSaving()"
+                    (click)="selectCardTheme(theme)"
+                  >
+                    <span class="visually-hidden">{{
+                      'CONFIG.CLUB_CARD_THEME.OPTION_' + theme | translate
+                    }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
   <mat-card class="logout-card">
     <mat-card-content>
       <button mat-raised-button color="warn" (click)="openLogoutDialog()">

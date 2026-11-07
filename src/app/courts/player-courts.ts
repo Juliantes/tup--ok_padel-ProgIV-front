@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslatePipe } from '@ngx-translate/core';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -13,11 +14,15 @@ import {
 import { CourtBookingsApiService } from '../core/api/court-bookings-api.service';
 import { CourtsApiService } from '../core/api/courts-api.service';
 import { readApiErrorMessage } from '../core/api/api-errors';
+import { ClubBrowseGrid } from '../club/club-browse/club-browse-grid/club-browse-grid';
+import { ClubBrowseHero } from '../club/club-browse/club-browse-hero/club-browse-hero';
+import { ClubBrowseItem } from '../club/club-browse/club-browse.models';
 import {
   buildScheduleDateOptions,
   formatClubPrice,
   scheduleCellKey,
   todayIsoDate,
+  whatsappClubUrl,
 } from '../club/club-schedule.utils';
 import {
   CourtBookingDialog,
@@ -42,7 +47,7 @@ function slotDurationMinutes(startTime: string, endTime: string | null): number 
 
 @Component({
   selector: 'app-player-courts',
-  imports: [MatButtonModule, TranslatePipe],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe, ClubBrowseGrid, ClubBrowseHero],
   templateUrl: './player-courts.html',
   styleUrl: './player-courts.css',
 })
@@ -50,6 +55,7 @@ export class PlayerCourts implements OnInit {
   private readonly courtsApi = inject(CourtsApiService);
   private readonly courtBookingsApi = inject(CourtBookingsApiService);
   private readonly dialog = inject(MatDialog);
+  private readonly translate = inject(TranslateService);
 
   protected readonly clubs = signal<PlayerClubOption[]>([]);
   protected readonly selectedClubId = signal<number | null>(null);
@@ -60,6 +66,15 @@ export class PlayerCourts implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly dateOptions = buildScheduleDateOptions(14);
+
+  protected readonly browseClubs = computed((): ClubBrowseItem[] => this.clubs());
+
+  protected readonly showClubBrowse = computed(() => {
+    if (this.clubs().length <= 1) {
+      return false;
+    }
+    return this.selectedClubId() === null;
+  });
 
   protected readonly selectedClub = computed(() => {
     const id = this.selectedClubId();
@@ -91,13 +106,30 @@ export class PlayerCourts implements OnInit {
     return this.myBookings().filter((booking) => new Date(booking.date).getTime() < now);
   });
 
+  protected readonly whatsappHrefFor = (club: ClubBrowseItem): string | null => {
+    const phone = club.phone?.trim();
+    if (!phone) {
+      return null;
+    }
+    const message = this.translate.instant('PLAYER_COURTS.WHATSAPP_MESSAGE', {
+      club: club.name,
+    });
+    return whatsappClubUrl(phone, message);
+  };
+
   ngOnInit(): void {
     void this.bootstrap();
   }
 
-  protected selectClub(clubId: number): void {
+  protected enterClub(clubId: number): void {
     this.selectedClubId.set(clubId);
     void this.loadSchedule();
+  }
+
+  protected backToClubBrowse(): void {
+    this.selectedClubId.set(null);
+    this.schedule.set(null);
+    this.errorMessage.set(null);
   }
 
   protected selectDate(isoDate: string): void {
@@ -206,21 +238,41 @@ export class PlayerCourts implements OnInit {
             id: court.club.id,
             name: court.club.name,
             address: court.club.address ?? '',
+            card_theme: court.club.card_theme,
           });
         }
       });
 
       const clubList = [...clubMap.values()].sort((a, b) => a.name.localeCompare(b.name));
       this.clubs.set(clubList);
-      if (clubList.length > 0) {
+      if (clubList.length === 1) {
         this.selectedClubId.set(clubList[0].id);
         await this.loadSchedule();
+      } else if (clubList.length > 1) {
+        this.selectedClubId.set(null);
       }
     } catch (error: unknown) {
       this.errorMessage.set(readApiErrorMessage(error));
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private syncClubPhoneFromSchedule(response: PlayerAvailabilityResponse): void {
+    const phone = response.club.phone?.trim();
+    const cardTheme = response.club.card_theme;
+    this.clubs.update((list) =>
+      list.map((club) => {
+        if (club.id !== response.club.id) {
+          return club;
+        }
+        return {
+          ...club,
+          ...(phone ? { phone } : {}),
+          ...(cardTheme !== undefined && cardTheme !== null ? { card_theme: cardTheme } : {}),
+        };
+      }),
+    );
   }
 
   private async loadSchedule(): Promise<void> {
@@ -236,6 +288,7 @@ export class PlayerCourts implements OnInit {
         this.courtBookingsApi.getClubAvailability(clubId, this.selectedDate()),
       );
       this.schedule.set(response);
+      this.syncClubPhoneFromSchedule(response);
     } catch (error: unknown) {
       this.errorMessage.set(readApiErrorMessage(error));
       this.schedule.set(null);

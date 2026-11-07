@@ -6,6 +6,7 @@ export interface OwnerClub {
   address: string;
   phone: string;
   email: string | null;
+  card_theme: number;
 }
 
 export interface OwnerClubsResponse {
@@ -29,6 +30,7 @@ export interface OwnerClubPayload {
   address: string;
   phone: string;
   email?: string | null;
+  card_theme?: number;
 }
 
 export interface OwnerCourtPayload {
@@ -211,4 +213,6 @@ export interface PlayerClubOption {
   id: number;
   name: string;
   address: string;
+  phone?: string;
+  card_theme?: number;
 }

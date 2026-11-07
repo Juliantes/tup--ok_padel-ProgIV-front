@@ -47,7 +47,7 @@ export class Header implements OnInit {
     }
 
     if (this.auth.isPlayer()) {
-      items.push({ labelKey: 'NAV.COURTS', path: '/canchas', analyticsName: 'canchas' });
+      items.push({ labelKey: 'NAV.COURTS', path: '/courts', analyticsName: 'courts' });
     }
 
     items.push({ labelKey: 'NAV.CONFIG', path: '/configurations', analyticsName: 'configuracion' });

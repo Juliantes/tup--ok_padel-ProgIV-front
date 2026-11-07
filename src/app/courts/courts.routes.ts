@@ -4,7 +4,7 @@ import { playerGuard } from '../login/player.guard';
 
 export const courtsRoutes: Routes = [
   {
-    path: 'canchas',
+    path: 'courts',
     loadComponent: () => import('./player-courts').then((m) => m.PlayerCourts),
     canActivate: [playerGuard],
   },
