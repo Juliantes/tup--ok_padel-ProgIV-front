@@ -8,10 +8,10 @@ import { provideTranslateTesting } from '../testing/translate-testing';
 import { AuthService } from './auth.service';
 
 describe('AuthService roles', () => {
-  const apiUser = signal<ApiUser | null>(null);
+  const session = signal<{ token: string; user: ApiUser } | null>(null);
 
   beforeEach(() => {
-    apiUser.set(null);
+    session.set(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -20,11 +20,17 @@ describe('AuthService roles', () => {
         {
           provide: ApiSessionService,
           useValue: {
-            user: () => apiUser(),
-            hasToken: () => apiUser() !== null,
-            setSession: (_token: string, user: ApiUser) => apiUser.set(user),
-            clear: () => apiUser.set(null),
-            updateUser: (user: ApiUser) => apiUser.set(user),
+            apiUser: session,
+            user: () => session()?.user ?? null,
+            hasToken: () => session() !== null,
+            setSession: (token: string, user: ApiUser) => session.set({ token, user }),
+            clear: () => session.set(null),
+            updateUser: (user: ApiUser) => {
+              const current = session();
+              if (current) {
+                session.set({ ...current, user });
+              }
+            },
           },
         },
         {
@@ -58,21 +64,21 @@ describe('AuthService roles', () => {
   }
 
   it('detects club_owner role alone', () => {
-    apiUser.set(buildUser(['club_owner']));
+    session.set({ token: 't', user: buildUser(['club_owner']) });
     expect(service().isClubOwner()).toBe(true);
     expect(service().isAdmin()).toBe(false);
     expect(service().isPlayer()).toBe(false);
   });
 
   it('supports multiple roles', () => {
-    apiUser.set(buildUser(['admin', 'player', 'club_owner']));
+    session.set({ token: 't', user: buildUser(['admin', 'player', 'club_owner']) });
     expect(service().isClubOwner()).toBe(true);
     expect(service().isAdmin()).toBe(true);
     expect(service().isPlayer()).toBe(true);
   });
 
   it('detects player only', () => {
-    apiUser.set(buildUser(['player']));
+    session.set({ token: 't', user: buildUser(['player']) });
     expect(service().isPlayer()).toBe(true);
     expect(service().isClubOwner()).toBe(false);
   });

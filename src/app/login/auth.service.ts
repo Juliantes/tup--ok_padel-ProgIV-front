@@ -70,7 +70,7 @@ export class AuthService {
   readonly currentUser = signal<User | null>(null);
   readonly apiUser = computed(() => this.apiSession.user());
   readonly isLogged = computed(() => this.apiSession.hasToken());
-  readonly userRoles = computed(() => this.apiSession.user()?.roles ?? []);
+  readonly userRoles = computed(() => this.apiSession.apiUser()?.user.roles ?? []);
   readonly isAdmin = computed(() => this.userRoles().includes('admin'));
   readonly isPlayer = computed(() => this.userRoles().includes('player'));
   readonly isClubOwner = computed(() => this.userRoles().includes('club_owner'));
