@@ -309,6 +309,7 @@ export class ClubOwner implements OnInit {
           name: court.name,
           price_per_hour: court.price_per_hour,
           status: court.status as ClubScheduleCourt['status'],
+          color: court.color,
         })),
       );
 

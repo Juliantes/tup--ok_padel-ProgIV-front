@@ -77,6 +77,7 @@ describe('ClubOwner', () => {
           court_type: 'indoor',
           price_per_hour: 8000,
           status: 'active',
+          color: 0,
           club: { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123' },
         },
       ],
@@ -97,7 +98,7 @@ describe('ClubOwner', () => {
           card_theme: 0,
         },
         date: todayIsoDate(),
-        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active' }],
+        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active', color: 0 }],
         rows: [{ start_time: '10:00', end_time: '11:30' }],
         cells: [
           {
@@ -190,6 +191,7 @@ describe('ClubOwner', () => {
           court_type: 'indoor',
           price_per_hour: 8000,
           status: 'active',
+          color: 0,
           club: { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123' },
         },
       ],
@@ -207,7 +209,7 @@ describe('ClubOwner', () => {
           card_theme: 0,
         },
         date: todayIsoDate(),
-        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active' }],
+        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active', color: 0 }],
         rows: [{ start_time: '10:00', end_time: '11:30' }],
         cells: [
           {

@@ -185,10 +185,31 @@
   background: #fff;
   border: 0.0625rem solid #e5e7eb;
   border-radius: 0.65rem;
+  border-left-width: 0.35rem;
   display: flex;
   gap: 0;
   min-width: 6.5rem;
   overflow: hidden;
+}
+
+.court-pill--color-0 {
+  border-left-color: #0b5278;
+}
+
+.court-pill--color-1 {
+  border-left-color: #15803d;
+}
+
+.court-pill--color-2 {
+  border-left-color: #c2410c;
+}
+
+.court-pill--color-3 {
+  border-left-color: #404040;
+}
+
+.court-pill--color-4 {
+  border-left-color: #c026d3;
 }
 
 .court-pill__main {
@@ -279,9 +300,32 @@
 
 .schedule-grid__court-head-inner {
   align-items: center;
+  border-top: 0.25rem solid transparent;
+  border-radius: 0.35rem;
   display: flex;
   gap: 0.15rem;
   justify-content: center;
+  padding-top: 0.2rem;
+}
+
+.schedule-grid__court-head-inner--color-0 {
+  border-top-color: #0b5278;
+}
+
+.schedule-grid__court-head-inner--color-1 {
+  border-top-color: #15803d;
+}
+
+.schedule-grid__court-head-inner--color-2 {
+  border-top-color: #c2410c;
+}
+
+.schedule-grid__court-head-inner--color-3 {
+  border-top-color: #404040;
+}
+
+.schedule-grid__court-head-inner--color-4 {
+  border-top-color: #c026d3;
 }
 
 .schedule-grid__court-btn {

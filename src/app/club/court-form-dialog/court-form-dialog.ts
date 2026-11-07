@@ -10,7 +10,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { readApiErrorMessage } from '../../core/api/api-errors';
 import { OwnerCourtPayload } from '../../core/api/club.models';
-import { Court } from '../../core/api/match.models';
+import { Court, type CourtColor } from '../../core/api/match.models';
 import { ClubsApiService } from '../../core/api/clubs-api.service';
 
 export interface CourtFormDialogData {
@@ -19,6 +19,8 @@ export interface CourtFormDialogData {
 }
 
 export type CourtFormDialogResult = 'saved' | 'deleted';
+
+const COURT_COLORS: CourtColor[] = [0, 1, 2, 3, 4];
 
 @Component({
   selector: 'app-court-form-dialog',
@@ -47,6 +49,8 @@ export class CourtFormDialog {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly isEdit = !!this.data.court;
 
+  protected readonly courtColors = COURT_COLORS;
+
   protected readonly form = this.fb.nonNullable.group({
     name: [this.data.court?.name ?? '', Validators.required],
     court_type: [this.data.court?.court_type ?? 'indoor', Validators.required],
@@ -56,6 +60,7 @@ export class CourtFormDialog {
     ],
     status: [this.data.court?.status ?? 'active', Validators.required],
     description: [this.data.court?.description ?? ''],
+    color: [this.data.court?.color ?? 0, Validators.required],
   });
 
   protected close(): void {
@@ -78,6 +83,7 @@ export class CourtFormDialog {
       price_per_hour: Number(raw.price_per_hour),
       status: raw.status as OwnerCourtPayload['status'],
       description: raw.description.trim() || null,
+      color: raw.color as CourtColor,
     };
 
     try {

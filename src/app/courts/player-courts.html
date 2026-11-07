@@ -77,6 +77,7 @@
               <th scope="col" class="schedule-grid__court-head">
                 <div
                   class="schedule-grid__court-head-inner schedule-grid__court-head-inner--readonly"
+                  [class]="'schedule-grid__court-head-inner--color-' + court.color"
                 >
                   <span class="schedule-grid__court-label">{{
                     'PLAYER_COURTS.GRID_COURT' | translate

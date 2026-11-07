@@ -85,7 +85,7 @@
         <h2 class="courts-overview__title">{{ 'CLUB_OWNER.COURTS_OVERVIEW' | translate }}</h2>
         <div class="courts-overview__list">
           @for (court of displayCourts(); track court.id) {
-            <div class="court-pill">
+            <div class="court-pill" [class]="'court-pill--color-' + court.color">
               <button type="button" class="court-pill__main" (click)="openTimeSlots(court)">
                 <span class="court-pill__kind">{{ 'CLUB_OWNER.GRID_COURT' | translate }}</span>
                 <span class="court-pill__name">{{ court.name }}</span>
@@ -121,7 +121,10 @@
               </th>
               @for (court of displayCourts(); track court.id) {
                 <th scope="col" class="schedule-grid__court-head">
-                  <div class="schedule-grid__court-head-inner">
+                  <div
+                    class="schedule-grid__court-head-inner"
+                    [class]="'schedule-grid__court-head-inner--color-' + court.color"
+                  >
                     <button
                       type="button"
                       class="schedule-grid__court-btn"

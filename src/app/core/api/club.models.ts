@@ -1,4 +1,6 @@
-import { Court } from './match.models';
+import { Court, type CourtColor } from './match.models';
+
+export type { CourtColor };
 
 export interface OwnerClub {
   id: number;
@@ -39,6 +41,7 @@ export interface OwnerCourtPayload {
   price_per_hour: number;
   description?: string | null;
   status: 'active' | 'maintenance' | 'inactive';
+  color: CourtColor;
 }
 
 export type ClubScheduleCellState = 'empty' | 'blocked' | 'booked' | 'available';
@@ -48,6 +51,7 @@ export interface ClubScheduleCourt {
   name: string;
   price_per_hour: number;
   status: 'active' | 'maintenance' | 'inactive';
+  color: CourtColor;
 }
 
 export interface ClubScheduleRow {

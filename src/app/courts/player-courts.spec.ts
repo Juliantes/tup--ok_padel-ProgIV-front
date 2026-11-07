@@ -42,6 +42,7 @@ describe('PlayerCourts', () => {
           court_type: 'indoor',
           price_per_hour: 100,
           status: 'active',
+          color: 0,
           club: { id: 1, name: 'Club Test', address: 'Calle 1' },
         },
       ],
@@ -59,7 +60,7 @@ describe('PlayerCourts', () => {
     initialSchedule.flush({
       club: { id: 1, name: 'Club Test', address: 'Calle 1', phone: '111', email: null },
       date: initialSchedule.request.params.get('date'),
-      courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 100, status: 'active' }],
+      courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 100, status: 'active', color: 0 }],
       rows: [],
       cells: [],
     });
@@ -75,7 +76,7 @@ describe('PlayerCourts', () => {
     tomorrowSchedule.flush({
       club: { id: 1, name: 'Club Test', address: 'Calle 1', phone: '111', email: null },
       date: tomorrow,
-      courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 100, status: 'active' }],
+      courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 100, status: 'active', color: 0 }],
       rows: [{ start_time: '10:00', end_time: '11:30' }],
       cells: [
         {
