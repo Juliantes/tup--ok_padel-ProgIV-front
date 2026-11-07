@@ -13,3 +13,68 @@
 .court-form mat-form-field {
   width: 100%;
 }
+
+.court-form__color {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.15rem 0 0.35rem;
+}
+
+.court-form__color-label {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.court-form__color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.court-form__swatch {
+  border: 0.125rem solid transparent;
+  border-radius: 0.55rem;
+  cursor: pointer;
+  height: 2.25rem;
+  padding: 0;
+  width: 3.25rem;
+}
+
+.court-form__swatch--active {
+  border-color: #103b50;
+  box-shadow: 0 0 0 0.125rem rgba(16, 59, 80, 0.15);
+}
+
+.court-form__swatch--0 {
+  background: linear-gradient(155deg, #0b5278, #103b50);
+}
+
+.court-form__swatch--1 {
+  background: linear-gradient(155deg, #14532d, #15803d);
+}
+
+.court-form__swatch--2 {
+  background: linear-gradient(155deg, #9a3412, #c2410c);
+}
+
+.court-form__swatch--3 {
+  background: linear-gradient(155deg, #171717, #404040);
+}
+
+.court-form__swatch--4 {
+  background: linear-gradient(155deg, #be185d, #c026d3);
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

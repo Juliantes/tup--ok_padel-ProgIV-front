@@ -1,0 +1,43 @@
+<div class="club-card-grid">
+  @for (club of clubs(); track club.id) {
+    <article class="club-card">
+      <div class="club-card__hero" [class]="themeClass(club)">
+        @if (onlineBooking()) {
+          <span class="club-card__badge">{{ 'CLUB_BROWSE.ONLINE_BOOKING' | translate }}</span>
+        }
+        <p class="club-card__label">{{ badgeLabel(club) }}</p>
+        <p class="club-card__sublabel">{{ 'CLUB_BROWSE.PADEL_CLUB' | translate }}</p>
+      </div>
+
+      <div class="club-card__body">
+        <h2 class="club-card__name">
+          <mat-icon aria-hidden="true">apartment</mat-icon>
+          <span>{{ club.name }}</span>
+        </h2>
+        <p class="club-card__meta">
+          <mat-icon aria-hidden="true">place</mat-icon>
+          <span>{{ club.address }}</span>
+        </p>
+
+        <div class="club-card__actions">
+          @if (whatsappHrefFor()(club); as waHref) {
+            <a
+              class="club-card__whatsapp"
+              [href]="waHref"
+              target="_blank"
+              rel="noopener noreferrer"
+              (click)="$event.stopPropagation()"
+            >
+              <mat-icon aria-hidden="true">chat</mat-icon>
+              {{ 'CLUB_BROWSE.WHATSAPP' | translate }}
+            </a>
+          }
+          <button type="button" class="club-card__details" (click)="selectClub(club.id)">
+            {{ 'CLUB_BROWSE.VIEW_DETAILS' | translate }}
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </article>
+  }
+</div>

@@ -1,4 +1,6 @@
-import { Court } from './match.models';
+import { Court, type CourtColor } from './match.models';
+
+export type { CourtColor };
 
 export interface OwnerClub {
   id: number;
@@ -6,6 +8,7 @@ export interface OwnerClub {
   address: string;
   phone: string;
   email: string | null;
+  card_theme: number;
 }
 
 export interface OwnerClubsResponse {
@@ -29,6 +32,7 @@ export interface OwnerClubPayload {
   address: string;
   phone: string;
   email?: string | null;
+  card_theme?: number;
 }
 
 export interface OwnerCourtPayload {
@@ -37,6 +41,7 @@ export interface OwnerCourtPayload {
   price_per_hour: number;
   description?: string | null;
   status: 'active' | 'maintenance' | 'inactive';
+  color: CourtColor;
 }
 
 export type ClubScheduleCellState = 'empty' | 'blocked' | 'booked' | 'available';
@@ -46,6 +51,7 @@ export interface ClubScheduleCourt {
   name: string;
   price_per_hour: number;
   status: 'active' | 'maintenance' | 'inactive';
+  color: CourtColor;
 }
 
 export interface ClubScheduleRow {
@@ -147,4 +153,70 @@ export interface WalkInBookingResponse {
     walk_in_guest_name?: string | null;
     walk_in_guest_phone?: string | null;
   };
+}
+
+export interface PlayerAvailabilityCell {
+  court_id: number;
+  start_time: string;
+  state: ClubScheduleCellState;
+  time_slot_id: number | null;
+  end_time: string | null;
+}
+
+export interface PlayerAvailabilityResponse {
+  club: OwnerClub;
+  date: string;
+  courts: ClubScheduleCourt[];
+  rows: ClubScheduleRow[];
+  cells: PlayerAvailabilityCell[];
+}
+
+export interface CourtBookingPayload {
+  club_id: number;
+  court_id: number;
+  time_slot_id: number;
+  date: string;
+}
+
+export interface CourtBookingSummary {
+  id: number;
+  court_id?: number;
+  time_slot_id?: number | null;
+  date: string;
+  duration: number;
+  status: string;
+  player_booking?: boolean;
+  estimated_price: number;
+  cancellable: boolean;
+  court?: {
+    id: number;
+    name: string;
+    price_per_hour: number;
+  };
+  club?: {
+    id: number;
+    name: string;
+    address: string;
+  };
+  time_slot?: {
+    id: number;
+    start_time: string;
+    end_time: string;
+  };
+}
+
+export interface CourtBookingResponse {
+  court_booking: CourtBookingSummary;
+}
+
+export interface CourtBookingsIndexResponse {
+  court_bookings: CourtBookingSummary[];
+}
+
+export interface PlayerClubOption {
+  id: number;
+  name: string;
+  address: string;
+  phone?: string;
+  card_theme?: number;
 }

@@ -14,6 +14,9 @@ import {
 import { ClubsApiService } from '../core/api/clubs-api.service';
 import { readApiErrorMessage } from '../core/api/api-errors';
 import { Court } from '../core/api/match.models';
+import { ClubBrowseGrid } from './club-browse/club-browse-grid/club-browse-grid';
+import { ClubBrowseHero } from './club-browse/club-browse-hero/club-browse-hero';
+import { ClubBrowseItem } from './club-browse/club-browse.models';
 import {
   CourtFormDialog,
   CourtFormDialogData,
@@ -40,7 +43,7 @@ import {
 
 @Component({
   selector: 'app-club-owner',
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe, ClubBrowseGrid, ClubBrowseHero],
   templateUrl: './club-owner.html',
   styleUrl: './club-owner.css',
 })
@@ -81,6 +84,15 @@ export class ClubOwner implements OnInit {
 
   protected readonly scheduleRows = computed(() => this.schedule()?.rows ?? []);
 
+  protected readonly browseClubs = computed((): ClubBrowseItem[] => this.clubs());
+
+  protected readonly showClubBrowse = computed(() => {
+    if (this.clubs().length <= 1) {
+      return false;
+    }
+    return this.selectedClubId() === null;
+  });
+
   ngOnInit(): void {
     void this.loadClubs();
   }
@@ -89,6 +101,29 @@ export class ClubOwner implements OnInit {
     this.selectedClubId.set(clubId);
     void this.loadSchedule();
   }
+
+  protected enterClub(clubId: number): void {
+    this.selectClub(clubId);
+  }
+
+  protected backToClubBrowse(): void {
+    this.selectedClubId.set(null);
+    this.schedule.set(null);
+    this.courts.set([]);
+    this.fullCourts.set([]);
+    this.errorMessage.set(null);
+  }
+
+  protected readonly whatsappHrefFor = (club: ClubBrowseItem): string | null => {
+    const phone = club.phone?.trim();
+    if (!phone) {
+      return null;
+    }
+    const message = this.translate.instant('CLUB_OWNER.WHATSAPP_MESSAGE', {
+      club: club.name,
+    });
+    return whatsappClubUrl(phone, message);
+  };
 
   protected selectDate(isoDate: string): void {
     this.selectedDate.set(isoDate);
@@ -242,8 +277,11 @@ export class ClubOwner implements OnInit {
     try {
       const response = await firstValueFrom(this.clubsApi.listClubs());
       this.clubs.set(response.clubs);
-      if (response.clubs.length > 0) {
+      if (response.clubs.length === 1) {
         this.selectClub(response.clubs[0].id);
+      } else if (response.clubs.length > 1) {
+        this.selectedClubId.set(null);
+        this.isLoading.set(false);
       } else {
         this.isLoading.set(false);
       }
@@ -271,6 +309,7 @@ export class ClubOwner implements OnInit {
           name: court.name,
           price_per_hour: court.price_per_hour,
           status: court.status as ClubScheduleCourt['status'],
+          color: court.color,
         })),
       );
 

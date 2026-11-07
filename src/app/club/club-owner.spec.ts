@@ -44,10 +44,28 @@ describe('ClubOwner', () => {
 
     http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs`).flush({
       clubs: [
-        { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123', phone: '1144556677', email: null },
-        { id: 2, name: 'Segundo Club', address: 'Calle 2', phone: '1144556688', email: null },
+        {
+          id: 1,
+          name: 'Ok Padel Club',
+          address: 'Av. Test 123',
+          phone: '1144556677',
+          email: null,
+          card_theme: 0,
+        },
+        {
+          id: 2,
+          name: 'Segundo Club',
+          address: 'Calle 2',
+          phone: '1144556688',
+          email: null,
+          card_theme: 1,
+        },
       ],
     });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    fixture.componentInstance['enterClub'](1);
     await fixture.whenStable();
 
     http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs/1/courts`).flush({
@@ -59,6 +77,7 @@ describe('ClubOwner', () => {
           court_type: 'indoor',
           price_per_hour: 8000,
           status: 'active',
+          color: 0,
           club: { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123' },
         },
       ],
@@ -76,9 +95,10 @@ describe('ClubOwner', () => {
           address: 'Av. Test 123',
           phone: '1144556677',
           email: null,
+          card_theme: 0,
         },
         date: todayIsoDate(),
-        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active' }],
+        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active', color: 0 }],
         rows: [{ start_time: '10:00', end_time: '11:30' }],
         cells: [
           {
@@ -171,6 +191,7 @@ describe('ClubOwner', () => {
           court_type: 'indoor',
           price_per_hour: 8000,
           status: 'active',
+          color: 0,
           club: { id: 1, name: 'Ok Padel Club', address: 'Av. Test 123' },
         },
       ],
@@ -185,9 +206,10 @@ describe('ClubOwner', () => {
           address: 'Av. Test 123',
           phone: '1144556677',
           email: null,
+          card_theme: 0,
         },
         date: todayIsoDate(),
-        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active' }],
+        courts: [{ id: 10, name: 'Cancha 1', price_per_hour: 8000, status: 'active', color: 0 }],
         rows: [{ start_time: '10:00', end_time: '11:30' }],
         cells: [
           {

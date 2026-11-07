@@ -2,7 +2,10 @@ export interface ClubSummary {
   id: number;
   name: string;
   address: string | null;
+  card_theme?: number;
 }
+
+export type CourtColor = 0 | 1 | 2 | 3 | 4;
 
 export interface Court {
   id: number;
@@ -11,6 +14,7 @@ export interface Court {
   court_type: string;
   price_per_hour: number;
   status: string;
+  color: CourtColor;
   club: ClubSummary;
   image_url?: string | null;
 }

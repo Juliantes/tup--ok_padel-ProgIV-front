@@ -23,6 +23,28 @@
       </mat-select>
     </mat-form-field>
 
+    <div
+      class="court-form__color"
+      role="radiogroup"
+      [attr.aria-label]="'CLUB_OWNER.COURT_FORM.COLOR' | translate"
+    >
+      <span class="court-form__color-label">{{ 'CLUB_OWNER.COURT_FORM.COLOR' | translate }}</span>
+      <div class="court-form__color-options">
+        @for (c of courtColors; track c) {
+          <button
+            type="button"
+            role="radio"
+            [class]="'court-form__swatch court-form__swatch--' + c"
+            [class.court-form__swatch--active]="form.controls.color.value === c"
+            [attr.aria-checked]="form.controls.color.value === c"
+            (click)="form.controls.color.setValue(c)"
+          >
+            <span class="visually-hidden">{{ 'CLUB_OWNER.COURT_COLOR_' + c | translate }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
     <mat-form-field>
       <mat-label>{{ 'CLUB_OWNER.COURT_FORM.PRICE' | translate }}</mat-label>
       <input matInput type="number" formControlName="price_per_hour" />

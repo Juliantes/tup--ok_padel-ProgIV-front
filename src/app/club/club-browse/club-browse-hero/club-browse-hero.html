@@ -1,0 +1,11 @@
+@let current = club();
+<div
+  [class]="'club-card__hero club-card__hero--banner ' + themeClass(current)"
+  [attr.aria-label]="current.name"
+>
+  @if (onlineBooking()) {
+    <span class="club-card__badge">{{ 'CLUB_BROWSE.ONLINE_BOOKING' | translate }}</span>
+  }
+  <p class="club-card__label">{{ badgeLabel(current) }}</p>
+  <p class="club-card__sublabel">{{ 'CLUB_BROWSE.PADEL_CLUB' | translate }}</p>
+</div>

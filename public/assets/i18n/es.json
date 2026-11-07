@@ -6,6 +6,7 @@
     "HOME": "Inicio",
     "MATCHES": "Partidos",
     "CLUB": "Mis canchas",
+    "COURTS": "Canchas",
     "CONFIG": "Configuración"
   },
   "ROLES": {
@@ -131,7 +132,20 @@
     "COURT_SIDE_DERECHA": "Derecha",
     "COURT_SIDE_REVES": "Revés",
     "BIO": "Bio",
-    "PLACEHOLDER_PHONE_HINT": "Completá tu teléfono real: el sistema generó uno temporal al registrarte con Google."
+    "PLACEHOLDER_PHONE_HINT": "Completá tu teléfono real: el sistema generó uno temporal al registrarte con Google.",
+    "CLUB_CARD_THEME": {
+      "TITLE": "Apariencia del club",
+      "SUBTITLE": "Define el color que verán los jugadores en la tarjeta de tu club al explorar clubes.",
+      "LOADING": "Cargando clubes...",
+      "NO_CLUBS": "Todavía no tenés un club registrado.",
+      "CLUB_LABEL": "Club",
+      "LABEL": "Color de la tarjeta del club",
+      "OPTION_0": "Azul",
+      "OPTION_1": "Verde",
+      "OPTION_2": "Terracota",
+      "OPTION_3": "Negro grisáceo",
+      "OPTION_4": "Rosa fucsia"
+    }
   },
   "MATCHES": {
     "TITLE": "Partidos disponibles",
@@ -253,6 +267,19 @@
     "CREATE_ERROR": "No se pudo crear el partido.",
     "ACTION_ERROR": "No se pudo completar la acción."
   },
+  "CLUB_BROWSE": {
+    "PADEL_CLUB": "Club de pádel",
+    "ONLINE_BOOKING": "Reservas online",
+    "WHATSAPP": "Consultar por WhatsApp",
+    "VIEW_DETAILS": "Ver detalles",
+    "BACK_TO_CLUBS": "Ver todos los clubes",
+    "PLAYER_TITLE": "Clubes de pádel",
+    "PLAYER_SUBTITLE_one": "{{count}} club con canchas disponibles. Elegí uno para ver horarios y reservar.",
+    "PLAYER_SUBTITLE_other": "{{count}} clubes con canchas disponibles. Elegí uno para ver horarios y reservar.",
+    "OWNER_TITLE": "Mis clubes",
+    "OWNER_SUBTITLE_one": "{{count}} club registrado. Elegí uno para administrar canchas y turnos.",
+    "OWNER_SUBTITLE_other": "{{count}} clubes registrados. Elegí uno para administrar canchas y turnos."
+  },
   "CLUB_OWNER": {
     "TITLE": "Mis canchas",
     "LOADING": "Cargando clubes...",
@@ -269,6 +296,14 @@
     "RESERVE": "Reservar",
     "WHATSAPP": "WhatsApp",
     "WHATSAPP_MESSAGE": "Hola, quiero consultar por turnos en {{club}}.",
+    "CARD_THEME": {
+      "LABEL": "Color de la tarjeta del club",
+      "OPTION_0": "Azul",
+      "OPTION_1": "Verde",
+      "OPTION_2": "Terracota",
+      "OPTION_3": "Negro grisáceo",
+      "OPTION_4": "Rosa fucsia"
+    },
     "RESERVE_WHATSAPP_MESSAGE": "Hola, quiero reservar {{court}} el {{date}} a las {{time}} en {{club}}.",
     "SLOT_AVAILABLE": "Turno disponible",
     "SLOT_BOOKED": "Turno ocupado",
@@ -295,6 +330,11 @@
     "STATUS_active": "Activa",
     "STATUS_maintenance": "Mantenimiento",
     "STATUS_inactive": "Inactiva",
+    "COURT_COLOR_0": "Azul",
+    "COURT_COLOR_1": "Verde",
+    "COURT_COLOR_2": "Naranja",
+    "COURT_COLOR_3": "Negro",
+    "COURT_COLOR_4": "Rosa",
     "SAVE_COURT": "Guardar cancha",
     "DELETE_COURT": "Eliminar cancha",
     "SLOT_BLOCKED": "Turno no disponible",
@@ -306,6 +346,7 @@
       "EDIT_ACTION": "Editar cancha",
       "NAME": "Nombre",
       "TYPE": "Tipo",
+      "COLOR": "Color",
       "PRICE": "Precio por hora",
       "STATUS": "Estado",
       "DESCRIPTION": "Descripción",
@@ -371,6 +412,43 @@
     "CANCEL": {
       "CONFIRM": "¿Anular este alquiler y liberar el turno?",
       "ACTION": "Liberar"
+    }
+  },
+  "PLAYER_COURTS": {
+    "TITLE": "Reservar cancha",
+    "WHATSAPP_MESSAGE": "Hola, quiero consultar por turnos en {{club}}.",
+    "LOADING": "Cargando clubes...",
+    "NO_CLUBS": "No hay clubes con canchas disponibles por ahora.",
+    "SWITCH_CLUB": "Elegir club",
+    "DATE_STRIP": "Elegir fecha",
+    "TODAY": "Hoy",
+    "SCHEDULE_HINT": "Elegí un turno libre para reservar. Las columnas son canchas y las filas horarios.",
+    "GRID_TIME": "Hora",
+    "GRID_COURT": "Cancha",
+    "NO_SLOTS": "No hay turnos para este día en este club.",
+    "RESERVE": "Reservar",
+    "SLOT_AVAILABLE": "Turno libre",
+    "SLOT_BOOKED": "Ocupado",
+    "SLOT_BLOCKED": "No disponible",
+    "SLOT_EMPTY": "Sin turno",
+    "SLOT_PAST": "Horario pasado",
+    "BOOKING": {
+      "TITLE": "Confirmar reserva",
+      "CLUB": "Club",
+      "COURT": "Cancha",
+      "WHEN": "Fecha y hora",
+      "PRICE": "Total estimado",
+      "HINT": "La reserva queda confirmada al instante. Podés cancelarla hasta 2 horas antes del turno.",
+      "CONFIRM": "Confirmar reserva",
+      "CANCEL": "Volver"
+    },
+    "MY_BOOKINGS": {
+      "TITLE": "Mis reservas",
+      "CANCEL_POLICY": "Podés cancelar una reserva hasta 2 horas antes del horario de inicio.",
+      "EMPTY": "Todavía no tenés reservas de cancha.",
+      "UPCOMING": "Próximas",
+      "PAST": "Anteriores",
+      "CANCEL": "Cancelar reserva"
     }
   },
   "AUTH": {

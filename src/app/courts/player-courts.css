@@ -1,0 +1,98 @@
+@import '../club/club-owner.css';
+@import '../club/club-browse/club-browse.css';
+
+.player-courts {
+  padding-bottom: 2.5rem;
+}
+
+.club-detail-header {
+  margin-bottom: 1rem;
+}
+
+.club-detail-header__title {
+  font-size: clamp(1.15rem, 3vw, 1.45rem);
+  font-weight: 800;
+  margin: 0;
+}
+
+.club-detail-header__address {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0;
+}
+
+.schedule-grid__court-head-inner--readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem 0.25rem;
+  text-align: center;
+}
+
+.my-bookings {
+  margin-top: 2rem;
+}
+
+.my-bookings__title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+}
+
+.my-bookings__policy {
+  color: #555;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.my-bookings__subtitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+}
+
+.my-bookings__list {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.booking-card {
+  align-items: center;
+  background: #fff;
+  border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.booking-card--past {
+  opacity: 0.85;
+}
+
+.booking-card__main {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.booking-card__club {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #2d6a4f;
+}
+
+.booking-card__court {
+  font-weight: 700;
+}
+
+.booking-card__when,
+.booking-card__price {
+  color: #444;
+  font-size: 0.9rem;
+}

@@ -2,22 +2,64 @@ import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { computed, signal } from '@angular/core';
 import { EMPTY, of } from 'rxjs';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { AuthService } from '../login/auth.service';
 import { provideTranslateTesting } from '../testing/translate-testing';
 import { UserAccountService } from './services/user-account.service';
 import { Configurations } from './configurations';
+import { ClubsApiService } from '../core/api/clubs-api.service';
 
 describe('Configurations', () => {
   let component: Configurations;
   let fixture: ComponentFixture<Configurations>;
+  const isClubOwnerSignal = signal(true);
 
   beforeEach(async () => {
+    isClubOwnerSignal.set(true);
     await TestBed.configureTestingModule({
       imports: [Configurations],
       providers: [
         provideRouter([]),
+        provideNoopAnimations(),
         ...provideTranslateTesting(),
+        {
+          provide: ClubsApiService,
+          useValue: {
+            listClubs: () =>
+              of({
+                clubs: [
+                  {
+                    id: 1,
+                    name: 'Club A',
+                    address: 'Av. 1',
+                    phone: '111',
+                    email: null,
+                    card_theme: 0,
+                  },
+                  {
+                    id: 2,
+                    name: 'Club B',
+                    address: 'Av. 2',
+                    phone: '222',
+                    email: null,
+                    card_theme: 1,
+                  },
+                ],
+              }),
+            updateClub: () =>
+              of({
+                club: {
+                  id: 1,
+                  name: 'Club A',
+                  address: 'Av. 1',
+                  phone: '111',
+                  email: null,
+                  card_theme: 0,
+                },
+              }),
+          },
+        },
         {
           provide: AuthService,
           useValue: {
@@ -32,6 +74,7 @@ describe('Configurations', () => {
             })),
             isLogged: signal(false),
             userRoles: signal(['club_owner']),
+            isClubOwner: () => isClubOwnerSignal(),
             signOut: () => Promise.resolve(),
           },
         },
@@ -71,5 +114,22 @@ describe('Configurations', () => {
     const chips = fixture.nativeElement.querySelectorAll('.role-chip');
     expect(chips.length).toBeGreaterThan(0);
     expect(fixture.nativeElement.textContent).toContain('ROLES.CLUB_OWNER');
+  });
+
+  it('hides club card theme block when user is not a club owner', async () => {
+    isClubOwnerSignal.set(false);
+    fixture = TestBed.createComponent(Configurations);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.club-card-theme-card')).toBeNull();
+  });
+
+  it('shows club card theme controls for club owner with clubs', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('CONFIG.CLUB_CARD_THEME.TITLE');
+    const swatches = fixture.nativeElement.querySelectorAll('.club-card-theme__swatch');
+    expect(swatches.length).toBe(5);
   });
 });

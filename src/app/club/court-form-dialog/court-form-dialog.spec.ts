@@ -48,11 +48,13 @@ describe('CourtFormDialog', () => {
       court_type: 'indoor',
       price_per_hour: 5000,
       status: 'active',
+      color: 2,
     });
     void fixture.componentInstance['save']();
 
     const req = http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs/1/courts`);
     expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(expect.objectContaining({ color: 2 }));
     req.flush({
       court: {
         id: 3,
@@ -61,6 +63,7 @@ describe('CourtFormDialog', () => {
         price_per_hour: 5000,
         status: 'active',
         description: null,
+        color: 2,
         club: { id: 1, name: 'Club', address: 'Addr' },
       },
     });
@@ -75,6 +78,7 @@ describe('CourtFormDialog', () => {
       court_type: 'outdoor',
       price_per_hour: 7000,
       status: 'active',
+      color: 1,
       club: { id: 1, name: 'Club', address: 'Addr' },
     };
 
@@ -98,6 +102,7 @@ describe('CourtFormDialog', () => {
 
     const req = http.expectOne(`${environment.apiBaseUrl}/api/v1/clubs/1/courts/10`);
     expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(expect.objectContaining({ color: 1 }));
     req.flush({ court });
     await fixture.whenStable();
   });

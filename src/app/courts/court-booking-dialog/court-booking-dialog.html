@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ 'PLAYER_COURTS.BOOKING.TITLE' | translate }}</h2>
+
+<mat-dialog-content class="booking-dialog">
+  @if (errorMessage()) {
+    <p class="booking-dialog__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <dl class="booking-dialog__summary">
+    <div>
+      <dt>{{ 'PLAYER_COURTS.BOOKING.CLUB' | translate }}</dt>
+      <dd>{{ data.clubName }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'PLAYER_COURTS.BOOKING.COURT' | translate }}</dt>
+      <dd>{{ data.courtName }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'PLAYER_COURTS.BOOKING.WHEN' | translate }}</dt>
+      <dd>
+        {{ data.date }}
+        ·
+        {{ data.startTime }}
+        @if (data.endTime) {
+          – {{ data.endTime }}
+        }
+      </dd>
+    </div>
+    <div>
+      <dt>{{ 'PLAYER_COURTS.BOOKING.PRICE' | translate }}</dt>
+      <dd>{{ estimatedTotal() }}</dd>
+    </div>
+  </dl>
+
+  <p class="booking-dialog__hint">{{ 'PLAYER_COURTS.BOOKING.HINT' | translate }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button type="button" mat-button (click)="close()" [disabled]="isSaving()">
+    {{ 'PLAYER_COURTS.BOOKING.CANCEL' | translate }}
+  </button>
+  <button type="button" mat-flat-button color="primary" (click)="confirm()" [disabled]="isSaving()">
+    {{ 'PLAYER_COURTS.BOOKING.CONFIRM' | translate }}
+  </button>
+</mat-dialog-actions>

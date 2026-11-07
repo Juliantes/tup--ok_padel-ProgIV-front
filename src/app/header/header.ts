@@ -46,6 +46,10 @@ export class Header implements OnInit {
       items.push({ labelKey: 'NAV.CLUB', path: '/club', analyticsName: 'mis-canchas' });
     }
 
+    if (this.auth.isPlayer()) {
+      items.push({ labelKey: 'NAV.COURTS', path: '/courts', analyticsName: 'courts' });
+    }
+
     items.push({ labelKey: 'NAV.CONFIG', path: '/configurations', analyticsName: 'configuracion' });
     return items;
   });

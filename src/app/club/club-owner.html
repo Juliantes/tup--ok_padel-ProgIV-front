@@ -7,31 +7,38 @@
     <p class="state-message">{{ 'CLUB_OWNER.LOADING' | translate }}</p>
   } @else if (clubs().length === 0) {
     <p class="state-message">{{ 'CLUB_OWNER.NO_CLUBS' | translate }}</p>
+  } @else if (showClubBrowse()) {
+    <div class="club-browse-page">
+      <header class="club-browse-page__header">
+        <h1 class="club-browse-page__title">{{ 'CLUB_BROWSE.OWNER_TITLE' | translate }}</h1>
+        <p class="club-browse-page__subtitle">
+          {{ 'CLUB_BROWSE.OWNER_SUBTITLE_other' | translate: { count: clubs().length } }}
+        </p>
+      </header>
+
+      <app-club-browse-grid
+        [clubs]="browseClubs()"
+        [whatsappHrefFor]="whatsappHrefFor"
+        (clubSelected)="enterClub($event)"
+      />
+    </div>
   } @else if (selectedClub(); as club) {
     @if (clubs().length > 1) {
-      <div
-        class="club-switcher"
-        role="tablist"
-        [attr.aria-label]="'CLUB_OWNER.SWITCH_CLUB' | translate"
-      >
-        @for (item of clubs(); track item.id) {
-          <button
-            type="button"
-            class="club-switcher__chip"
-            role="tab"
-            [class.club-switcher__chip--active]="selectedClubId() === item.id"
-            [attr.aria-selected]="selectedClubId() === item.id"
-            (click)="selectClub(item.id)"
-          >
-            {{ item.name }}
-          </button>
-        }
-      </div>
+      <button type="button" class="club-browse-back" (click)="backToClubBrowse()">
+        <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        {{ 'CLUB_BROWSE.BACK_TO_CLUBS' | translate }}
+      </button>
+    }
+
+    @if (clubs().length === 1) {
+      <app-club-browse-hero [club]="club" />
     }
 
     <header class="club-hero">
       <div class="club-hero__brand">
-        <div class="club-hero__logo" aria-hidden="true">OP</div>
+        @if (clubs().length > 1) {
+          <div class="club-hero__logo" aria-hidden="true">OP</div>
+        }
         <div>
           <h1 class="club-hero__title">{{ club.name }}</h1>
           <p class="club-hero__address">{{ club.address }}</p>
@@ -78,7 +85,7 @@
         <h2 class="courts-overview__title">{{ 'CLUB_OWNER.COURTS_OVERVIEW' | translate }}</h2>
         <div class="courts-overview__list">
           @for (court of displayCourts(); track court.id) {
-            <div class="court-pill">
+            <div class="court-pill" [class]="'court-pill--color-' + court.color">
               <button type="button" class="court-pill__main" (click)="openTimeSlots(court)">
                 <span class="court-pill__kind">{{ 'CLUB_OWNER.GRID_COURT' | translate }}</span>
                 <span class="court-pill__name">{{ court.name }}</span>
@@ -114,7 +121,10 @@
               </th>
               @for (court of displayCourts(); track court.id) {
                 <th scope="col" class="schedule-grid__court-head">
-                  <div class="schedule-grid__court-head-inner">
+                  <div
+                    class="schedule-grid__court-head-inner"
+                    [class]="'schedule-grid__court-head-inner--color-' + court.color"
+                  >
                     <button
                       type="button"
                       class="schedule-grid__court-btn"
