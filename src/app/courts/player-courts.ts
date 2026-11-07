@@ -1,7 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerInputEvent, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -15,8 +20,8 @@ import { CourtBookingsApiService } from '../core/api/court-bookings-api.service'
 import { CourtsApiService } from '../core/api/courts-api.service';
 import { readApiErrorMessage } from '../core/api/api-errors';
 import { ClubBrowseGrid } from '../club/club-browse/club-browse-grid/club-browse-grid';
-import { ClubBrowseHero } from '../club/club-browse/club-browse-hero/club-browse-hero';
 import { ClubBrowseItem } from '../club/club-browse/club-browse.models';
+import { clubHeroTheme } from '../club/club-browse/club-browse.utils';
 import {
   buildScheduleDateOptions,
   formatClubPrice,
@@ -29,11 +34,42 @@ import {
   CourtBookingDialogData,
   CourtBookingDialogResult,
 } from './court-booking-dialog/court-booking-dialog';
+import {
+  TimelineSegment,
+  buildCourtTimelineSegments,
+  buildHourTicks,
+  myBookingSlotKey,
+  normalizeBookingDate,
+  scheduleDayHoursRange,
+} from './player-schedule-timeline.utils';
+import {
+  MatchCreateSlotSelection,
+  saveMatchCreateSlotSelection,
+} from '../matches/match-create-draft.utils';
+
+export interface PlayerCourtDetail {
+  id: number;
+  name: string;
+  court_type: string;
+  description: string | null;
+}
 
 function parseSlotStart(isoDate: string, startTime: string): Date {
   const [year, month, day] = isoDate.split('-').map(Number);
   const [hour, minute] = startTime.split(':').map(Number);
   return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function isoToLocalDate(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function localDateToIso(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function slotDurationMinutes(startTime: string, endTime: string | null): number {
@@ -47,7 +83,16 @@ function slotDurationMinutes(startTime: string, endTime: string | null): number 
 
 @Component({
   selector: 'app-player-courts',
-  imports: [MatButtonModule, MatIconModule, TranslatePipe, ClubBrowseGrid, ClubBrowseHero],
+  imports: [
+    MatButtonModule,
+    MatDatepickerModule,
+    MatIconModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    RouterLink,
+    TranslatePipe,
+    ClubBrowseGrid,
+  ],
   templateUrl: './player-courts.html',
   styleUrl: './player-courts.css',
 })
@@ -56,8 +101,14 @@ export class PlayerCourts implements OnInit {
   private readonly courtBookingsApi = inject(CourtBookingsApiService);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly createMatchIntent = signal(false);
 
   protected readonly clubs = signal<PlayerClubOption[]>([]);
+  protected readonly clubCourtsMap = signal<Map<number, PlayerCourtDetail[]>>(new Map());
   protected readonly selectedClubId = signal<number | null>(null);
   protected readonly selectedDate = signal(todayIsoDate());
   protected readonly schedule = signal<PlayerAvailabilityResponse | null>(null);
@@ -66,6 +117,17 @@ export class PlayerCourts implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly dateOptions = buildScheduleDateOptions(14);
+
+  protected readonly minSelectableDate = this.dateOptions[0]?.isoDate ?? todayIsoDate();
+
+  protected readonly maxSelectableDate =
+    this.dateOptions[this.dateOptions.length - 1]?.isoDate ?? todayIsoDate();
+
+  protected readonly minSelectableDateObject = isoToLocalDate(this.minSelectableDate);
+
+  protected readonly maxSelectableDateObject = isoToLocalDate(this.maxSelectableDate);
+
+  protected readonly scheduleDateControl = new FormControl(isoToLocalDate(todayIsoDate()));
 
   protected readonly browseClubs = computed((): ClubBrowseItem[] => this.clubs());
 
@@ -79,6 +141,24 @@ export class PlayerCourts implements OnInit {
   protected readonly selectedClub = computed(() => {
     const id = this.selectedClubId();
     return this.clubs().find((club) => club.id === id) ?? null;
+  });
+
+  protected readonly selectedClubCourts = computed(() => {
+    const id = this.selectedClubId();
+    if (!id) {
+      return [];
+    }
+    return this.clubCourtsMap().get(id) ?? [];
+  });
+
+  protected readonly clubCourtStats = computed(() => {
+    const courts = this.selectedClubCourts();
+    const indoor = courts.filter((court) => court.court_type === 'indoor').length;
+    return {
+      total: courts.length,
+      indoor,
+      outdoor: courts.length - indoor,
+    };
   });
 
   protected readonly cellIndex = computed(() => {
@@ -95,6 +175,77 @@ export class PlayerCourts implements OnInit {
 
   protected readonly displayCourts = computed(() => this.schedule()?.courts ?? []);
   protected readonly scheduleRows = computed(() => this.schedule()?.rows ?? []);
+
+  protected readonly hoursRange = computed(() => scheduleDayHoursRange(this.scheduleRows()));
+
+  protected readonly hourTicks = computed(() => {
+    const range = this.hoursRange();
+    return range ? buildHourTicks(range) : [];
+  });
+
+  protected readonly myBookingSlots = computed(() => {
+    const iso = this.selectedDate();
+    const clubId = this.selectedClubId();
+    const slots = new Set<string>();
+    this.myBookings().forEach((booking) => {
+      if (!booking.court_id) {
+        return;
+      }
+      if (clubId && booking.club?.id && booking.club.id !== clubId) {
+        return;
+      }
+      if (normalizeBookingDate(booking.date) !== iso) {
+        return;
+      }
+      const start = booking.time_slot?.start_time;
+      if (start) {
+        slots.add(myBookingSlotKey(booking.court_id, iso, start));
+      }
+    });
+    return slots;
+  });
+
+  protected readonly timelineByCourt = computed(() => {
+    const courts = this.displayCourts();
+    const rows = this.scheduleRows();
+    const range = this.hoursRange();
+    const map = new Map<number, TimelineSegment[]>();
+    if (!range || courts.length === 0) {
+      return map;
+    }
+
+    const iso = this.selectedDate();
+    const slots = this.myBookingSlots();
+
+    courts.forEach((court) => {
+      map.set(
+        court.id,
+        buildCourtTimelineSegments(
+          court.id,
+          rows,
+          range,
+          (courtId, startTime) => this.cellFor(courtId, startTime),
+          (courtId, startTime) => slots.has(myBookingSlotKey(courtId, iso, startTime)),
+          (courtId, startTime) => this.canBookSlot(courtId, startTime),
+        ),
+      );
+    });
+    return map;
+  });
+
+  protected readonly selectedDateOption = computed(
+    () => this.dateOptions.find((option) => option.isoDate === this.selectedDate()) ?? null,
+  );
+
+  protected readonly canGoPrevDate = computed(() => {
+    const idx = this.dateOptions.findIndex((option) => option.isoDate === this.selectedDate());
+    return idx > 0;
+  });
+
+  protected readonly canGoNextDate = computed(() => {
+    const idx = this.dateOptions.findIndex((option) => option.isoDate === this.selectedDate());
+    return idx >= 0 && idx < this.dateOptions.length - 1;
+  });
 
   protected readonly upcomingBookings = computed(() => {
     const now = Date.now();
@@ -118,6 +269,7 @@ export class PlayerCourts implements OnInit {
   };
 
   ngOnInit(): void {
+    this.createMatchIntent.set(this.route.snapshot.queryParamMap.get('intent') === 'create-match');
     void this.bootstrap();
   }
 
@@ -134,7 +286,51 @@ export class PlayerCourts implements OnInit {
 
   protected selectDate(isoDate: string): void {
     this.selectedDate.set(isoDate);
+    this.scheduleDateControl.setValue(isoToLocalDate(isoDate), { emitEvent: false });
     void this.loadSchedule();
+  }
+
+  protected shiftDate(delta: -1 | 1): void {
+    const idx = this.dateOptions.findIndex((option) => option.isoDate === this.selectedDate());
+    const next = this.dateOptions[idx + delta];
+    if (next) {
+      this.selectDate(next.isoDate);
+    }
+  }
+
+  protected onScheduleDatePicked(event: MatDatepickerInputEvent<Date>): void {
+    const value = event.value;
+    if (!value) {
+      return;
+    }
+    const iso = localDateToIso(value);
+    if (!this.dateOptions.some((option) => option.isoDate === iso)) {
+      return;
+    }
+    this.selectDate(iso);
+  }
+
+  protected themeClass(club: PlayerClubOption): string {
+    return `player-club-profile__banner--theme-${clubHeroTheme(club)}`;
+  }
+
+  protected mapsEmbedUrl(address: string): SafeResourceUrl {
+    const q = encodeURIComponent(address);
+    const url = `https://maps.google.com/maps?q=${q}&output=embed`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  protected mapsSearchUrl(address: string): string {
+    const q = encodeURIComponent(address);
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  }
+
+  protected courtDetail(courtId: number): PlayerCourtDetail | undefined {
+    return this.selectedClubCourts().find((court) => court.id === courtId);
+  }
+
+  protected timelineForCourt(courtId: number): TimelineSegment[] {
+    return this.timelineByCourt().get(courtId) ?? [];
   }
 
   protected formatPrice(value: number): string {
@@ -169,6 +365,8 @@ export class PlayerCourts implements OnInit {
       return;
     }
 
+    const selectForMatch = this.createMatchIntent();
+
     const ref = this.dialog.open<
       CourtBookingDialog,
       CourtBookingDialogData,
@@ -185,6 +383,7 @@ export class PlayerCourts implements OnInit {
         endTime: cell.end_time,
         pricePerHour: court.price_per_hour,
         durationMinutes: slotDurationMinutes(startTime, cell.end_time),
+        purpose: selectForMatch ? 'select' : 'book',
       },
       width: 'min(96vw, 24rem)',
     });
@@ -192,8 +391,20 @@ export class PlayerCourts implements OnInit {
     ref.afterClosed().subscribe((result) => {
       if (result === 'confirmed') {
         void this.refreshAfterMutation();
+        return;
+      }
+      if (result && typeof result === 'object' && 'timeSlotId' in result) {
+        saveMatchCreateSlotSelection(result as MatchCreateSlotSelection);
+        void this.router.navigate(['/matches/new']);
       }
     });
+  }
+
+  protected openBookingSegment(courtId: number, courtName: string, segment: TimelineSegment): void {
+    if (segment.kind !== 'available') {
+      return;
+    }
+    this.openBooking(courtId, courtName, segment.startTime);
   }
 
   protected async cancelBooking(booking: CourtBookingSummary): Promise<void> {
@@ -232,6 +443,8 @@ export class PlayerCourts implements OnInit {
       ]);
 
       const clubMap = new Map<number, PlayerClubOption>();
+      const courtsMap = new Map<number, PlayerCourtDetail[]>();
+
       courtsResponse.courts.forEach((court) => {
         if (!clubMap.has(court.club.id)) {
           clubMap.set(court.club.id, {
@@ -241,8 +454,18 @@ export class PlayerCourts implements OnInit {
             card_theme: court.club.card_theme,
           });
         }
+
+        const clubCourts = courtsMap.get(court.club.id) ?? [];
+        clubCourts.push({
+          id: court.id,
+          name: court.name,
+          court_type: court.court_type,
+          description: court.description,
+        });
+        courtsMap.set(court.club.id, clubCourts);
       });
 
+      this.clubCourtsMap.set(courtsMap);
       const clubList = [...clubMap.values()].sort((a, b) => a.name.localeCompare(b.name));
       this.clubs.set(clubList);
       if (clubList.length === 1) {

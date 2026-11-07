@@ -169,7 +169,13 @@
             <li>
               <mat-icon aria-hidden="true">place</mat-icon>
               <div>
-                <strong>{{ venueName(match) }}</strong>
+                <strong>
+                  @if (match.court) {
+                    {{ venueName(match) }}
+                  } @else {
+                    {{ 'MATCHES.NO_COURT_VENUE' | translate }}
+                  }
+                </strong>
                 @if (venueAddress(match); as address) {
                   <span class="meta-sub">{{ address }}</span>
                 }

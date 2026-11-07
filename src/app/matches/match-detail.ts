@@ -245,6 +245,10 @@ export class MatchDetail {
   }
 
   protected locationLine(match: Match): string {
+    if (!match.court) {
+      return this.translate.instant('MATCHES.NO_COURT_VENUE');
+    }
+
     const club = match.court.club;
     if (!club) {
       return match.court.name;
@@ -271,7 +275,7 @@ export class MatchDetail {
       date,
       time,
       location,
-      court: match.court.name,
+      court: match.court?.name ?? this.translate.instant('MATCHES.NO_COURT_VENUE'),
       url,
     })}`;
   }
@@ -455,11 +459,15 @@ export class MatchDetail {
   }
 
   protected scoreboardClubName(match: Match): string {
+    if (!match.court) {
+      return this.translate.instant('MATCHES.NO_COURT_VENUE');
+    }
     return match.court.club?.name ?? match.court.name;
   }
 
   protected scoreboardStageLabel(match: Match): string {
-    return `${this.categoryLabel(match)} · ${match.court.name}`;
+    const courtPart = match.court?.name ?? this.translate.instant('MATCHES.NO_COURT_VENUE');
+    return `${this.categoryLabel(match)} · ${courtPart}`;
   }
 
   protected formatDurationClock(minutes: number): string {

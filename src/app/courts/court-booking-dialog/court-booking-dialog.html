@@ -31,7 +31,13 @@
     </div>
   </dl>
 
-  <p class="booking-dialog__hint">{{ 'PLAYER_COURTS.BOOKING.HINT' | translate }}</p>
+  <p class="booking-dialog__hint">
+    @if (isSelectMode) {
+      {{ 'PLAYER_COURTS.BOOKING.HINT_SELECT_FOR_MATCH' | translate }}
+    } @else {
+      {{ 'PLAYER_COURTS.BOOKING.HINT' | translate }}
+    }
+  </p>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
@@ -39,6 +45,10 @@
     {{ 'PLAYER_COURTS.BOOKING.CANCEL' | translate }}
   </button>
   <button type="button" mat-flat-button color="primary" (click)="confirm()" [disabled]="isSaving()">
-    {{ 'PLAYER_COURTS.BOOKING.CONFIRM' | translate }}
+    @if (isSelectMode) {
+      {{ 'PLAYER_COURTS.BOOKING.USE_SLOT' | translate }}
+    } @else {
+      {{ 'PLAYER_COURTS.BOOKING.CONFIRM' | translate }}
+    }
   </button>
 </mat-dialog-actions>

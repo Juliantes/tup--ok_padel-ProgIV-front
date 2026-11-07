@@ -116,10 +116,17 @@ export class MatchesList implements OnInit {
   }
 
   protected courtFor(match: Match): Court | undefined {
+    if (!match.court) {
+      return undefined;
+    }
     return this.courtsById()[match.court.id];
   }
 
   protected venueName(match: Match): string {
+    if (!match.court) {
+      return 'MATCHES.NO_COURT_VENUE';
+    }
+
     const court = this.courtFor(match);
     if (court?.club.name) {
       return `${court.club.name} | ${court.name}`;
@@ -129,10 +136,16 @@ export class MatchesList implements OnInit {
   }
 
   protected venueAddress(match: Match): string | null {
+    if (!match.court) {
+      return null;
+    }
     return this.courtFor(match)?.club.address ?? null;
   }
 
   protected pricePerHour(match: Match): number | null {
+    if (!match.court) {
+      return null;
+    }
     const price = this.courtFor(match)?.price_per_hour;
     return price !== undefined ? price : null;
   }

@@ -8,6 +8,7 @@ import { filter } from 'rxjs';
 
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AuthService } from '../login/auth.service';
+import { navItemsForRoles } from '../navigation/app-navigation';
 
 @Component({
   selector: 'app-header',
@@ -36,23 +37,7 @@ export class Header implements OnInit {
     });
   }
 
-  protected readonly navigationItems = computed(() => {
-    const items = [
-      { labelKey: 'NAV.HOME', path: '/home', analyticsName: 'inicio' },
-      { labelKey: 'NAV.MATCHES', path: '/matches', analyticsName: 'partidos' },
-    ];
-
-    if (this.auth.isClubOwner()) {
-      items.push({ labelKey: 'NAV.CLUB', path: '/club', analyticsName: 'mis-canchas' });
-    }
-
-    if (this.auth.isPlayer()) {
-      items.push({ labelKey: 'NAV.COURTS', path: '/courts', analyticsName: 'courts' });
-    }
-
-    items.push({ labelKey: 'NAV.CONFIG', path: '/configurations', analyticsName: 'configuracion' });
-    return items;
-  });
+  protected readonly navigationItems = computed(() => navItemsForRoles(this.auth.userRoles()));
 
   protected trackNavClick(analyticsName: string, location: 'header_nav' | 'mobile_nav'): void {
     this.analytics.trackButtonClick(analyticsName, location);

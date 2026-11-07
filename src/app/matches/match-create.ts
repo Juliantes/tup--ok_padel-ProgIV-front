@@ -6,14 +6,8 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiSessionService } from '../core/api/api-session.service';
-import { Court } from '../core/api/match.models';
-import { CourtsApiService } from '../core/api/courts-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
-import {
-  LEVEL_REQUIRED_OPTIONS,
-  levelRequiredI18nKey,
-  playerInitials,
-} from './matches-search.utils';
+import { AuthService } from '../login/auth.service';
 import {
   CREATE_WIZARD_STEPS,
   CreateWizardStep,
@@ -26,6 +20,21 @@ import {
   truncateCompletedFrom,
   wizardStepIndex,
 } from './match-create.utils';
+import {
+  MatchCreateDraft,
+  MatchCreateSlotSelection,
+  PlaceMode,
+  clearMatchCreateDraft,
+  consumeMatchCreateSlotSelection,
+  readMatchCreateDraft,
+  saveMatchCreateDraft,
+  slotSelectionLabel,
+} from './match-create-draft.utils';
+import {
+  LEVEL_REQUIRED_OPTIONS,
+  levelRequiredI18nKey,
+  playerInitials,
+} from './matches-search.utils';
 
 type WizardCardState = 'active' | 'complete' | 'pending';
 
@@ -37,10 +46,10 @@ type WizardCardState = 'active' | 'complete' | 'pending';
 })
 export class MatchCreate implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly courtsApi = inject(CourtsApiService);
   private readonly matchesApi = inject(MatchesApiService);
   private readonly router = inject(Router);
   private readonly apiSession = inject(ApiSessionService);
+  private readonly auth = inject(AuthService);
 
   protected readonly wizardSteps = CREATE_WIZARD_STEPS;
   protected readonly levelOptions = LEVEL_REQUIRED_OPTIONS;
@@ -48,18 +57,25 @@ export class MatchCreate implements OnInit {
   protected readonly timeOptions = halfHourTimeOptions();
   protected readonly levelRequiredI18nKey = levelRequiredI18nKey;
 
-  protected readonly courts = signal<Court[]>([]);
-  protected readonly isLoading = signal(true);
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly activeStep = signal<CreateWizardStep>('date');
+  protected readonly activeStep = signal<CreateWizardStep>('place');
   protected readonly completedSteps = signal<Set<CreateWizardStep>>(new Set());
+  protected readonly placeMode = signal<PlaceMode | null>(null);
+  protected readonly slotSummaryLabel = signal('');
+
+  protected readonly canPickCourtBooking = computed(() => this.auth.isPlayer());
+
+  protected readonly hasReservedSlot = computed(
+    () => this.placeMode() === 'with_court' && this.form.controls.timeSlotId.value != null,
+  );
 
   protected readonly form = this.fb.group({
     matchDate: [todayIsoDate(), Validators.required],
     matchTime: ['', Validators.required],
     duration: [90, [Validators.required, Validators.min(30)]],
-    courtId: [null as number | null, Validators.required],
+    courtId: [null as number | null],
+    timeSlotId: [null as number | null],
     autoJoin: [true, Validators.required],
     levelRequired: ['fifth', Validators.required],
     rosterMode: ['individual', Validators.required],
@@ -96,16 +112,38 @@ export class MatchCreate implements OnInit {
   });
 
   ngOnInit(): void {
-    this.courtsApi.listCourts().subscribe({
-      next: (response) => {
-        this.courts.set(response.courts);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('MATCHES.ERROR');
-        this.isLoading.set(false);
-      },
-    });
+    const slot = consumeMatchCreateSlotSelection();
+    const draft = readMatchCreateDraft();
+
+    if (draft) {
+      this.form.patchValue({
+        matchDate: draft.form.matchDate,
+        matchTime: draft.form.matchTime,
+        duration: draft.form.duration,
+        courtId: draft.form.courtId,
+        timeSlotId: draft.form.timeSlotId,
+        autoJoin: draft.form.autoJoin,
+        levelRequired: draft.form.levelRequired,
+        rosterMode: draft.form.rosterMode,
+        joinPolicy: draft.form.joinPolicy,
+      });
+      this.placeMode.set(draft.form.placeMode);
+      if (draft.slotLabel) {
+        this.slotSummaryLabel.set(draft.slotLabel);
+      }
+    }
+
+    if (slot) {
+      this.applySlotSelection(slot);
+      const completed = new Set<CreateWizardStep>(['place', 'date']);
+      this.completedSteps.set(completed);
+      this.placeMode.set('with_court');
+      this.activeStep.set('play');
+    } else if (draft) {
+      const completed = new Set(draft.completedSteps as CreateWizardStep[]);
+      this.completedSteps.set(completed);
+      this.activeStep.set((draft.activeStep as CreateWizardStep) ?? 'place');
+    }
   }
 
   protected stepState(step: CreateWizardStep): WizardCardState {
@@ -122,7 +160,23 @@ export class MatchCreate implements OnInit {
     return wizardStepIndex(step);
   }
 
+  protected selectPlaceMode(mode: PlaceMode): void {
+    if (mode === 'with_court' && !this.canPickCourtBooking()) {
+      return;
+    }
+    this.placeMode.set(mode);
+    if (mode === 'without_court') {
+      this.form.patchValue({ courtId: null, timeSlotId: null });
+      this.slotSummaryLabel.set('');
+    }
+  }
+
   protected continue(step: CreateWizardStep): void {
+    if (step === 'place' && this.placeMode() === 'with_court') {
+      this.goToCourtSelection();
+      return;
+    }
+
     if (!this.isStepValid(step)) {
       this.touchStepControls(step);
       return;
@@ -139,6 +193,15 @@ export class MatchCreate implements OnInit {
   }
 
   protected edit(step: CreateWizardStep): void {
+    if (step === 'place' && this.placeMode() === 'with_court') {
+      this.goToCourtSelection();
+      return;
+    }
+    if (step === 'date' && this.hasReservedSlot()) {
+      this.goToCourtSelection();
+      return;
+    }
+
     this.completedSteps.set(truncateCompletedFrom(this.completedSteps(), step));
     this.activeStep.set(step);
   }
@@ -158,17 +221,6 @@ export class MatchCreate implements OnInit {
     return formatWizardDateLabel(isoDate);
   }
 
-  protected courtLabel(courtId: number | null): string {
-    if (!courtId) {
-      return '';
-    }
-    const court = this.courts().find((item) => item.id === courtId);
-    if (!court) {
-      return '';
-    }
-    return `${court.name} — ${court.club.name}`;
-  }
-
   protected levelLabel(level: string | null): string {
     if (!level) {
       return '';
@@ -176,16 +228,27 @@ export class MatchCreate implements OnInit {
     return levelRequiredI18nKey(level);
   }
 
+  protected clearDraftAndCancel(): void {
+    clearMatchCreateDraft();
+  }
+
   protected submit(): void {
     if (!this.canSubmit() || this.form.invalid) {
       return;
     }
 
-    const rawCourtId = this.form.controls.courtId.value;
     const matchDate = this.form.controls.matchDate.value;
     const matchTime = this.form.controls.matchTime.value;
+    if (!matchDate || !matchTime) {
+      return;
+    }
+
+    const rawCourtId = this.form.controls.courtId.value;
     const courtId = rawCourtId === null ? null : Number(rawCourtId);
-    if (!courtId || Number.isNaN(courtId) || !matchDate || !matchTime) {
+    const rawSlotId = this.form.controls.timeSlotId.value;
+    const timeSlotId = rawSlotId === null ? null : Number(rawSlotId);
+
+    if (this.placeMode() === 'with_court' && (!courtId || !timeSlotId)) {
       return;
     }
 
@@ -194,6 +257,7 @@ export class MatchCreate implements OnInit {
 
     const payload = buildCreateMatchPayload({
       courtId,
+      timeSlotId,
       date: matchDate,
       time: matchTime,
       duration: this.form.controls.duration.value ?? 90,
@@ -205,6 +269,7 @@ export class MatchCreate implements OnInit {
 
     this.matchesApi.createMatch(payload).subscribe({
       next: (response) => {
+        clearMatchCreateDraft();
         void this.router.navigate(['/matches', response.match.id]);
       },
       error: () => {
@@ -214,16 +279,60 @@ export class MatchCreate implements OnInit {
     });
   }
 
+  private applySlotSelection(slot: MatchCreateSlotSelection): void {
+    if (!slot) {
+      return;
+    }
+    this.form.patchValue({
+      matchDate: slot.date,
+      matchTime: slot.startTime,
+      duration: slot.durationMinutes,
+      courtId: slot.courtId,
+      timeSlotId: slot.timeSlotId,
+    });
+    this.slotSummaryLabel.set(slotSelectionLabel(slot));
+  }
+
+  private goToCourtSelection(): void {
+    const draft: MatchCreateDraft = {
+      activeStep: this.activeStep(),
+      completedSteps: [...this.completedSteps()],
+      form: {
+        matchDate: this.form.controls.matchDate.value ?? todayIsoDate(),
+        matchTime: this.form.controls.matchTime.value ?? '',
+        duration: this.form.controls.duration.value ?? 90,
+        courtId: this.form.controls.courtId.value,
+        timeSlotId: this.form.controls.timeSlotId.value,
+        placeMode: this.placeMode(),
+        autoJoin: this.form.controls.autoJoin.value ?? true,
+        levelRequired: this.form.controls.levelRequired.value ?? 'fifth',
+        rosterMode: this.form.controls.rosterMode.value ?? 'individual',
+        joinPolicy: this.form.controls.joinPolicy.value ?? 'auto',
+      },
+      slotLabel: this.slotSummaryLabel() || undefined,
+    };
+    saveMatchCreateDraft(draft);
+    void this.router.navigate(['/courts'], { queryParams: { intent: 'create-match' } });
+  }
+
   private isStepValid(step: CreateWizardStep): boolean {
     switch (step) {
+      case 'place':
+        if (this.placeMode() === 'without_court') {
+          return true;
+        }
+        if (this.placeMode() === 'with_court') {
+          return (
+            this.form.controls.courtId.value != null && this.form.controls.timeSlotId.value != null
+          );
+        }
+        return false;
       case 'date':
         return (
           this.form.controls.matchDate.valid &&
           this.form.controls.matchTime.valid &&
           this.form.controls.duration.valid
         );
-      case 'place':
-        return this.form.controls.courtId.valid;
       case 'play':
         return this.form.controls.autoJoin.valid;
       case 'category':
@@ -243,9 +352,6 @@ export class MatchCreate implements OnInit {
         this.form.controls.matchDate.markAsTouched();
         this.form.controls.matchTime.markAsTouched();
         this.form.controls.duration.markAsTouched();
-        break;
-      case 'place':
-        this.form.controls.courtId.markAsTouched();
         break;
       case 'play':
         this.form.controls.autoJoin.markAsTouched();

@@ -96,7 +96,7 @@ export interface Match {
   level_required: string;
   level_required_label?: string;
   join_policy: string;
-  court: MatchCourtSummary;
+  court: MatchCourtSummary | null;
   creator: MatchUserSummary;
   match_players: MatchPlayer[];
   players_count: number;
@@ -135,7 +135,7 @@ export interface MatchListQuery {
 }
 
 export interface CreateMatchPayload {
-  court_id: number;
+  court_id?: number | null;
   time_slot_id?: number | null;
   date: string;
   duration: number;

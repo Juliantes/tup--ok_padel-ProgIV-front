@@ -3,8 +3,8 @@ import { CreateMatchPayload } from '../core/api/match.models';
 export type CreateWizardStep = 'date' | 'place' | 'play' | 'category' | 'who' | 'visibility';
 
 export const CREATE_WIZARD_STEPS: CreateWizardStep[] = [
-  'date',
   'place',
+  'date',
   'play',
   'category',
   'who',
@@ -16,7 +16,8 @@ export const MATCH_MAX_PLAYERS = 4;
 export const DURATION_OPTIONS = [60, 90, 120] as const;
 
 export interface CreateMatchFormValues {
-  courtId: number;
+  courtId: number | null;
+  timeSlotId?: number | null;
   date: string;
   time: string;
   duration: number;
@@ -60,8 +61,7 @@ export function buildMatchDateIso(date: string, time: string): string {
 }
 
 export function buildCreateMatchPayload(values: CreateMatchFormValues): CreateMatchPayload {
-  return {
-    court_id: values.courtId,
+  const payload: CreateMatchPayload = {
     date: buildMatchDateIso(values.date, values.time),
     duration: values.duration,
     roster_mode: values.rosterMode,
@@ -69,6 +69,16 @@ export function buildCreateMatchPayload(values: CreateMatchFormValues): CreateMa
     auto_join: values.autoJoin,
     join_policy: values.joinPolicy,
   };
+
+  if (values.courtId != null) {
+    payload.court_id = values.courtId;
+  }
+
+  if (values.timeSlotId != null) {
+    payload.time_slot_id = values.timeSlotId;
+  }
+
+  return payload;
 }
 
 export function nextWizardStep(step: CreateWizardStep): CreateWizardStep | null {

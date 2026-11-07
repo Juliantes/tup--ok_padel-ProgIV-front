@@ -68,13 +68,13 @@
           <div>
             <p class="info-label">{{ 'MATCHES.LOCATION' | translate }}</p>
             <p class="info-value">{{ locationLine(current) }}</p>
-            <p class="info-sub">
-              {{ 'MATCHES.COURT_LABEL' | translate }}: {{ current.court.name }}
-            </p>
-            <p class="court-disclaimer">
-              <mat-icon>info</mat-icon>
-              {{ 'MATCHES.COURT_DISCLAIMER' | translate }}
-            </p>
+            @if (current.court) {
+              <p class="info-sub">
+                {{ 'MATCHES.COURT_LABEL' | translate }}: {{ current.court.name }}
+              </p>
+            } @else {
+              <p class="info-sub">{{ 'MATCHES.NO_COURT_VENUE' | translate }}</p>
+            }
           </div>
         </div>
 
@@ -98,25 +98,29 @@
           </div>
         </div>
 
-        <div class="info-item">
-          <div class="info-icon" aria-hidden="true">
-            <mat-icon>attach_money</mat-icon>
+        @if (current.court) {
+          <div class="info-item">
+            <div class="info-icon" aria-hidden="true">
+              <mat-icon>attach_money</mat-icon>
+            </div>
+            <div>
+              <p class="info-label">{{ 'MATCHES.PRICE' | translate }}</p>
+              <p class="info-value">
+                {{ current.court.price_per_hour | currency: 'ARS' : 'symbol' : '1.0-0' }}
+              </p>
+            </div>
           </div>
-          <div>
-            <p class="info-label">{{ 'MATCHES.PRICE' | translate }}</p>
-            <p class="info-value">
-              {{ current.court.price_per_hour | currency: 'ARS' : 'symbol' : '1.0-0' }}
-            </p>
-          </div>
-        </div>
+        }
       </div>
 
-      @if (current.court.description) {
-        <hr class="card-divider" />
-        <section class="description-block">
-          <p class="info-label">{{ 'MATCHES.DESCRIPTION' | translate }}</p>
-          <p class="description-text">{{ current.court.description }}</p>
-        </section>
+      @if (current.court; as court) {
+        @if (court.description) {
+          <hr class="card-divider" />
+          <section class="description-block">
+            <p class="info-label">{{ 'MATCHES.DESCRIPTION' | translate }}</p>
+            <p class="description-text">{{ court.description }}</p>
+          </section>
+        }
       }
 
       <hr class="card-divider" />

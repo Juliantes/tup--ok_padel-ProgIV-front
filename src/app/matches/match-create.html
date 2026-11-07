@@ -21,39 +21,53 @@
                   <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_DATE' | translate }}</h2>
                 </header>
                 <div class="wizard-card__body">
-                  <label class="field">
-                    <span class="field__label">{{ 'MATCHES.CREATE_FIELD_DATE' | translate }}</span>
-                    <span class="field__control field__control--date">
-                      <mat-icon aria-hidden="true">calendar_today</mat-icon>
-                      <input type="date" formControlName="matchDate" />
-                    </span>
-                  </label>
-                  <label class="field">
-                    <span class="field__label">{{ 'MATCHES.CREATE_FIELD_TIME' | translate }}</span>
-                    <span class="field__control field__control--select">
-                      <mat-icon aria-hidden="true">schedule</mat-icon>
-                      <select formControlName="matchTime">
-                        <option value="" disabled>
-                          {{ 'MATCHES.CREATE_TIME_PLACEHOLDER' | translate }}
-                        </option>
-                        @for (time of timeOptions; track time) {
-                          <option [value]="time">{{ time }}</option>
-                        }
-                      </select>
-                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
-                    </span>
-                  </label>
-                  <label class="field">
-                    <span class="field__label">{{ 'MATCHES.DURATION' | translate }}</span>
-                    <span class="field__control field__control--select">
-                      <select formControlName="duration">
-                        @for (minutes of durationOptions; track minutes) {
-                          <option [value]="minutes">{{ minutes }}</option>
-                        }
-                      </select>
-                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
-                    </span>
-                  </label>
+                  @if (hasReservedSlot()) {
+                    <p class="wizard-card__hint">
+                      {{ formatDateLabel(form.controls.matchDate.value) }}
+                      · {{ form.controls.matchTime.value }} · {{ form.controls.duration.value }} min
+                    </p>
+                    <p class="field__hint">
+                      {{ 'MATCHES.CREATE_DATE_FROM_SLOT_HINT' | translate }}
+                    </p>
+                  } @else {
+                    <label class="field">
+                      <span class="field__label">{{
+                        'MATCHES.CREATE_FIELD_DATE' | translate
+                      }}</span>
+                      <span class="field__control field__control--date">
+                        <mat-icon aria-hidden="true">calendar_today</mat-icon>
+                        <input type="date" formControlName="matchDate" />
+                      </span>
+                    </label>
+                    <label class="field">
+                      <span class="field__label">{{
+                        'MATCHES.CREATE_FIELD_TIME' | translate
+                      }}</span>
+                      <span class="field__control field__control--select">
+                        <mat-icon aria-hidden="true">schedule</mat-icon>
+                        <select formControlName="matchTime">
+                          <option value="" disabled>
+                            {{ 'MATCHES.CREATE_TIME_PLACEHOLDER' | translate }}
+                          </option>
+                          @for (time of timeOptions; track time) {
+                            <option [value]="time">{{ time }}</option>
+                          }
+                        </select>
+                        <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                      </span>
+                    </label>
+                    <label class="field">
+                      <span class="field__label">{{ 'MATCHES.DURATION' | translate }}</span>
+                      <span class="field__control field__control--select">
+                        <select formControlName="duration">
+                          @for (minutes of durationOptions; track minutes) {
+                            <option [value]="minutes">{{ minutes }}</option>
+                          }
+                        </select>
+                        <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
+                      </span>
+                    </label>
+                  }
                   <div class="wizard-card__actions">
                     <button type="button" class="wizard-continue" (click)="continue('date')">
                       {{ 'MATCHES.CREATE_CONTINUE' | translate }}
@@ -69,25 +83,44 @@
                   <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_PLACE' | translate }}</h2>
                 </header>
                 <div class="wizard-card__body">
-                  <label class="field">
-                    <span class="field__label">{{ 'MATCHES.COURT' | translate }}</span>
-                    <span class="field__control field__control--select">
-                      <select formControlName="courtId" [disabled]="isLoading()">
-                        <option value="" disabled>
-                          {{ 'MATCHES.CREATE_COURT_PLACEHOLDER' | translate }}
-                        </option>
-                        @for (court of courts(); track court.id) {
-                          <option [value]="court.id">
-                            {{ court.name }} — {{ court.club.name }}
-                          </option>
-                        }
-                      </select>
-                      <mat-icon class="field__chevron" aria-hidden="true">expand_more</mat-icon>
-                    </span>
-                  </label>
+                  <p class="field__hint">{{ 'MATCHES.CREATE_PLACE_PROMPT' | translate }}</p>
+                  <div class="choice-row">
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      [class.choice-chip--selected]="placeMode() === 'without_court'"
+                      (click)="selectPlaceMode('without_court')"
+                    >
+                      {{ 'MATCHES.CREATE_PLACE_WITHOUT_COURT' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      [class.choice-chip--selected]="placeMode() === 'with_court'"
+                      [disabled]="!canPickCourtBooking()"
+                      (click)="selectPlaceMode('with_court')"
+                    >
+                      {{ 'MATCHES.CREATE_PLACE_WITH_COURT' | translate }}
+                    </button>
+                  </div>
+                  @if (placeMode() === 'with_court' && slotSummaryLabel()) {
+                    <p class="wizard-card__hint">{{ slotSummaryLabel() }}</p>
+                  }
+                  @if (placeMode() === 'with_court' && !canPickCourtBooking()) {
+                    <p class="field__hint">{{ 'MATCHES.CREATE_PLACE_PLAYER_ONLY' | translate }}</p>
+                  }
                   <div class="wizard-card__actions">
-                    <button type="button" class="wizard-continue" (click)="continue('place')">
-                      {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                    <button
+                      type="button"
+                      class="wizard-continue"
+                      [disabled]="placeMode() === null"
+                      (click)="continue('place')"
+                    >
+                      @if (placeMode() === 'with_court' && !hasReservedSlot()) {
+                        {{ 'MATCHES.CREATE_PICK_SLOT' | translate }}
+                      } @else {
+                        {{ 'MATCHES.CREATE_CONTINUE' | translate }}
+                      }
                     </button>
                   </div>
                 </div>
@@ -296,7 +329,13 @@
                     <h2 class="wizard-card__title">
                       {{ 'MATCHES.CREATE_STEP_PLACE' | translate }}
                     </h2>
-                    <p class="wizard-card__hint">{{ courtLabel(form.controls.courtId.value) }}</p>
+                    <p class="wizard-card__hint">
+                      @if (placeMode() === 'without_court') {
+                        {{ 'MATCHES.CREATE_PLACE_WITHOUT_COURT_SUMMARY' | translate }}
+                      } @else {
+                        {{ slotSummaryLabel() }}
+                      }
+                    </p>
                   }
                   @case ('play') {
                     <h2 class="wizard-card__title">{{ 'MATCHES.CREATE_STEP_PLAY' | translate }}</h2>
@@ -388,7 +427,9 @@
     }
 
     <div class="match-create-footer">
-      <a class="footer-link" routerLink="/matches">{{ 'CONFIG.CANCEL' | translate }}</a>
+      <a class="footer-link" routerLink="/matches" (click)="clearDraftAndCancel()">{{
+        'CONFIG.CANCEL' | translate
+      }}</a>
       <button class="cta-button" type="submit" [disabled]="!canSubmit()">
         {{ 'MATCHES.CREATE' | translate }}
       </button>

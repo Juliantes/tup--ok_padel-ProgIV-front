@@ -15,12 +15,10 @@ describe('Header', () => {
   let component: Header;
   let fixture: ComponentFixture<Header>;
 
-  const isClubOwner = signal(false);
-  const isPlayer = signal(false);
+  const userRoles = signal<('player' | 'club_owner' | 'admin')[]>([]);
 
   beforeEach(async () => {
-    isClubOwner.set(false);
-    isPlayer.set(false);
+    userRoles.set([]);
 
     await TestBed.configureTestingModule({
       imports: [Header, StubComponent],
@@ -30,8 +28,7 @@ describe('Header', () => {
         {
           provide: AuthService,
           useValue: {
-            isClubOwner: () => isClubOwner(),
-            isPlayer: () => isPlayer(),
+            userRoles: () => userRoles(),
           },
         },
       ],
@@ -50,7 +47,7 @@ describe('Header', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('NAV.CLUB');
 
-    isClubOwner.set(true);
+    userRoles.set(['club_owner']);
     fixture = TestBed.createComponent(Header);
     component = fixture.componentInstance;
     await fixture.whenStable();
@@ -63,7 +60,7 @@ describe('Header', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('NAV.COURTS');
 
-    isPlayer.set(true);
+    userRoles.set(['player']);
     fixture = TestBed.createComponent(Header);
     component = fixture.componentInstance;
     await fixture.whenStable();
