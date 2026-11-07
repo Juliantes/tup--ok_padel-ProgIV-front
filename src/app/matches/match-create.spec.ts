@@ -6,8 +6,8 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ApiSessionService } from '../core/api/api-session.service';
-import { CourtsApiService } from '../core/api/courts-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
+import { AuthService } from '../login/auth.service';
 import { provideTranslateTesting } from '../testing/translate-testing';
 import { MatchCreate } from './match-create';
 import { buildCreateMatchPayload, CreateWizardStep } from './match-create.utils';
@@ -15,6 +15,7 @@ import { buildCreateMatchPayload, CreateWizardStep } from './match-create.utils'
 type MatchCreateHarness = MatchCreate & {
   form: MatchCreate['form'];
   continue: (step: CreateWizardStep) => void;
+  selectPlaceMode: (mode: 'with_court' | 'without_court') => void;
   submit: () => void;
 };
 
@@ -34,13 +35,7 @@ describe('MatchCreate', () => {
           roster_mode: 'individual',
           level_required: 'fifth',
           join_policy: 'auto',
-          court: {
-            id: 1,
-            name: 'Cancha 1',
-            club_id: 1,
-            price_per_hour: 5000,
-            club: { id: 1, name: 'Club Test', address: 'Calle 1' },
-          },
+          court: null,
           creator: { id: 1, name: 'Tester' },
           match_players: [],
           players_count: 1,
@@ -57,21 +52,6 @@ describe('MatchCreate', () => {
         provideHttpClientTesting(),
         ...provideTranslateTesting(),
         {
-          provide: CourtsApiService,
-          useValue: {
-            listCourts: () =>
-              of({
-                courts: [
-                  {
-                    id: 1,
-                    name: 'Cancha 1',
-                    club: { id: 1, name: 'Club Norte' },
-                  },
-                ],
-              }),
-          },
-        },
-        {
           provide: MatchesApiService,
           useValue: {
             createMatch: createMatchSpy,
@@ -80,7 +60,13 @@ describe('MatchCreate', () => {
         {
           provide: ApiSessionService,
           useValue: {
-            user: () => ({ id: 1, name: 'Tester', email: 't@test.com' }),
+            user: () => ({ id: 1, name: 'Tester', email: 't@test.com', roles: ['player'] }),
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            isPlayer: () => true,
           },
         },
       ],
@@ -96,19 +82,19 @@ describe('MatchCreate', () => {
     expect(component).toBeTruthy();
   });
 
-  it('posts backend payload after completing wizard steps', async () => {
+  it('posts backend payload without court after completing wizard (sin cancha)', async () => {
+    component.selectPlaceMode('without_court');
     component.form.patchValue({
       matchDate: '2026-10-22',
       matchTime: '19:00',
       duration: 90,
-      courtId: 1,
       autoJoin: true,
       levelRequired: 'fifth',
       rosterMode: 'individual',
       joinPolicy: 'auto',
     });
 
-    const steps: CreateWizardStep[] = ['date', 'place', 'play', 'category', 'who', 'visibility'];
+    const steps: CreateWizardStep[] = ['place', 'date', 'play', 'category', 'who', 'visibility'];
     for (const step of steps) {
       component.continue(step);
     }
@@ -118,7 +104,7 @@ describe('MatchCreate', () => {
 
     expect(createMatchSpy).toHaveBeenCalledWith(
       buildCreateMatchPayload({
-        courtId: 1,
+        courtId: null,
         date: '2026-10-22',
         time: '19:00',
         duration: 90,
@@ -134,16 +120,16 @@ describe('MatchCreate', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
+    component.selectPlaceMode('without_court');
     component.form.patchValue({
       matchDate: '2026-10-22',
       matchTime: '19:00',
-      courtId: 1,
       autoJoin: false,
       levelRequired: 'fifth',
       joinPolicy: 'manual',
     });
 
-    const steps: CreateWizardStep[] = ['date', 'place', 'play', 'category', 'who', 'visibility'];
+    const steps: CreateWizardStep[] = ['place', 'date', 'play', 'category', 'who', 'visibility'];
     for (const step of steps) {
       component.continue(step);
     }

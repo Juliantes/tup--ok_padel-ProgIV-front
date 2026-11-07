@@ -5,6 +5,26 @@
   padding-bottom: 2.5rem;
 }
 
+.player-courts-match-intent {
+  align-items: center;
+  background: #e8f4fc;
+  border-radius: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.player-courts-match-intent p {
+  margin: 0;
+}
+
+.player-courts-match-intent a {
+  font-weight: 600;
+}
+
 .player-club-profile {
   margin-bottom: 2rem;
   position: relative;

@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerInputEvent, MatDatepickerModule } from '@angular/material/datepicker';
@@ -42,6 +42,10 @@ import {
   normalizeBookingDate,
   scheduleDayHoursRange,
 } from './player-schedule-timeline.utils';
+import {
+  MatchCreateSlotSelection,
+  saveMatchCreateSlotSelection,
+} from '../matches/match-create-draft.utils';
 
 export interface PlayerCourtDetail {
   id: number;
@@ -98,6 +102,10 @@ export class PlayerCourts implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly createMatchIntent = signal(false);
 
   protected readonly clubs = signal<PlayerClubOption[]>([]);
   protected readonly clubCourtsMap = signal<Map<number, PlayerCourtDetail[]>>(new Map());
@@ -261,6 +269,7 @@ export class PlayerCourts implements OnInit {
   };
 
   ngOnInit(): void {
+    this.createMatchIntent.set(this.route.snapshot.queryParamMap.get('intent') === 'create-match');
     void this.bootstrap();
   }
 
@@ -356,6 +365,8 @@ export class PlayerCourts implements OnInit {
       return;
     }
 
+    const selectForMatch = this.createMatchIntent();
+
     const ref = this.dialog.open<
       CourtBookingDialog,
       CourtBookingDialogData,
@@ -372,6 +383,7 @@ export class PlayerCourts implements OnInit {
         endTime: cell.end_time,
         pricePerHour: court.price_per_hour,
         durationMinutes: slotDurationMinutes(startTime, cell.end_time),
+        purpose: selectForMatch ? 'select' : 'book',
       },
       width: 'min(96vw, 24rem)',
     });
@@ -379,6 +391,11 @@ export class PlayerCourts implements OnInit {
     ref.afterClosed().subscribe((result) => {
       if (result === 'confirmed') {
         void this.refreshAfterMutation();
+        return;
+      }
+      if (result && typeof result === 'object' && 'timeSlotId' in result) {
+        saveMatchCreateSlotSelection(result as MatchCreateSlotSelection);
+        void this.router.navigate(['/matches/new']);
       }
     });
   }

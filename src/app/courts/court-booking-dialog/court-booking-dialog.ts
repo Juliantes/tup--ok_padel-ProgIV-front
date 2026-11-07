@@ -7,6 +7,9 @@ import { firstValueFrom } from 'rxjs';
 import { readApiErrorMessage } from '../../core/api/api-errors';
 import { CourtBookingsApiService } from '../../core/api/court-bookings-api.service';
 import { formatClubPrice } from '../../club/club-schedule.utils';
+import { MatchCreateSlotSelection } from '../../matches/match-create-draft.utils';
+
+export type CourtBookingDialogPurpose = 'book' | 'select';
 
 export interface CourtBookingDialogData {
   clubId: number;
@@ -19,9 +22,10 @@ export interface CourtBookingDialogData {
   endTime: string | null;
   pricePerHour: number;
   durationMinutes: number;
+  purpose?: CourtBookingDialogPurpose;
 }
 
-export type CourtBookingDialogResult = 'confirmed';
+export type CourtBookingDialogResult = 'confirmed' | MatchCreateSlotSelection;
 
 @Component({
   selector: 'app-court-booking-dialog',
@@ -38,6 +42,8 @@ export class CourtBookingDialog {
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  protected readonly isSelectMode = (this.data.purpose ?? 'book') === 'select';
+
   protected estimatedTotal(): string {
     const total = (this.data.pricePerHour * this.data.durationMinutes) / 60;
     return formatClubPrice(total);
@@ -48,6 +54,22 @@ export class CourtBookingDialog {
   }
 
   protected async confirm(): Promise<void> {
+    if (this.isSelectMode) {
+      const selection: MatchCreateSlotSelection = {
+        clubId: this.data.clubId,
+        clubName: this.data.clubName,
+        courtId: this.data.courtId,
+        courtName: this.data.courtName,
+        timeSlotId: this.data.timeSlotId,
+        date: this.data.date,
+        startTime: this.data.startTime,
+        endTime: this.data.endTime,
+        durationMinutes: this.data.durationMinutes,
+      };
+      this.dialogRef.close(selection);
+      return;
+    }
+
     this.isSaving.set(true);
     this.errorMessage.set(null);
 

@@ -1,4 +1,11 @@
 <section class="club-schedule-page player-courts">
+  @if (createMatchIntent()) {
+    <div class="player-courts-match-intent" role="status">
+      <p>{{ 'PLAYER_COURTS.CREATE_MATCH_INTENT' | translate }}</p>
+      <a routerLink="/matches/new">{{ 'PLAYER_COURTS.CREATE_MATCH_BACK' | translate }}</a>
+    </div>
+  }
+
   @if (errorMessage()) {
     <p class="state-message error" role="alert">{{ errorMessage() }}</p>
   }
