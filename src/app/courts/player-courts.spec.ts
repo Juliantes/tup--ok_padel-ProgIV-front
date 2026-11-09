@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
 
 import { environment } from '../../environments/environment';
 import { addDaysIso, todayIsoDate } from '../club/club-schedule.utils';
@@ -15,7 +17,13 @@ describe('PlayerCourts', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PlayerCourts, MatDialogModule],
-      providers: [provideHttpClient(), provideHttpClientTesting(), ...provideTranslateTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        provideNativeDateAdapter(),
+        ...provideTranslateTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlayerCourts);

@@ -63,7 +63,7 @@
 .home-search {
   --home-search-control-height: 2.625rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 0.65rem;
   align-items: end;
   padding: 0.85rem;
@@ -466,6 +466,10 @@
 .home-card__cta--secondary {
   background: rgba(8, 120, 201, 0.12);
   color: #0878c9;
+}
+
+.home-search__location {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 960px) {

@@ -11,6 +11,9 @@ import { ApiSessionService } from '../core/api/api-session.service';
 import { CourtsApiService } from '../core/api/courts-api.service';
 import { Court, Match } from '../core/api/match.models';
 import { MatchesApiService } from '../core/api/matches-api.service';
+import { formatDistanceKm } from '../core/location/geo.utils';
+import { SearchLocationBar } from '../core/location/search-location-bar';
+import { SearchLocationService } from '../core/location/search-location.service';
 import {
   DateFilterPreset,
   LEVEL_REQUIRED_OPTIONS,
@@ -20,6 +23,7 @@ import {
   filterMatches,
   isUserEnrolled,
   levelRequiredI18nKey,
+  matchDistanceKm,
   pickJoinTeam,
   playerInitials,
   rosterSlots,
@@ -34,6 +38,7 @@ import {
     MatIconModule,
     MatProgressSpinnerModule,
     RouterLink,
+    SearchLocationBar,
     TranslatePipe,
   ],
   templateUrl: './matches-list.html',
@@ -45,6 +50,7 @@ export class MatchesList implements OnInit {
   private readonly apiSession = inject(ApiSessionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly searchLocation = inject(SearchLocationService);
 
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
@@ -72,6 +78,9 @@ export class MatchesList implements OnInit {
       pickedDate: this.pickedDate(),
       timeOfDay: this.timeOfDay(),
       category: this.category(),
+      origin: this.searchLocation.origin(),
+      radiusKm: this.searchLocation.radiusKm(),
+      originIsGps: this.searchLocation.originIsGps(),
     };
 
     return filterMatches(this.matches(), filters);
@@ -84,7 +93,28 @@ export class MatchesList implements OnInit {
   ngOnInit(): void {
     this.isMine.set(this.route.snapshot.data['mine'] === true);
     this.applyQueryParamsFromRoute();
+    if (!this.isMine()) {
+      this.searchLocation.hydrateFromQueryParams(this.route.snapshot.queryParams);
+    }
     this.loadData();
+  }
+
+  protected onSearchLocationChanged(): void {
+    if (this.isMine()) {
+      return;
+    }
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.searchLocation.toQueryParams(
+        Object.fromEntries(
+          Object.entries(this.route.snapshot.queryParams).filter(
+            ([key]) => !['lat', 'lng', 'radiusKm', 'near', 'source'].includes(key),
+          ),
+        ),
+      ),
+      replaceUrl: true,
+    });
   }
 
   private applyQueryParamsFromRoute(): void {
@@ -167,7 +197,12 @@ export class MatchesList implements OnInit {
     if (!match.court) {
       return null;
     }
-    return this.courtFor(match)?.club.address ?? null;
+    const address = this.courtFor(match)?.club.address ?? match.court.club.address;
+    const distance = matchDistanceKm(match, this.searchLocation.origin());
+    if (distance !== null) {
+      return `${formatDistanceKm(distance)} · ${address}`;
+    }
+    return address ?? null;
   }
 
   protected pricePerHour(match: Match): number | null {

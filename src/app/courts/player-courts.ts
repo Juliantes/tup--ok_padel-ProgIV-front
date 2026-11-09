@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -8,7 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 import {
   CourtBookingSummary,
@@ -19,6 +19,13 @@ import {
 import { CourtBookingsApiService } from '../core/api/court-bookings-api.service';
 import { CourtsApiService } from '../core/api/courts-api.service';
 import { readApiErrorMessage } from '../core/api/api-errors';
+import {
+  clubMatchesProximity,
+  compareByDistanceThenName,
+  distanceKmToClub,
+} from '../core/location/proximity.utils';
+import { SearchLocationBar } from '../core/location/search-location-bar';
+import { SearchLocationService } from '../core/location/search-location.service';
 import { ClubBrowseGrid } from '../club/club-browse/club-browse-grid/club-browse-grid';
 import { ClubBrowseItem } from '../club/club-browse/club-browse.models';
 import { clubHeroTheme } from '../club/club-browse/club-browse.utils';
@@ -92,11 +99,12 @@ function slotDurationMinutes(startTime: string, endTime: string | null): number 
     RouterLink,
     TranslatePipe,
     ClubBrowseGrid,
+    SearchLocationBar,
   ],
   templateUrl: './player-courts.html',
   styleUrl: './player-courts.css',
 })
-export class PlayerCourts implements OnInit {
+export class PlayerCourts implements OnInit, OnDestroy {
   private readonly courtsApi = inject(CourtsApiService);
   private readonly courtBookingsApi = inject(CourtBookingsApiService);
   private readonly dialog = inject(MatDialog);
@@ -104,6 +112,9 @@ export class PlayerCourts implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly searchLocation = inject(SearchLocationService);
+
+  private searchQueryParamsSub?: Subscription;
 
   protected readonly createMatchIntent = signal(false);
 
@@ -129,7 +140,31 @@ export class PlayerCourts implements OnInit {
 
   protected readonly scheduleDateControl = new FormControl(isoToLocalDate(todayIsoDate()));
 
-  protected readonly browseClubs = computed((): ClubBrowseItem[] => this.clubs());
+  protected readonly browseClubs = computed((): ClubBrowseItem[] => {
+    const origin = this.searchLocation.origin();
+    const radiusKm = this.searchLocation.radiusKm();
+    const originIsGps = this.searchLocation.originIsGps();
+
+    return this.clubs()
+      .filter((club) => clubMatchesProximity(origin, radiusKm, club, originIsGps))
+      .map((club) => ({
+        id: club.id,
+        name: club.name,
+        address: club.address,
+        phone: club.phone,
+        card_theme: club.card_theme,
+        city: club.city,
+        lat: club.lat,
+        lng: club.lng,
+        distanceKm: origin ? distanceKmToClub(origin, club) : null,
+      }))
+      .sort((a, b) =>
+        compareByDistanceThenName(
+          { distanceKm: a.distanceKm ?? null, name: a.name },
+          { distanceKm: b.distanceKm ?? null, name: b.name },
+        ),
+      );
+  });
 
   protected readonly showClubBrowse = computed(() => {
     if (this.clubs().length <= 1) {
@@ -137,6 +172,8 @@ export class PlayerCourts implements OnInit {
     }
     return this.selectedClubId() === null;
   });
+
+  protected readonly hasLocationSearch = computed(() => this.searchLocation.origin() !== null);
 
   protected readonly selectedClub = computed(() => {
     const id = this.selectedClubId();
@@ -270,7 +307,29 @@ export class PlayerCourts implements OnInit {
 
   ngOnInit(): void {
     this.createMatchIntent.set(this.route.snapshot.queryParamMap.get('intent') === 'create-match');
+    this.searchLocation.hydrateFromQueryParams(this.route.snapshot.queryParams);
+    this.searchQueryParamsSub = this.route.queryParams.subscribe((params) => {
+      this.searchLocation.hydrateFromQueryParams(params);
+    });
     void this.bootstrap();
+  }
+
+  ngOnDestroy(): void {
+    this.searchQueryParamsSub?.unsubscribe();
+  }
+
+  protected onSearchLocationChanged(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.searchLocation.toQueryParams(
+        Object.fromEntries(
+          Object.entries(this.route.snapshot.queryParams).filter(
+            ([key]) => !['lat', 'lng', 'radiusKm', 'near', 'source'].includes(key),
+          ),
+        ),
+      ),
+      replaceUrl: true,
+    });
   }
 
   protected enterClub(clubId: number): void {
@@ -314,15 +373,21 @@ export class PlayerCourts implements OnInit {
     return `player-club-profile__banner--theme-${clubHeroTheme(club)}`;
   }
 
-  protected mapsEmbedUrl(address: string): SafeResourceUrl {
-    const q = encodeURIComponent(address);
-    const url = `https://maps.google.com/maps?q=${q}&output=embed`;
+  protected mapsEmbedUrl(club: PlayerClubOption): SafeResourceUrl {
+    const query =
+      club.lat != null && club.lng != null
+        ? `${club.lat},${club.lng}`
+        : encodeURIComponent(club.address);
+    const url = `https://maps.google.com/maps?q=${query}&output=embed`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
-  protected mapsSearchUrl(address: string): string {
-    const q = encodeURIComponent(address);
-    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  protected mapsSearchUrl(club: PlayerClubOption): string {
+    const query =
+      club.lat != null && club.lng != null
+        ? `${club.lat},${club.lng}`
+        : encodeURIComponent(club.address);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
   }
 
   protected courtDetail(courtId: number): PlayerCourtDetail | undefined {
@@ -452,6 +517,10 @@ export class PlayerCourts implements OnInit {
             name: court.club.name,
             address: court.club.address ?? '',
             card_theme: court.club.card_theme,
+            province: court.club.province,
+            city: court.club.city,
+            lat: court.club.lat,
+            lng: court.club.lng,
           });
         }
 

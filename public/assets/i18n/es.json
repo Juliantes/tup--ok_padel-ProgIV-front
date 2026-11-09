@@ -57,6 +57,7 @@
     "TAG_LEVEL": "Tu categoría",
     "TAG_SIDE": "Tu lado",
     "TAG_CITY": "En tu zona",
+    "TAG_NEAR": "Cerca",
     "SPOTS_ONE": "Falta 1 jugador",
     "SPOTS_MANY": "Faltan {{count}} jugadores",
     "PREV": "Anterior",
@@ -335,6 +336,7 @@
     "PLAYER_TITLE": "Clubes de pádel",
     "PLAYER_SUBTITLE_one": "{{count}} club con canchas disponibles. Elegí uno para ver horarios y reservar.",
     "PLAYER_SUBTITLE_other": "{{count}} clubes con canchas disponibles. Elegí uno para ver horarios y reservar.",
+    "NO_RESULTS_NEAR": "No hay clubes en el radio elegido. Ampliá el radio o quitá la ubicación.",
     "OWNER_TITLE": "Mis clubes",
     "OWNER_SUBTITLE_one": "{{count}} club registrado. Elegí uno para administrar canchas y turnos.",
     "OWNER_SUBTITLE_other": "{{count}} clubes registrados. Elegí uno para administrar canchas y turnos."
@@ -539,6 +541,20 @@
       "PAST": "Anteriores",
       "CANCEL": "Cancelar reserva"
     }
+  },
+  "SEARCH_LOCATION": {
+    "NEAR": "Cerca de",
+    "PLACEHOLDER": "Dirección, barrio o ciudad",
+    "RADIUS": "Radio",
+    "RADIUS_5": "5 km",
+    "RADIUS_10": "10 km",
+    "RADIUS_25": "25 km",
+    "RADIUS_UNLIMITED": "Sin límite",
+    "GPS_ARIA": "Usar mi ubicación",
+    "GPS_LABEL": "Tu ubicación",
+    "GPS_ERROR": "No pudimos obtener tu ubicación. Revisá los permisos del navegador.",
+    "SEARCHING": "Buscando direcciones…",
+    "CLEAR": "Quitar ubicación"
   },
   "AUTH": {
     "DEFAULT_USER": "Usuario"

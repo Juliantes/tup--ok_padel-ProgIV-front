@@ -2,6 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import { formatDistanceKm } from '../../../core/location/geo.utils';
 import { ClubBrowseItem } from '../club-browse.models';
 import { clubBadgeLabel, clubHeroTheme } from '../club-browse.utils';
 
@@ -28,5 +29,9 @@ export class ClubBrowseGrid {
 
   protected selectClub(clubId: number): void {
     this.clubSelected.emit(clubId);
+  }
+
+  protected formatDistance(km: number): string {
+    return formatDistanceKm(km);
   }
 }

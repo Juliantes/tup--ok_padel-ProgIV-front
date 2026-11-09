@@ -233,4 +233,8 @@ export interface PlayerClubOption {
   address: string;
   phone?: string;
   card_theme?: number;
+  province?: string | null;
+  city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }

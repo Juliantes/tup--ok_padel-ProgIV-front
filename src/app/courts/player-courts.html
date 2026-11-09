@@ -19,15 +19,21 @@
       <header class="club-browse-page__header">
         <h1 class="club-browse-page__title">{{ 'CLUB_BROWSE.PLAYER_TITLE' | translate }}</h1>
         <p class="club-browse-page__subtitle">
-          {{ 'CLUB_BROWSE.PLAYER_SUBTITLE_other' | translate: { count: clubs().length } }}
+          {{ 'CLUB_BROWSE.PLAYER_SUBTITLE_other' | translate: { count: browseClubs().length } }}
         </p>
       </header>
 
-      <app-club-browse-grid
-        [clubs]="browseClubs()"
-        [whatsappHrefFor]="whatsappHrefFor"
-        (clubSelected)="enterClub($event)"
-      />
+      <app-search-location-bar variant="compact" (locationChanged)="onSearchLocationChanged()" />
+
+      @if (browseClubs().length === 0 && hasLocationSearch()) {
+        <p class="state-message">{{ 'CLUB_BROWSE.NO_RESULTS_NEAR' | translate }}</p>
+      } @else {
+        <app-club-browse-grid
+          [clubs]="browseClubs()"
+          [whatsappHrefFor]="whatsappHrefFor"
+          (clubSelected)="enterClub($event)"
+        />
+      }
     </div>
   } @else if (selectedClub(); as club) {
     @if (clubs().length > 1) {
@@ -123,7 +129,7 @@
             <iframe
               class="player-club-profile__map"
               [title]="'PLAYER_COURTS.PROFILE.MAP_TITLE' | translate: { club: club.name }"
-              [src]="mapsEmbedUrl(club.address)"
+              [src]="mapsEmbedUrl(club)"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
             ></iframe>
@@ -132,7 +138,7 @@
             <span class="player-club-profile__map-address">{{ club.address }}</span>
             <a
               class="player-club-profile__map-link"
-              [href]="mapsSearchUrl(club.address)"
+              [href]="mapsSearchUrl(club)"
               target="_blank"
               rel="noopener noreferrer"
             >

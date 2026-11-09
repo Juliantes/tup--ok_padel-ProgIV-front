@@ -13,6 +13,8 @@
   </header>
 
   @if (!isMine()) {
+    <app-search-location-bar variant="compact" (locationChanged)="onSearchLocationChanged()" />
+
     <div class="filters">
       <div class="filter-row">
         <button

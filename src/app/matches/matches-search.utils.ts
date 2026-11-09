@@ -1,4 +1,6 @@
 import { Match, MatchPlayer } from '../core/api/match.models';
+import { clubMatchesProximity, distanceKmToClub } from '../core/location/proximity.utils';
+import { SearchOrigin, SearchRadiusKm } from '../core/location/search-location.models';
 
 export type DateFilterPreset = 'any' | 'today' | 'tomorrow' | 'week' | 'pick';
 export type TimeOfDayFilter = 'morning' | 'afternoon' | 'night';
@@ -9,6 +11,9 @@ export interface MatchSearchFilters {
   pickedDate: string | null;
   timeOfDay: TimeOfDayFilter | null;
   category: string | null;
+  origin?: SearchOrigin | null;
+  radiusKm?: SearchRadiusKm;
+  originIsGps?: boolean;
 }
 
 export const LEVEL_REQUIRED_OPTIONS = [
@@ -208,8 +213,22 @@ function matchesTimeOfDay(match: Match, timeOfDay: TimeOfDayFilter | null): bool
   return hour >= 18;
 }
 
+export function matchDistanceKm(
+  match: Match,
+  origin: SearchOrigin | null | undefined,
+): number | null {
+  if (!origin || !match.court?.club) {
+    return null;
+  }
+  return distanceKmToClub(origin, match.court.club);
+}
+
 export function filterMatches(matches: Match[], filters: MatchSearchFilters): Match[] {
-  return matches.filter((match) => {
+  const origin = filters.origin ?? null;
+  const radiusKm = filters.radiusKm ?? null;
+  const originIsGps = filters.originIsGps ?? false;
+
+  const filtered = matches.filter((match) => {
     if (
       filters.onlyOpenSpots &&
       match.status !== 'open' &&
@@ -230,6 +249,35 @@ export function filterMatches(matches: Match[], filters: MatchSearchFilters): Ma
       return false;
     }
 
+    if (origin && !match.court) {
+      return false;
+    }
+
+    if (origin && match.court?.club) {
+      if (!clubMatchesProximity(origin, radiusKm, match.court.club, originIsGps)) {
+        return false;
+      }
+    }
+
     return true;
+  });
+
+  if (!origin) {
+    return filtered;
+  }
+
+  return [...filtered].sort((a, b) => {
+    const aDist = matchDistanceKm(a, origin);
+    const bDist = matchDistanceKm(b, origin);
+    if (aDist !== null && bDist !== null && aDist !== bDist) {
+      return aDist - bDist;
+    }
+    if (aDist !== null && bDist === null) {
+      return -1;
+    }
+    if (aDist === null && bDist !== null) {
+      return 1;
+    }
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
   });
 }
