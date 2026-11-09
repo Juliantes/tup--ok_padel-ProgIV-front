@@ -1,16 +1,330 @@
-<section
-  class="home-shell"
-  [style.background-image]="backgroundImage"
-  [attr.aria-label]="'HOME.ARIA' | translate"
->
-  <a class="home-half home-half--left" routerLink="/matches" (click)="trackHomeClick('partidos')">
-    <span class="home-half-label">{{ 'HOME.MATCHES' | translate }}</span>
-  </a>
-  <a
-    class="home-half home-half--right"
-    routerLink="/configurations"
-    (click)="trackHomeClick('configuracion')"
-  >
-    <span class="home-half-label">{{ 'HOME.CONFIG' | translate }}</span>
-  </a>
+<section class="home-page" [attr.aria-label]="'HOME.ARIA' | translate">
+  <header class="home-hero">
+    <p class="home-hero__badge">{{ 'HOME.HERO_BADGE' | translate }}</p>
+    <h2 class="home-hero__title">{{ 'HOME.HERO_TITLE' | translate }}</h2>
+    <p class="home-hero__subtitle">{{ 'HOME.HERO_SUBTITLE' | translate }}</p>
+
+    <form class="home-search" (submit)="$event.preventDefault(); applySearch()">
+      <label class="home-search__field">
+        <span>{{ 'HOME.SEARCH_CITY' | translate }}</span>
+        <select [value]="selectedCity()" (change)="onCityChange($event)">
+          <option value="all">{{ 'HOME.SEARCH_CITY_ALL' | translate }}</option>
+          @if (selectedCity() !== 'all' && !cityOptions().includes(selectedCity())) {
+            <option [value]="selectedCity()">{{ selectedCity() }}</option>
+          }
+          @for (city of cityOptions(); track city) {
+            <option [value]="city">{{ city }}</option>
+          }
+        </select>
+      </label>
+      <label class="home-search__field">
+        <span>{{ 'HOME.SEARCH_DATE' | translate }}</span>
+        <input type="date" [value]="selectedDate()" (change)="onDateChange($event)" />
+      </label>
+      <label class="home-search__field">
+        <span>{{ 'HOME.SEARCH_TIME' | translate }}</span>
+        <select [value]="selectedTimeWindow()" (change)="onTimeWindowChange($event)">
+          <option value="now">{{ 'HOME.SEARCH_TIME_NOW' | translate }}</option>
+          <option value="morning">{{ 'MATCHES.SEARCH_TIME_MORNING' | translate }}</option>
+          <option value="afternoon">{{ 'MATCHES.SEARCH_TIME_AFTERNOON' | translate }}</option>
+          <option value="night">{{ 'MATCHES.SEARCH_TIME_NIGHT' | translate }}</option>
+        </select>
+      </label>
+      <label class="home-search__field">
+        <span>{{ 'HOME.SEARCH_LEVEL' | translate }}</span>
+        <select [value]="selectedLevel() ?? ''" (change)="onLevelChange($event)">
+          <option value="">{{ 'MATCHES.SEARCH_CATEGORY_ANY' | translate }}</option>
+          @for (level of levelOptions; track level) {
+            <option [value]="level">{{ levelRequiredI18nKey(level) | translate }}</option>
+          }
+        </select>
+      </label>
+      <button type="submit" class="home-search__submit">
+        {{ 'HOME.SEARCH_SUBMIT' | translate }}
+      </button>
+    </form>
+
+    <div class="home-quick-actions">
+      <a
+        class="home-cta home-cta--primary"
+        routerLink="/matches/new"
+        (click)="trackHomeClick('crear_partido')"
+      >
+        {{ 'HOME.CTA_CREATE' | translate }}
+      </a>
+      <button type="button" class="home-cta home-cta--ghost" (click)="goToCourts()">
+        {{ 'HOME.CTA_COURTS' | translate }}
+      </button>
+      <button type="button" class="home-cta home-cta--link" (click)="goToMatchesList()">
+        {{ 'HOME.CTA_MATCHES' | translate }}
+      </button>
+    </div>
+
+    <ul class="home-stats" aria-live="polite">
+      <li>
+        <mat-icon aria-hidden="true">sports_tennis</mat-icon>
+        {{ 'HOME.STAT_SLOTS' | translate: { count: stats().slots } }}
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">domain</mat-icon>
+        {{ 'HOME.STAT_CLUBS' | translate: { count: stats().clubs } }}
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">groups</mat-icon>
+        {{ 'HOME.STAT_MATCHES' | translate: { count: stats().openMatches } }}
+      </li>
+    </ul>
+  </header>
+
+  @if (loadError()) {
+    <p class="home-state home-state--error">{{ 'HOME.ERROR' | translate }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="home-loading">
+      <mat-spinner diameter="40" />
+      <span>{{ 'HOME.LOADING' | translate }}</span>
+    </div>
+  } @else {
+    @if (layoutVariant() === 'B') {
+      <div class="home-tabs">
+        <button
+          type="button"
+          class="home-tab"
+          [class.home-tab--active]="activeTab() === 'courts'"
+          (click)="setActiveTab('courts')"
+        >
+          {{ 'HOME.SLICE_COURTS_TITLE' | translate }}
+        </button>
+        <button
+          type="button"
+          class="home-tab"
+          [class.home-tab--active]="activeTab() === 'matches'"
+          (click)="setActiveTab('matches')"
+        >
+          {{ 'HOME.SLICE_MATCHES_TITLE' | translate }}
+        </button>
+      </div>
+    }
+
+    @if (layoutVariant() === 'C') {
+      <div class="home-master-nav" role="tablist">
+        <button
+          type="button"
+          class="home-master-dot"
+          [class.home-master-dot--active]="masterSlide() === 0"
+          (click)="setMasterSlide(0)"
+        >
+          {{ 'HOME.MASTER_SEARCH' | translate }}
+        </button>
+        <button
+          type="button"
+          class="home-master-dot"
+          [class.home-master-dot--active]="masterSlide() === 1"
+          (click)="setMasterSlide(1)"
+        >
+          {{ 'HOME.SLICE_COURTS_TITLE' | translate }}
+        </button>
+        <button
+          type="button"
+          class="home-master-dot"
+          [class.home-master-dot--active]="masterSlide() === 2"
+          (click)="setMasterSlide(2)"
+        >
+          {{ 'HOME.SLICE_MATCHES_TITLE' | translate }}
+        </button>
+      </div>
+    }
+
+    @if (
+      layoutVariant() === 'A' ||
+      (layoutVariant() === 'B' && activeTab() === 'courts') ||
+      (layoutVariant() === 'C' && masterSlide() === 1)
+    ) {
+      <section class="home-slice" [attr.aria-label]="'HOME.SLICE_COURTS_ARIA' | translate">
+        <div class="home-slice__head">
+          <div>
+            <h3>{{ 'HOME.SLICE_COURTS_TITLE' | translate }}</h3>
+            <p class="home-slice__hint">{{ 'HOME.SLICE_COURTS_HINT' | translate }}</p>
+          </div>
+          <div class="home-slice__nav">
+            <button
+              type="button"
+              class="home-slice__arrow"
+              [attr.aria-label]="'HOME.PREV' | translate"
+              (click)="scrollSlice('courts', -1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <button
+              type="button"
+              class="home-slice__arrow"
+              [attr.aria-label]="'HOME.NEXT' | translate"
+              (click)="scrollSlice('courts', 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (courtSlots().length === 0) {
+          <p class="home-state">{{ 'HOME.SLICE_COURTS_EMPTY' | translate }}</p>
+        } @else {
+          <div #courtsTrack class="home-track">
+            @for (slot of courtSlots(); track slot.clubId + slot.courtId + slot.startTime) {
+              <article class="home-card home-card--court">
+                <p class="home-card__club">{{ slot.clubName }}</p>
+                <h4>{{ slot.courtName }}</h4>
+                <p class="home-card__meta">
+                  <mat-icon aria-hidden="true">place</mat-icon>
+                  {{ slot.city || slot.clubAddress }}
+                </p>
+                <p class="home-card__meta">
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
+                  {{ slot.startTime }}
+                  @if (slot.endTime) {
+                    – {{ slot.endTime }}
+                  }
+                </p>
+                <p class="home-card__price">
+                  {{
+                    estimatedSlotPrice(slot.pricePerHour, slot.startTime, slot.endTime)
+                      | currency: 'ARS' : 'symbol' : '1.0-0'
+                  }}
+                </p>
+                <button type="button" class="home-card__cta" (click)="goToCourtSlot()">
+                  {{ 'HOME.RESERVE_SLOT' | translate }}
+                </button>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (
+      layoutVariant() === 'A' ||
+      (layoutVariant() === 'B' && activeTab() === 'matches') ||
+      (layoutVariant() === 'C' && masterSlide() === 2)
+    ) {
+      <section class="home-slice" [attr.aria-label]="'HOME.SLICE_MATCHES_ARIA' | translate">
+        <div class="home-slice__head">
+          <div>
+            <h3>{{ 'HOME.SLICE_MATCHES_TITLE' | translate }}</h3>
+            <p class="home-slice__hint">
+              @if (userCategory(); as cat) {
+                {{
+                  'HOME.SLICE_MATCHES_PROFILE'
+                    | translate
+                      : {
+                          category: (levelRequiredI18nKey(cat) | translate),
+                          side: userSideLabel() ?? ('CONFIG.COURT_SIDE_NONE' | translate),
+                        }
+                }}
+              } @else {
+                {{ 'HOME.SLICE_MATCHES_HINT' | translate }}
+              }
+            </p>
+          </div>
+          <div class="home-slice__nav">
+            <button
+              type="button"
+              class="home-slice__arrow"
+              [attr.aria-label]="'HOME.PREV' | translate"
+              (click)="scrollSlice('matches', -1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <button
+              type="button"
+              class="home-slice__arrow"
+              [attr.aria-label]="'HOME.NEXT' | translate"
+              (click)="scrollSlice('matches', 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (recommendedMatches().length === 0) {
+          <p class="home-state">{{ 'HOME.SLICE_MATCHES_EMPTY' | translate }}</p>
+        } @else {
+          <div #matchesTrack class="home-track">
+            @for (item of recommendedMatches(); track item.match.id) {
+              <article
+                class="home-card home-card--match"
+                tabindex="0"
+                role="button"
+                (click)="openMatch(item.match.id)"
+                (keydown.enter)="openMatch(item.match.id)"
+              >
+                <div class="home-card__tags">
+                  @if (item.tags.levelMatch) {
+                    <span class="home-tag">{{ 'HOME.TAG_LEVEL' | translate }}</span>
+                  }
+                  @if (item.tags.sideMatch) {
+                    <span class="home-tag">{{ 'HOME.TAG_SIDE' | translate }}</span>
+                  }
+                  @if (item.tags.cityMatch) {
+                    <span class="home-tag">{{ 'HOME.TAG_CITY' | translate }}</span>
+                  }
+                </div>
+                <p class="home-card__spots">
+                  {{
+                    item.spotsLeft === 1
+                      ? ('HOME.SPOTS_ONE' | translate)
+                      : ('HOME.SPOTS_MANY' | translate: { count: item.spotsLeft })
+                  }}
+                </p>
+                <p class="home-card__meta">
+                  <mat-icon aria-hidden="true">event</mat-icon>
+                  {{ item.match.date | date: 'd MMM yyyy · HH:mm' }}
+                </p>
+                @if (item.match.court) {
+                  <p class="home-card__meta">
+                    <mat-icon aria-hidden="true">place</mat-icon>
+                    {{ item.match.court.club.name }} · {{ item.match.court.name }}
+                  </p>
+                }
+                <p class="home-card__level">
+                  {{ levelRequiredI18nKey(item.match.level_required) | translate }}
+                </p>
+                <div class="home-card__roster">
+                  @for (slot of rosterSlots(item.match); track $index) {
+                    <span
+                      class="home-avatar"
+                      [class.home-avatar--empty]="!slot.filled"
+                      [attr.title]="slot.filled ? slot.filled.user.name : ''"
+                    >
+                      @if (slot.filled) {
+                        {{ playerInitials(slot.filled.user.name) }}
+                      }
+                    </span>
+                  }
+                </div>
+                @if (canJoin(item)) {
+                  <button
+                    type="button"
+                    class="home-card__cta"
+                    [disabled]="actionMatchId() === item.match.id"
+                    (click)="joinMatch(item, $event)"
+                  >
+                    {{ 'MATCHES.JOIN' | translate }}
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="home-card__cta home-card__cta--secondary"
+                    (click)="openMatch(item.match.id); $event.stopPropagation()"
+                  >
+                    {{ 'MATCHES.VIEW_DETAIL' | translate }}
+                  </button>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
 </section>
