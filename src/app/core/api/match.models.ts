@@ -5,6 +5,8 @@ export interface ClubSummary {
   country?: string | null;
   province?: string | null;
   city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   card_theme?: number;
 }
 
@@ -37,6 +39,8 @@ export interface MatchClubSummary {
   country?: string | null;
   province?: string | null;
   city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface MatchCourtSummary {

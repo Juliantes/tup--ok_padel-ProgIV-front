@@ -5,30 +5,11 @@
     <p class="home-hero__subtitle">{{ 'HOME.HERO_SUBTITLE' | translate }}</p>
 
     <form class="home-search" (submit)="$event.preventDefault(); applySearch()">
-      <label class="home-search__field">
-        <span>{{ 'HOME.SEARCH_PROVINCE' | translate }}</span>
-        <select [value]="selectedProvince()" (change)="onProvinceChange($event)">
-          <option value="all">{{ 'HOME.SEARCH_PROVINCE_ALL' | translate }}</option>
-          @if (selectedProvince() !== 'all' && !provinceOptions().includes(selectedProvince())) {
-            <option [value]="selectedProvince()">{{ selectedProvince() }}</option>
-          }
-          @for (province of provinceOptions(); track province) {
-            <option [value]="province">{{ province }}</option>
-          }
-        </select>
-      </label>
-      <label class="home-search__field">
-        <span>{{ 'HOME.SEARCH_CITY' | translate }}</span>
-        <select [value]="selectedCity()" (change)="onCityChange($event)">
-          <option value="all">{{ 'HOME.SEARCH_CITY_ALL' | translate }}</option>
-          @if (selectedCity() !== 'all' && !cityOptions().includes(selectedCity())) {
-            <option [value]="selectedCity()">{{ selectedCity() }}</option>
-          }
-          @for (city of cityOptions(); track city) {
-            <option [value]="city">{{ city }}</option>
-          }
-        </select>
-      </label>
+      <app-search-location-bar
+        class="home-search__location"
+        variant="hero"
+        (locationChanged)="onSearchLocationChanged()"
+      />
       <label class="home-search__field">
         <span>{{ 'HOME.SEARCH_DATE' | translate }}</span>
         <input type="date" [value]="selectedDate()" (change)="onDateChange($event)" />
@@ -189,6 +170,9 @@
                 <h4>{{ slot.courtName }}</h4>
                 <p class="home-card__meta">
                   <mat-icon aria-hidden="true">place</mat-icon>
+                  @if (slot.distanceKm !== null) {
+                    {{ distanceLabel(slot.distanceKm) }} ·
+                  }
                   {{ slot.city || slot.clubAddress }}
                 </p>
                 <p class="home-card__meta">
@@ -277,8 +261,8 @@
                   @if (item.tags.sideMatch) {
                     <span class="home-tag">{{ 'HOME.TAG_SIDE' | translate }}</span>
                   }
-                  @if (item.tags.cityMatch) {
-                    <span class="home-tag">{{ 'HOME.TAG_CITY' | translate }}</span>
+                  @if (item.tags.nearMatch) {
+                    <span class="home-tag">{{ 'HOME.TAG_NEAR' | translate }}</span>
                   }
                 </div>
                 <p class="home-card__spots">

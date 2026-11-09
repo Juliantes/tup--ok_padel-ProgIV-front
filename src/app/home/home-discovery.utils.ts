@@ -1,6 +1,16 @@
 import { ApiCourtSide } from '../core/api/api-user.model';
 import { PlayerAvailabilityResponse } from '../core/api/club.models';
 import { Court, Match } from '../core/api/match.models';
+import {
+  clubMatchesProximity,
+  distanceKmToClub,
+  extractCityFromAddress,
+  normalizeLocationToken,
+  resolveClubCity,
+} from '../core/location/proximity.utils';
+
+export { extractCityFromAddress, resolveClubCity };
+import { SearchOrigin, SearchRadiusKm } from '../core/location/search-location.models';
 import { canJoinMatch, TimeOfDayFilter } from '../matches/matches-search.utils';
 
 export type HomeTimeWindow = 'now' | TimeOfDayFilter;
@@ -9,11 +19,14 @@ export interface ClubLocationFields {
   address?: string | null;
   city?: string | null;
   province?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface HomeDiscoveryFilters {
-  province: string;
-  city: string;
+  origin: SearchOrigin | null;
+  radiusKm: SearchRadiusKm;
+  originIsGps: boolean;
   dateIso: string;
   timeWindow: HomeTimeWindow;
   levelCategory: string | null;
@@ -34,6 +47,7 @@ export interface AvailableCourtSlotCard {
   timeSlotId: number;
   pricePerHour: number;
   minutesFromNow: number;
+  distanceKm: number | null;
 }
 
 export interface RecommendedMatchCard {
@@ -41,7 +55,8 @@ export interface RecommendedMatchCard {
   affinityScore: number;
   spotsLeft: number;
   matchCity: string | null;
-  tags: { levelMatch: boolean; sideMatch: boolean; cityMatch: boolean };
+  distanceKm: number | null;
+  tags: { levelMatch: boolean; sideMatch: boolean; nearMatch: boolean };
 }
 
 export const SELF_LEVEL_TO_CATEGORY: Record<number, string> = {
@@ -68,34 +83,7 @@ const CATEGORY_ORDER = [
 ] as const;
 
 function normalizeCityToken(value: string): string {
-  return value.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-}
-
-export function extractCityFromAddress(address: string | null | undefined): string {
-  if (!address?.trim()) {
-    return '';
-  }
-
-  const segments = address
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  if (segments.length === 0) {
-    return '';
-  }
-
-  const last = segments[segments.length - 1];
-  const withoutPostal = last.replace(/^\d{4,8}\s*/, '').trim();
-  return withoutPostal || last;
-}
-
-export function resolveClubCity(club: ClubLocationFields): string {
-  const structured = club.city?.trim();
-  if (structured) {
-    return structured;
-  }
-  return extractCityFromAddress(club.address);
+  return normalizeLocationToken(value);
 }
 
 export function resolveClubProvince(club: ClubLocationFields): string {
@@ -171,8 +159,16 @@ export function cityMatches(selectedCity: string, club: ClubLocationFields): boo
   return normalizeCityToken(city) === normalizeCityToken(selectedCity);
 }
 
+export function proximityMatchesClub(
+  filters: Pick<HomeDiscoveryFilters, 'origin' | 'radiusKm' | 'originIsGps'>,
+  club: ClubLocationFields,
+): boolean {
+  return clubMatchesProximity(filters.origin, filters.radiusKm, club, filters.originIsGps);
+}
+
+/** @deprecated kept for unit tests covering legacy province/city strings */
 export function locationMatches(
-  filters: Pick<HomeDiscoveryFilters, 'province' | 'city'>,
+  filters: { province: string; city: string },
   club: ClubLocationFields,
 ): boolean {
   if (!provinceMatches(filters.province, club)) {
@@ -226,10 +222,11 @@ export function buildAvailableCourtCards(
       continue;
     }
 
-    if (!locationMatches(filters, response.club)) {
+    if (!proximityMatchesClub(filters, response.club)) {
       continue;
     }
 
+    const distanceKm = filters.origin ? distanceKmToClub(filters.origin, response.club) : null;
     const city = resolveClubCity(response.club);
     const courtById = new Map(response.courts.map((court) => [court.id, court]));
 
@@ -273,11 +270,23 @@ export function buildAvailableCourtCards(
         timeSlotId: cell.time_slot_id,
         pricePerHour: court.price_per_hour,
         minutesFromNow,
+        distanceKm,
       });
     }
   }
 
   cards.sort((a, b) => {
+    const aDist = a.distanceKm;
+    const bDist = b.distanceKm;
+    if (aDist !== null && bDist !== null && aDist !== bDist) {
+      return aDist - bDist;
+    }
+    if (aDist !== null && bDist === null) {
+      return -1;
+    }
+    if (aDist === null && bDist !== null) {
+      return 1;
+    }
     if (a.minutesFromNow !== b.minutesFromNow) {
       return a.minutesFromNow - b.minutesFromNow;
     }
@@ -346,11 +355,14 @@ function affinityScore(
     score += 25;
   }
 
-  const cityMatch = match.court?.club
-    ? cityMatches(filters.city, match.court.club)
-    : filters.city === 'all';
-  if (cityMatch && filters.city !== 'all') {
-    score += 20;
+  let nearMatch = false;
+  if (filters.origin && match.court?.club) {
+    const distance = distanceKmToClub(filters.origin, match.court.club);
+    if (distance !== null && proximityMatchesClub(filters, match.court.club)) {
+      nearMatch = true;
+      const proximityBoost = Math.max(0, 25 - distance);
+      score += Math.min(25, proximityBoost);
+    }
   }
 
   if (filters.levelCategory && match.level_required === filters.levelCategory) {
@@ -377,7 +389,7 @@ function affinityScore(
     tags: {
       levelMatch: levelMatch && match.level_required !== 'open',
       sideMatch,
-      cityMatch: cityMatch && filters.city !== 'all',
+      nearMatch,
     },
   };
 }
@@ -416,7 +428,11 @@ export function buildRecommendedMatches(
       continue;
     }
 
-    if (match.court?.club && !locationMatches(filters, match.court.club)) {
+    if (filters.origin && !match.court) {
+      continue;
+    }
+
+    if (match.court?.club && !proximityMatchesClub(filters, match.court.club)) {
       continue;
     }
 
@@ -440,17 +456,35 @@ export function buildRecommendedMatches(
     }
 
     const { score, tags } = affinityScore(match, filters, userId, userCategory, userSide);
+    const distanceKm =
+      filters.origin && match.court?.club
+        ? distanceKmToClub(filters.origin, match.court.club)
+        : null;
 
     candidates.push({
       match,
       affinityScore: score,
       spotsLeft: match.max_players - match.players_count,
       matchCity: match.court?.club ? resolveClubCity(match.court.club) : null,
+      distanceKm,
       tags,
     });
   }
 
   candidates.sort((a, b) => {
+    if (filters.origin) {
+      const aDist = a.distanceKm;
+      const bDist = b.distanceKm;
+      if (aDist !== null && bDist !== null && aDist !== bDist) {
+        return aDist - bDist;
+      }
+      if (aDist !== null && bDist === null) {
+        return -1;
+      }
+      if (aDist === null && bDist !== null) {
+        return 1;
+      }
+    }
     if (b.affinityScore !== a.affinityScore) {
       return b.affinityScore - a.affinityScore;
     }

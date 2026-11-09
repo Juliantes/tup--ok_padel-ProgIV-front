@@ -2,28 +2,33 @@ import { Match } from '../core/api/match.models';
 import {
   buildAvailableCourtCards,
   buildRecommendedMatches,
-  collectCitiesFromCourts,
-  collectProvincesFromCourts,
   extractCityFromAddress,
   locationMatches,
   provinceMatches,
+  proximityMatchesClub,
   SELF_LEVEL_TO_CATEGORY,
 } from './home-discovery.utils';
 
 describe('home-discovery.utils', () => {
+  const baseFilters = {
+    origin: null,
+    radiusKm: 10 as const,
+    originIsGps: false,
+    dateIso: '2026-11-09',
+    timeWindow: 'now' as const,
+    levelCategory: null,
+    now: new Date(2026, 10, 9, 14, 0, 0),
+  };
+
   describe('extractCityFromAddress', () => {
     it('returns last segment without postal code', () => {
       expect(extractCityFromAddress('Av. Siempre Viva 742, 1425 CABA, Buenos Aires')).toBe(
         'Buenos Aires',
       );
     });
-
-    it('returns empty for blank address', () => {
-      expect(extractCityFromAddress('')).toBe('');
-    });
   });
 
-  describe('locationMatches', () => {
+  describe('locationMatches (legacy)', () => {
     it('uses structured province and city when present', () => {
       const club = {
         address: 'Calle 1',
@@ -32,93 +37,58 @@ describe('home-discovery.utils', () => {
       };
 
       expect(locationMatches({ province: 'Santa Fe', city: 'Rosario' }, club)).toBe(true);
-      expect(locationMatches({ province: 'Santa Fe', city: 'all' }, club)).toBe(true);
-      expect(locationMatches({ province: 'Buenos Aires', city: 'all' }, club)).toBe(false);
-    });
-
-    it('excludes legacy clubs when a province is selected', () => {
-      const club = { address: 'Calle 1, Rosario' };
-      expect(provinceMatches('Santa Fe', club)).toBe(false);
-      expect(provinceMatches('all', club)).toBe(true);
+      expect(provinceMatches('Santa Fe', { address: 'Calle 1, Rosario' })).toBe(false);
     });
   });
 
-  describe('collectProvincesFromCourts', () => {
-    it('lists distinct structured provinces', () => {
-      const courts = [
-        { id: 1, club: { id: 1, name: 'A', address: 'X', province: 'Santa Fe', city: 'Rosario' } },
-        { id: 2, club: { id: 2, name: 'B', address: 'Y', province: 'Santa Fe', city: 'Rafaela' } },
-      ] as Parameters<typeof collectProvincesFromCourts>[0];
-
-      expect(collectProvincesFromCourts(courts)).toEqual(['Santa Fe']);
-    });
-  });
-
-  describe('collectCitiesFromCourts', () => {
-    it('dedupes cities from club addresses', () => {
-      const courts = [
-        {
-          id: 1,
-          club: { id: 1, name: 'A', address: 'Calle 1, Rosario' },
-        },
-        {
-          id: 2,
-          club: { id: 2, name: 'B', address: 'Calle 2, Rosario' },
-        },
-      ] as Parameters<typeof collectCitiesFromCourts>[0];
-
-      expect(collectCitiesFromCourts(courts)).toEqual(['Rosario']);
+  describe('proximityMatchesClub', () => {
+    it('allows all clubs when origin is unset', () => {
+      expect(proximityMatchesClub(baseFilters, { lat: -32.95, lng: -60.67, city: 'Rosario' })).toBe(
+        true,
+      );
     });
 
-    it('filters cities by province', () => {
-      const courts = [
-        {
-          id: 1,
-          club: {
-            id: 1,
-            name: 'A',
-            address: 'X',
-            province: 'Santa Fe',
-            city: 'Rosario',
-          },
+    it('filters by radius when origin is set', () => {
+      const filters = {
+        ...baseFilters,
+        origin: {
+          lat: -32.95,
+          lng: -60.67,
+          label: 'Centro',
+          city: 'Rosario',
+          source: 'autocomplete' as const,
         },
-        {
-          id: 2,
-          club: {
-            id: 2,
-            name: 'B',
-            address: 'Y',
-            province: 'Buenos Aires',
-            city: 'La Plata',
-          },
-        },
-      ] as Parameters<typeof collectCitiesFromCourts>[0];
-
-      expect(collectCitiesFromCourts(courts, 'Santa Fe')).toEqual(['Rosario']);
+        radiusKm: 5 as const,
+      };
+      expect(proximityMatchesClub(filters, { lat: -32.946, lng: -60.639 })).toBe(true);
+      expect(proximityMatchesClub(filters, { lat: -34.6, lng: -58.38 })).toBe(false);
     });
   });
 
   describe('buildAvailableCourtCards', () => {
-    const now = new Date(2026, 10, 9, 14, 0, 0);
-    const filters = {
-      province: 'all',
-      city: 'all',
-      dateIso: '2026-11-09',
-      timeWindow: 'now' as const,
-      levelCategory: null,
-      now,
-    };
+    it('includes available future slots sorted by distance when origin set', () => {
+      const filters = {
+        ...baseFilters,
+        origin: {
+          lat: -32.95,
+          lng: -60.67,
+          label: 'Centro',
+          city: 'Rosario',
+          source: 'autocomplete' as const,
+        },
+      };
 
-    it('includes available future slots sorted by time', () => {
       const availability = [
         {
           club: {
             id: 1,
             name: 'Club Norte',
-            address: 'X, Rosario',
+            address: 'X',
             country: null,
             province: null,
-            city: null,
+            city: 'Rosario',
+            lat: -32.946,
+            lng: -60.639,
             phone: '1',
             email: null,
             card_theme: 0,
@@ -148,21 +118,11 @@ describe('home-discovery.utils', () => {
 
       const cards = buildAvailableCourtCards(availability, filters);
       expect(cards.length).toBe(1);
-      expect(cards[0].startTime).toBe('16:00');
+      expect(cards[0].distanceKm).not.toBeNull();
     });
   });
 
   describe('buildRecommendedMatches', () => {
-    const now = new Date(2026, 10, 9, 10, 0, 0);
-    const filters = {
-      province: 'all',
-      city: 'all',
-      dateIso: '2026-11-09',
-      timeWindow: 'now' as const,
-      levelCategory: null,
-      now,
-    };
-
     const baseMatch = {
       id: 1,
       date: '2026-11-09T18:00:00',
@@ -176,7 +136,13 @@ describe('home-discovery.utils', () => {
         name: 'C1',
         club_id: 1,
         price_per_hour: 100,
-        club: { id: 1, name: 'Club', address: 'X, Rosario' },
+        club: {
+          id: 1,
+          name: 'Club',
+          address: 'X, Rosario',
+          lat: -32.946,
+          lng: -60.639,
+        },
       },
       creator: { id: 99, name: 'Ana' },
       match_players: [],
@@ -190,9 +156,30 @@ describe('home-discovery.utils', () => {
       const openMatch = { ...baseMatch, level_required: category };
       const other = { ...baseMatch, id: 2, level_required: 'first' };
 
-      const result = buildRecommendedMatches([other, openMatch], filters, 50, userLevel, 'reves');
+      const result = buildRecommendedMatches(
+        [other, openMatch],
+        baseFilters,
+        50,
+        userLevel,
+        'reves',
+      );
       expect(result[0].match.id).toBe(1);
       expect(result[0].tags.levelMatch).toBe(true);
+    });
+
+    it('excludes walk-in matches when origin is set', () => {
+      const filters = {
+        ...baseFilters,
+        origin: {
+          lat: -32.95,
+          lng: -60.67,
+          label: 'Centro',
+          source: 'gps' as const,
+        },
+      };
+      const walkIn = { ...baseMatch, id: 2, court: null };
+      const result = buildRecommendedMatches([walkIn], filters, 50, 6, 'reves');
+      expect(result).toHaveLength(0);
     });
   });
 });

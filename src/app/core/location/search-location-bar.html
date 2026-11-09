@@ -1,0 +1,82 @@
+<div
+  class="search-location"
+  [class.search-location--hero]="variant() === 'hero'"
+  [class.search-location--compact]="variant() === 'compact'"
+>
+  <label class="search-location__address-wrap">
+    <span class="search-location__label">{{ 'SEARCH_LOCATION.NEAR' | translate }}</span>
+    <div class="search-location__address-row">
+      <input
+        type="search"
+        class="search-location__input"
+        autocomplete="off"
+        [value]="searchLocation.addressQuery()"
+        [placeholder]="'SEARCH_LOCATION.PLACEHOLDER' | translate"
+        (input)="onAddressInput($any($event.target).value)"
+      />
+      <button
+        type="button"
+        class="search-location__gps"
+        [attr.aria-label]="'SEARCH_LOCATION.GPS_ARIA' | translate"
+        (click)="requestGps()"
+      >
+        <mat-icon aria-hidden="true">my_location</mat-icon>
+      </button>
+      @if (searchLocation.origin()) {
+        <button
+          type="button"
+          class="search-location__clear"
+          [attr.aria-label]="'SEARCH_LOCATION.CLEAR' | translate"
+          (click)="clearLocation()"
+        >
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      }
+    </div>
+    @if (autocompleteLoading()) {
+      <p class="search-location__hint">{{ 'SEARCH_LOCATION.SEARCHING' | translate }}</p>
+    }
+    @if (suggestions().length > 0) {
+      <ul class="search-location__suggestions" role="listbox">
+        @for (suggestion of suggestions(); track suggestion.place_id) {
+          <li>
+            <button
+              type="button"
+              role="option"
+              class="search-location__suggestion"
+              aria-selected="false"
+              (click)="selectSuggestion(suggestion)"
+            >
+              {{ suggestion.formatted }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (searchLocation.origin(); as origin) {
+      <p class="search-location__active">
+        @if (origin.source === 'gps') {
+          {{ 'SEARCH_LOCATION.GPS_LABEL' | translate }}
+        } @else {
+          {{ origin.label }}
+        }
+      </p>
+    }
+    @if (searchLocation.gpsError()) {
+      <p class="search-location__error" role="alert">
+        {{ 'SEARCH_LOCATION.GPS_ERROR' | translate }}
+      </p>
+    }
+  </label>
+
+  <label class="search-location__radius">
+    <span class="search-location__label">{{ 'SEARCH_LOCATION.RADIUS' | translate }}</span>
+    <select [value]="radiusSelectValue()" (change)="onRadiusChange($event)">
+      @for (opt of radiusOptions; track opt.labelKey) {
+        <option [value]="opt.value === null ? 'none' : opt.value">
+          {{ opt.labelKey | translate }}
+        </option>
+      }
+    </select>
+  </label>
+</div>

@@ -8,7 +8,7 @@ import { CourtsApiService } from '../core/api/courts-api.service';
 import { CourtBookingsApiService } from '../core/api/court-bookings-api.service';
 import { MatchesApiService } from '../core/api/matches-api.service';
 import { ApiSessionService } from '../core/api/api-session.service';
-import { UserAccountService } from '../configurations/services/user-account.service';
+import { AddressesApiService } from '../core/api/addresses-api.service';
 import { Home } from './home';
 
 @Component({ standalone: true, template: '' })
@@ -64,9 +64,9 @@ describe('Home', () => {
           },
         },
         {
-          provide: UserAccountService,
+          provide: AddressesApiService,
           useValue: {
-            getAccountDetails: () => ({ birthDate: null, address: 'Calle 1, Rosario', phones: [] }),
+            autocomplete: () => of({ addresses: [] }),
           },
         },
       ],

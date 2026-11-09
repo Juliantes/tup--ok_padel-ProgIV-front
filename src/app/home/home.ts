@@ -16,17 +16,16 @@ import { CourtsApiService } from '../core/api/courts-api.service';
 import { PlayerAvailabilityResponse } from '../core/api/club.models';
 import { Court, Match } from '../core/api/match.models';
 import { MatchesApiService } from '../core/api/matches-api.service';
-import { UserAccountService } from '../configurations/services/user-account.service';
+import { formatDistanceKm } from '../core/location/geo.utils';
+import { SearchLocationService } from '../core/location/search-location.service';
+import { SearchLocationBar } from '../core/location/search-location-bar';
 import {
   HomeTimeWindow,
   RecommendedMatchCard,
   buildAvailableCourtCards,
   buildRecommendedMatches,
   categoryForSelfLevel,
-  collectCitiesFromCourts,
-  collectProvincesFromCourts,
   estimatedSlotPrice,
-  extractCityFromAddress,
   levelOptionsForSelect,
 } from './home-discovery.utils';
 import {
@@ -48,6 +47,7 @@ export type HomeLayoutVariant = 'A' | 'B' | 'C';
     MatIconModule,
     MatProgressSpinnerModule,
     RouterLink,
+    SearchLocationBar,
     TranslatePipe,
   ],
   templateUrl: './home.html',
@@ -59,7 +59,7 @@ export class Home implements OnInit {
   private readonly courtBookingsApi = inject(CourtBookingsApiService);
   private readonly matchesApi = inject(MatchesApiService);
   private readonly apiSession = inject(ApiSessionService);
-  private readonly userAccount = inject(UserAccountService);
+  private readonly searchLocation = inject(SearchLocationService);
   private readonly router = inject(Router);
 
   protected readonly layoutVariant = signal<HomeLayoutVariant>('A');
@@ -69,10 +69,6 @@ export class Home implements OnInit {
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
 
-  protected readonly provinceOptions = signal<string[]>([]);
-  protected readonly cityOptions = signal<string[]>([]);
-  protected readonly selectedProvince = signal('all');
-  protected readonly selectedCity = signal('all');
   protected readonly selectedDate = signal(todayIsoDate());
   protected readonly selectedTimeWindow = signal<HomeTimeWindow>('now');
   protected readonly selectedLevel = signal<string | null>(null);
@@ -100,8 +96,9 @@ export class Home implements OnInit {
   });
 
   protected readonly discoveryFilters = computed(() => ({
-    province: this.selectedProvince(),
-    city: this.selectedCity(),
+    origin: this.searchLocation.origin(),
+    radiusKm: this.searchLocation.radiusKm(),
+    originIsGps: this.searchLocation.originIsGps(),
     dateIso: this.selectedDate(),
     timeWindow: this.selectedTimeWindow(),
     levelCategory: this.selectedLevel(),
@@ -148,17 +145,12 @@ export class Home implements OnInit {
     void this.loadDiscoveryData();
   }
 
-  protected onProvinceChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedProvince.set(value || 'all');
-    this.selectedCity.set('all');
-    const courts = [...this.courtsByIdMap().values()];
-    this.cityOptions.set(collectCitiesFromCourts(courts, this.selectedProvince()));
+  protected onSearchLocationChanged(): void {
+    // Filters react via searchLocation signals; no refetch required.
   }
 
-  protected onCityChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedCity.set(value || 'all');
+  protected distanceLabel(km: number): string {
+    return formatDistanceKm(km);
   }
 
   protected onDateChange(event: Event): void {
@@ -200,7 +192,9 @@ export class Home implements OnInit {
 
   protected goToCourts(): void {
     this.trackHomeClick('explorar_clubes');
-    void this.router.navigate(['/courts']);
+    void this.router.navigate(['/courts'], {
+      queryParams: this.searchLocation.toQueryParams(),
+    });
   }
 
   protected goToCourtSlot(): void {
@@ -210,18 +204,15 @@ export class Home implements OnInit {
 
   protected goToMatchesList(): void {
     this.trackHomeClick('ver_partidos');
-    const query: Record<string, string> = {};
-    if (this.selectedDate()) {
-      query['date'] = this.selectedDate();
-    }
-    if (this.selectedTimeWindow() !== 'now') {
-      query['timeOfDay'] = this.selectedTimeWindow();
-    }
-    if (this.selectedLevel()) {
-      query['category'] = this.selectedLevel()!;
-    }
-    query['openSpots'] = '1';
-    void this.router.navigate(['/matches'], { queryParams: query });
+    const query: Record<string, string | undefined> = {
+      date: this.selectedDate(),
+      timeOfDay: this.selectedTimeWindow() !== 'now' ? this.selectedTimeWindow() : undefined,
+      category: this.selectedLevel() ?? undefined,
+      openSpots: '1',
+    };
+    void this.router.navigate(['/matches'], {
+      queryParams: this.searchLocation.toQueryParams(query),
+    });
   }
 
   protected openMatch(id: number): void {
@@ -260,16 +251,6 @@ export class Home implements OnInit {
     if (category) {
       this.selectedLevel.set(category);
     }
-
-    if (!user?.id) {
-      return;
-    }
-
-    const details = this.userAccount.getAccountDetails(String(user.id));
-    const city = extractCityFromAddress(details.address);
-    if (city) {
-      this.selectedCity.set(city);
-    }
   }
 
   private async loadDiscoveryData(): Promise<void> {
@@ -284,9 +265,6 @@ export class Home implements OnInit {
       const courts = courtsResponse.courts;
       const courtsById = new Map(courts.map((court) => [court.id, court]));
       this.courtsByIdMap.set(courtsById);
-      this.provinceOptions.set(collectProvincesFromCourts(courts));
-      const cities = collectCitiesFromCourts(courts, this.selectedProvince());
-      this.cityOptions.set(cities);
 
       const clubIds = [...new Set(courts.map((c) => c.club.id))];
       this.clubCount.set(clubIds.length);

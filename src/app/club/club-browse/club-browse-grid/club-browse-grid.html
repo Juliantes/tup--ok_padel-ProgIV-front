@@ -16,7 +16,12 @@
         </h2>
         <p class="club-card__meta">
           <mat-icon aria-hidden="true">place</mat-icon>
-          <span>{{ club.address }}</span>
+          <span>
+            @if (club.distanceKm !== null && club.distanceKm !== undefined) {
+              {{ formatDistance(club.distanceKm) }} ·
+            }
+            {{ club.address }}
+          </span>
         </p>
 
         <div class="club-card__actions">
