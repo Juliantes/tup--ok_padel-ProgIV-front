@@ -2,6 +2,9 @@ export interface ClubSummary {
   id: number;
   name: string;
   address: string | null;
+  country?: string | null;
+  province?: string | null;
+  city?: string | null;
   card_theme?: number;
 }
 
@@ -31,6 +34,9 @@ export interface MatchClubSummary {
   id: number;
   name: string;
   address: string;
+  country?: string | null;
+  province?: string | null;
+  city?: string | null;
 }
 
 export interface MatchCourtSummary {

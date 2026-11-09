@@ -1,6 +1,8 @@
 export const environment = {
   production: false,
   apiBaseUrl: 'http://localhost:3000',
+  /** Obsoleto en el front: el autocomplete usa GET /api/v1/addresses/autocomplete (key en GEOAPIFY_API_KEY del backend). */
+  geoapifyApiKey: '',
   /** Token de padelapi.org. Copiá el valor real solo en environment.ts (no commitear). */
   padelApiToken: '',
   /** Solo Tauri/desktop OAuth. Copiá valores reales en environment.ts (no commitear). */
