@@ -27,6 +27,8 @@
     "HERO_BADGE": "Tu club y tu próximo partido en un solo lugar",
     "HERO_TITLE": "Armá tu partido. Elegí cancha y salí a jugar.",
     "HERO_SUBTITLE": "Turnos libres cerca de tu horario y partidos abiertos que buscan tu categoría y posición.",
+    "SEARCH_PROVINCE": "Provincia",
+    "SEARCH_PROVINCE_ALL": "Todas las provincias",
     "SEARCH_CITY": "Ciudad / zona",
     "SEARCH_CITY_ALL": "Todas las zonas",
     "SEARCH_DATE": "Fecha",
@@ -170,8 +172,8 @@
     "BIO": "Bio",
     "PLACEHOLDER_PHONE_HINT": "Completá tu teléfono real: el sistema generó uno temporal al registrarte con Google.",
     "CLUB_CARD_THEME": {
-      "TITLE": "Apariencia del club",
-      "SUBTITLE": "Define el color que verán los jugadores en la tarjeta de tu club al explorar clubes.",
+      "TITLE": "Tu club",
+      "SUBTITLE": "Ubicación y color de la tarjeta que ven los jugadores al explorar clubes.",
       "LOADING": "Cargando clubes...",
       "NO_CLUBS": "Todavía no tenés un club registrado.",
       "CLUB_LABEL": "Club",
@@ -181,6 +183,19 @@
       "OPTION_2": "Terracota",
       "OPTION_3": "Negro grisáceo",
       "OPTION_4": "Rosa fucsia"
+    },
+    "CLUB_LOCATION": {
+      "CURRENT_ADDRESS": "Dirección guardada",
+      "SEARCH_LABEL": "Buscar nueva dirección",
+      "SEARCH_PLACEHOLDER": "Calle, número, localidad…",
+      "COUNTRY": "País",
+      "PROVINCE": "Provincia",
+      "CITY": "Ciudad",
+      "SAVE": "Guardar ubicación",
+      "NO_API_KEY": "Configurá geoapifyApiKey en environment.ts para buscar direcciones.",
+      "INCOMPLETE_RESULT": "El resultado elegido no incluye país, provincia y ciudad.",
+      "SEARCHING": "Buscando…",
+      "SEARCH_FAILED": "No pudimos buscar direcciones. Probá de nuevo."
     }
   },
   "MATCHES": {

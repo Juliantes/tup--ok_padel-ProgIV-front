@@ -6,6 +6,18 @@
 
     <form class="home-search" (submit)="$event.preventDefault(); applySearch()">
       <label class="home-search__field">
+        <span>{{ 'HOME.SEARCH_PROVINCE' | translate }}</span>
+        <select [value]="selectedProvince()" (change)="onProvinceChange($event)">
+          <option value="all">{{ 'HOME.SEARCH_PROVINCE_ALL' | translate }}</option>
+          @if (selectedProvince() !== 'all' && !provinceOptions().includes(selectedProvince())) {
+            <option [value]="selectedProvince()">{{ selectedProvince() }}</option>
+          }
+          @for (province of provinceOptions(); track province) {
+            <option [value]="province">{{ province }}</option>
+          }
+        </select>
+      </label>
+      <label class="home-search__field">
         <span>{{ 'HOME.SEARCH_CITY' | translate }}</span>
         <select [value]="selectedCity()" (change)="onCityChange($event)">
           <option value="all">{{ 'HOME.SEARCH_CITY_ALL' | translate }}</option>

@@ -3,7 +3,10 @@ import {
   buildAvailableCourtCards,
   buildRecommendedMatches,
   collectCitiesFromCourts,
+  collectProvincesFromCourts,
   extractCityFromAddress,
+  locationMatches,
+  provinceMatches,
   SELF_LEVEL_TO_CATEGORY,
 } from './home-discovery.utils';
 
@@ -17,6 +20,37 @@ describe('home-discovery.utils', () => {
 
     it('returns empty for blank address', () => {
       expect(extractCityFromAddress('')).toBe('');
+    });
+  });
+
+  describe('locationMatches', () => {
+    it('uses structured province and city when present', () => {
+      const club = {
+        address: 'Calle 1',
+        province: 'Santa Fe',
+        city: 'Rosario',
+      };
+
+      expect(locationMatches({ province: 'Santa Fe', city: 'Rosario' }, club)).toBe(true);
+      expect(locationMatches({ province: 'Santa Fe', city: 'all' }, club)).toBe(true);
+      expect(locationMatches({ province: 'Buenos Aires', city: 'all' }, club)).toBe(false);
+    });
+
+    it('excludes legacy clubs when a province is selected', () => {
+      const club = { address: 'Calle 1, Rosario' };
+      expect(provinceMatches('Santa Fe', club)).toBe(false);
+      expect(provinceMatches('all', club)).toBe(true);
+    });
+  });
+
+  describe('collectProvincesFromCourts', () => {
+    it('lists distinct structured provinces', () => {
+      const courts = [
+        { id: 1, club: { id: 1, name: 'A', address: 'X', province: 'Santa Fe', city: 'Rosario' } },
+        { id: 2, club: { id: 2, name: 'B', address: 'Y', province: 'Santa Fe', city: 'Rafaela' } },
+      ] as Parameters<typeof collectProvincesFromCourts>[0];
+
+      expect(collectProvincesFromCourts(courts)).toEqual(['Santa Fe']);
     });
   });
 
@@ -35,11 +69,39 @@ describe('home-discovery.utils', () => {
 
       expect(collectCitiesFromCourts(courts)).toEqual(['Rosario']);
     });
+
+    it('filters cities by province', () => {
+      const courts = [
+        {
+          id: 1,
+          club: {
+            id: 1,
+            name: 'A',
+            address: 'X',
+            province: 'Santa Fe',
+            city: 'Rosario',
+          },
+        },
+        {
+          id: 2,
+          club: {
+            id: 2,
+            name: 'B',
+            address: 'Y',
+            province: 'Buenos Aires',
+            city: 'La Plata',
+          },
+        },
+      ] as Parameters<typeof collectCitiesFromCourts>[0];
+
+      expect(collectCitiesFromCourts(courts, 'Santa Fe')).toEqual(['Rosario']);
+    });
   });
 
   describe('buildAvailableCourtCards', () => {
     const now = new Date(2026, 10, 9, 14, 0, 0);
     const filters = {
+      province: 'all',
       city: 'all',
       dateIso: '2026-11-09',
       timeWindow: 'now' as const,
@@ -54,6 +116,9 @@ describe('home-discovery.utils', () => {
             id: 1,
             name: 'Club Norte',
             address: 'X, Rosario',
+            country: null,
+            province: null,
+            city: null,
             phone: '1',
             email: null,
             card_theme: 0,
@@ -90,6 +155,7 @@ describe('home-discovery.utils', () => {
   describe('buildRecommendedMatches', () => {
     const now = new Date(2026, 10, 9, 10, 0, 0);
     const filters = {
+      province: 'all',
       city: 'all',
       dateIso: '2026-11-09',
       timeWindow: 'now' as const,

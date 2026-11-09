@@ -6,6 +6,12 @@ export interface OwnerClub {
   id: number;
   name: string;
   address: string;
+  country: string | null;
+  province: string | null;
+  city: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  place_id?: string | null;
   phone: string;
   email: string | null;
   card_theme: number;
@@ -30,6 +36,12 @@ export interface OwnerCourtResponse {
 export interface OwnerClubPayload {
   name: string;
   address: string;
+  country?: string | null;
+  province?: string | null;
+  city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  place_id?: string | null;
   phone: string;
   email?: string | null;
   card_theme?: number;

@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { computed, signal } from '@angular/core';
 import { EMPTY, of } from 'rxjs';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { vi } from 'vitest';
 
 import { AuthService } from '../login/auth.service';
 import { provideTranslateTesting } from '../testing/translate-testing';
@@ -14,9 +15,29 @@ describe('Configurations', () => {
   let component: Configurations;
   let fixture: ComponentFixture<Configurations>;
   const isClubOwnerSignal = signal(true);
+  let updateClubSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     isClubOwnerSignal.set(true);
+    updateClubSpy = vi.fn((id: number, payload: Record<string, unknown>) =>
+      of({
+        club: {
+          id,
+          name: 'Club A',
+          address: payload['address'] ?? 'Av. 1',
+          country: payload['country'] ?? null,
+          province: payload['province'] ?? null,
+          city: payload['city'] ?? null,
+          lat: payload['lat'] ?? null,
+          lng: payload['lng'] ?? null,
+          place_id: payload['place_id'] ?? null,
+          phone: '111',
+          email: null,
+          card_theme: payload['card_theme'] ?? 0,
+        },
+      }),
+    );
+
     await TestBed.configureTestingModule({
       imports: [Configurations],
       providers: [
@@ -33,6 +54,9 @@ describe('Configurations', () => {
                     id: 1,
                     name: 'Club A',
                     address: 'Av. 1',
+                    country: null,
+                    province: null,
+                    city: null,
                     phone: '111',
                     email: null,
                     card_theme: 0,
@@ -41,23 +65,16 @@ describe('Configurations', () => {
                     id: 2,
                     name: 'Club B',
                     address: 'Av. 2',
+                    country: null,
+                    province: null,
+                    city: null,
                     phone: '222',
                     email: null,
                     card_theme: 1,
                   },
                 ],
               }),
-            updateClub: () =>
-              of({
-                club: {
-                  id: 1,
-                  name: 'Club A',
-                  address: 'Av. 1',
-                  phone: '111',
-                  email: null,
-                  card_theme: 0,
-                },
-              }),
+            updateClub: updateClubSpy,
           },
         },
         {
@@ -131,5 +148,46 @@ describe('Configurations', () => {
     expect(fixture.nativeElement.textContent).toContain('CONFIG.CLUB_CARD_THEME.TITLE');
     const swatches = fixture.nativeElement.querySelectorAll('.club-card-theme__swatch');
     expect(swatches.length).toBe(5);
+  });
+
+  it('saves structured location through updateClub', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const exposed = component as unknown as {
+      selectSuggestion: (suggestion: {
+        formatted: string;
+        address: string;
+        country: string;
+        province: string;
+        city: string;
+        lat: number;
+        lng: number;
+        place_id: string;
+      }) => void;
+      saveClubLocation: () => Promise<void>;
+    };
+    exposed.selectSuggestion({
+      formatted: 'Calle 1, Rosario, Argentina',
+      address: 'Calle 1, Rosario, Argentina',
+      country: 'Argentina',
+      province: 'Santa Fe',
+      city: 'Rosario',
+      lat: -32.95,
+      lng: -60.67,
+      place_id: 'place-rosario',
+    });
+    await exposed.saveClubLocation();
+    expect(updateClubSpy).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        address: 'Calle 1, Rosario, Argentina',
+        country: 'Argentina',
+        province: 'Santa Fe',
+        city: 'Rosario',
+        lat: -32.95,
+        lng: -60.67,
+        place_id: 'place-rosario',
+      }),
+    );
   });
 });

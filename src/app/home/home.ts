@@ -24,6 +24,7 @@ import {
   buildRecommendedMatches,
   categoryForSelfLevel,
   collectCitiesFromCourts,
+  collectProvincesFromCourts,
   estimatedSlotPrice,
   extractCityFromAddress,
   levelOptionsForSelect,
@@ -68,7 +69,9 @@ export class Home implements OnInit {
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
 
+  protected readonly provinceOptions = signal<string[]>([]);
   protected readonly cityOptions = signal<string[]>([]);
+  protected readonly selectedProvince = signal('all');
   protected readonly selectedCity = signal('all');
   protected readonly selectedDate = signal(todayIsoDate());
   protected readonly selectedTimeWindow = signal<HomeTimeWindow>('now');
@@ -97,6 +100,7 @@ export class Home implements OnInit {
   });
 
   protected readonly discoveryFilters = computed(() => ({
+    province: this.selectedProvince(),
     city: this.selectedCity(),
     dateIso: this.selectedDate(),
     timeWindow: this.selectedTimeWindow(),
@@ -142,6 +146,14 @@ export class Home implements OnInit {
   protected applySearch(): void {
     this.trackHomeClick('buscar');
     void this.loadDiscoveryData();
+  }
+
+  protected onProvinceChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedProvince.set(value || 'all');
+    this.selectedCity.set('all');
+    const courts = [...this.courtsByIdMap().values()];
+    this.cityOptions.set(collectCitiesFromCourts(courts, this.selectedProvince()));
   }
 
   protected onCityChange(event: Event): void {
@@ -272,7 +284,8 @@ export class Home implements OnInit {
       const courts = courtsResponse.courts;
       const courtsById = new Map(courts.map((court) => [court.id, court]));
       this.courtsByIdMap.set(courtsById);
-      const cities = collectCitiesFromCourts(courts);
+      this.provinceOptions.set(collectProvincesFromCourts(courts));
+      const cities = collectCitiesFromCourts(courts, this.selectedProvince());
       this.cityOptions.set(cities);
 
       const clubIds = [...new Set(courts.map((c) => c.club.id))];

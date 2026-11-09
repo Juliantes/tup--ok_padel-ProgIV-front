@@ -5,7 +5,14 @@ import { canJoinMatch, TimeOfDayFilter } from '../matches/matches-search.utils';
 
 export type HomeTimeWindow = 'now' | TimeOfDayFilter;
 
+export interface ClubLocationFields {
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+}
+
 export interface HomeDiscoveryFilters {
+  province: string;
   city: string;
   dateIso: string;
   timeWindow: HomeTimeWindow;
@@ -83,12 +90,51 @@ export function extractCityFromAddress(address: string | null | undefined): stri
   return withoutPostal || last;
 }
 
-export function collectCitiesFromCourts(courts: Court[]): string[] {
+export function resolveClubCity(club: ClubLocationFields): string {
+  const structured = club.city?.trim();
+  if (structured) {
+    return structured;
+  }
+  return extractCityFromAddress(club.address);
+}
+
+export function resolveClubProvince(club: ClubLocationFields): string {
+  return club.province?.trim() ?? '';
+}
+
+export function collectProvincesFromCourts(courts: Court[]): string[] {
+  const seen = new Set<string>();
+  const provinces: string[] = [];
+
+  for (const court of courts) {
+    const province = court.club.province?.trim();
+    if (!province) {
+      continue;
+    }
+    const key = normalizeCityToken(province);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    provinces.push(province);
+  }
+
+  return provinces.sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+export function collectCitiesFromCourts(courts: Court[], selectedProvince = 'all'): string[] {
   const seen = new Set<string>();
   const cities: string[] = [];
 
   for (const court of courts) {
-    const city = extractCityFromAddress(court.club.address);
+    if (selectedProvince !== 'all') {
+      const province = court.club.province?.trim();
+      if (!province || normalizeCityToken(province) !== normalizeCityToken(selectedProvince)) {
+        continue;
+      }
+    }
+
+    const city = resolveClubCity(court.club);
     if (!city) {
       continue;
     }
@@ -103,12 +149,37 @@ export function collectCitiesFromCourts(courts: Court[]): string[] {
   return cities.sort((a, b) => a.localeCompare(b, 'es'));
 }
 
-export function cityMatches(selectedCity: string, address: string | null | undefined): boolean {
+export function provinceMatches(selectedProvince: string, club: ClubLocationFields): boolean {
+  if (selectedProvince === 'all' || !selectedProvince.trim()) {
+    return true;
+  }
+
+  const province = resolveClubProvince(club);
+  if (!province) {
+    return false;
+  }
+
+  return normalizeCityToken(province) === normalizeCityToken(selectedProvince);
+}
+
+export function cityMatches(selectedCity: string, club: ClubLocationFields): boolean {
   if (selectedCity === 'all' || !selectedCity.trim()) {
     return true;
   }
-  const city = extractCityFromAddress(address);
+
+  const city = resolveClubCity(club);
   return normalizeCityToken(city) === normalizeCityToken(selectedCity);
+}
+
+export function locationMatches(
+  filters: Pick<HomeDiscoveryFilters, 'province' | 'city'>,
+  club: ClubLocationFields,
+): boolean {
+  if (!provinceMatches(filters.province, club)) {
+    return false;
+  }
+
+  return cityMatches(filters.city, club);
 }
 
 function parseSlotStart(isoDate: string, startTime: string): Date {
@@ -155,11 +226,11 @@ export function buildAvailableCourtCards(
       continue;
     }
 
-    if (!cityMatches(filters.city, response.club.address)) {
+    if (!locationMatches(filters, response.club)) {
       continue;
     }
 
-    const city = extractCityFromAddress(response.club.address);
+    const city = resolveClubCity(response.club);
     const courtById = new Map(response.courts.map((court) => [court.id, court]));
 
     for (const cell of response.cells) {
@@ -275,7 +346,9 @@ function affinityScore(
     score += 25;
   }
 
-  const cityMatch = cityMatches(filters.city, match.court?.club.address ?? null);
+  const cityMatch = match.court?.club
+    ? cityMatches(filters.city, match.court.club)
+    : filters.city === 'all';
   if (cityMatch && filters.city !== 'all') {
     score += 20;
   }
@@ -343,7 +416,7 @@ export function buildRecommendedMatches(
       continue;
     }
 
-    if (!cityMatches(filters.city, match.court?.club.address ?? null)) {
+    if (match.court?.club && !locationMatches(filters, match.court.club)) {
       continue;
     }
 
@@ -372,9 +445,7 @@ export function buildRecommendedMatches(
       match,
       affinityScore: score,
       spotsLeft: match.max_players - match.players_count,
-      matchCity: match.court?.club.address
-        ? extractCityFromAddress(match.court.club.address)
-        : null,
+      matchCity: match.court?.club ? resolveClubCity(match.court.club) : null,
       tags,
     });
   }

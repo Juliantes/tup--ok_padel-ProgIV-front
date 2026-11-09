@@ -83,6 +83,81 @@
           }
 
           @if (selectedClub(); as club) {
+            <section class="club-location" aria-labelledby="club-location-heading">
+              <h3 id="club-location-heading" class="club-location__heading">
+                {{ 'CONFIG.CLUB_LOCATION.CURRENT_ADDRESS' | translate }}
+              </h3>
+              <p class="club-location__saved">{{ club.address }}</p>
+              @if (club.country && club.province && club.city) {
+                <p class="club-location__meta muted">
+                  {{ club.city }}, {{ club.province }}, {{ club.country }}
+                </p>
+              }
+
+              <mat-form-field appearance="outline" class="club-location__search">
+                <mat-label>{{ 'CONFIG.CLUB_LOCATION.SEARCH_LABEL' | translate }}</mat-label>
+                <input
+                  matInput
+                  type="search"
+                  autocomplete="off"
+                  [value]="addressSearchQuery()"
+                  [placeholder]="'CONFIG.CLUB_LOCATION.SEARCH_PLACEHOLDER' | translate"
+                  (input)="onAddressSearchInput($any($event.target).value)"
+                />
+              </mat-form-field>
+
+              @if (autocompleteLoading()) {
+                <p class="state-message muted">
+                  {{ 'CONFIG.CLUB_LOCATION.SEARCHING' | translate }}
+                </p>
+              }
+
+              @if (addressSuggestions().length > 0) {
+                <ul class="club-location__suggestions" role="listbox">
+                  @for (suggestion of addressSuggestions(); track suggestion.place_id) {
+                    <li>
+                      <button
+                        type="button"
+                        role="option"
+                        class="club-location__suggestion"
+                        aria-selected="false"
+                        (click)="selectSuggestion(suggestion)"
+                      >
+                        {{ suggestion.formatted }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (pendingLocation(); as draft) {
+                <dl class="club-location__draft">
+                  <div>
+                    <dt>{{ 'CONFIG.CLUB_LOCATION.COUNTRY' | translate }}</dt>
+                    <dd>{{ draft.country }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'CONFIG.CLUB_LOCATION.PROVINCE' | translate }}</dt>
+                    <dd>{{ draft.province }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'CONFIG.CLUB_LOCATION.CITY' | translate }}</dt>
+                    <dd>{{ draft.city }}</dd>
+                  </div>
+                </dl>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  type="button"
+                  class="club-location__save"
+                  [disabled]="!canSaveLocation() || addressSaving()"
+                  (click)="saveClubLocation()"
+                >
+                  {{ 'CONFIG.CLUB_LOCATION.SAVE' | translate }}
+                </button>
+              }
+            </section>
+
             <div class="club-card-theme">
               <p class="club-card-theme__label">{{ 'CONFIG.CLUB_CARD_THEME.LABEL' | translate }}</p>
               <div

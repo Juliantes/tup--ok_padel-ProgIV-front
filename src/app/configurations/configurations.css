@@ -102,6 +102,75 @@ button[color='warn'] {
   color: #0b5278;
 }
 
+.club-location {
+  margin-bottom: 1.25rem;
+}
+
+.club-location__heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.club-location__saved {
+  margin: 0 0 0.25rem;
+}
+
+.club-location__meta {
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.club-location__search {
+  display: block;
+  width: 100%;
+}
+
+.club-location__suggestions {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.club-location__suggestion {
+  background: #fff;
+  border: 0;
+  cursor: pointer;
+  display: block;
+  font-size: 0.88rem;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.club-location__suggestion:hover {
+  background: #f3f4f6;
+}
+
+.club-location__draft {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+}
+
+.club-location__draft dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.club-location__draft dd {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+
+.club-location__save {
+  margin-bottom: 0.5rem;
+}
+
 .club-card-theme-card mat-card-subtitle {
   margin-bottom: 0.75rem;
 }
