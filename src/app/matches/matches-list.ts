@@ -83,7 +83,35 @@ export class MatchesList implements OnInit {
 
   ngOnInit(): void {
     this.isMine.set(this.route.snapshot.data['mine'] === true);
+    this.applyQueryParamsFromRoute();
     this.loadData();
+  }
+
+  private applyQueryParamsFromRoute(): void {
+    if (this.isMine()) {
+      return;
+    }
+
+    const params = this.route.snapshot.queryParamMap;
+    const date = params.get('date');
+    if (date) {
+      this.pickedDate.set(date);
+      this.datePreset.set('pick');
+    }
+
+    const timeOfDay = params.get('timeOfDay');
+    if (timeOfDay === 'morning' || timeOfDay === 'afternoon' || timeOfDay === 'night') {
+      this.timeOfDay.set(timeOfDay);
+    }
+
+    const category = params.get('category');
+    if (category) {
+      this.category.set(category);
+    }
+
+    if (params.get('openSpots') === '1') {
+      this.onlyOpenSpots.set(true);
+    }
   }
 
   protected loadData(): void {
