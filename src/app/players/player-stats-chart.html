@@ -1,0 +1,64 @@
+@let current = detail();
+@let percents = bar();
+<section class="stats-chart" aria-labelledby="stats-chart-title">
+  <h4 id="stats-chart-title" class="stats-chart__title">{{ 'PLAYERS.CHART_TITLE' | translate }}</h4>
+
+  @if (current.played === 0) {
+    <p class="stats-chart__empty">{{ 'PLAYERS.NO_PLAYED_MATCHES' | translate }}</p>
+  } @else {
+    <p class="stats-chart__summary">
+      {{
+        'PLAYERS.PLAYED_SUMMARY'
+          | translate
+            : {
+                played: current.played,
+                wins: current.wins,
+                losses: current.losses,
+              }
+      }}
+      @if (winRateLabel(); as rate) {
+        <span class="stats-chart__win-rate"> · {{ rate }}</span>
+      }
+    </p>
+    <div
+      class="stats-chart__bar"
+      role="img"
+      [attr.aria-label]="
+        'PLAYERS.BAR_ARIA' | translate: { wins: current.wins, losses: current.losses }
+      "
+    >
+      <span
+        class="stats-chart__segment stats-chart__segment--wins"
+        [style.width.%]="percents.winsPercent"
+      ></span>
+      <span
+        class="stats-chart__segment stats-chart__segment--losses"
+        [style.width.%]="percents.lossesPercent"
+      ></span>
+    </div>
+  }
+
+  <div class="stats-chart__ratings">
+    <div class="stats-chart__rating-head">
+      <mat-icon aria-hidden="true">star</mat-icon>
+      <strong>{{ averageStarsLabel(current) }}</strong>
+      <span>
+        {{ 'PLAYERS.REVIEWS_COUNT' | translate: { count: current.reviews_count } }}
+      </span>
+    </div>
+    @for (star of [5, 4, 3, 2, 1]; track star) {
+      @let count = starCount(current, star);
+      <div class="stats-chart__star-row">
+        <span class="stats-chart__star-label">{{ star }}</span>
+        <mat-icon aria-hidden="true" class="stats-chart__star-icon">star</mat-icon>
+        <div class="stats-chart__star-track">
+          <span
+            class="stats-chart__star-fill"
+            [style.width.%]="starBarWidth(count, current)"
+          ></span>
+        </div>
+        <span class="stats-chart__star-count">{{ count }}</span>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,91 @@
+@let summary = player();
+<article class="player-card match-card">
+  <div class="match-card-badges">
+    <span class="badge badge--level">
+      {{ 'PLAYERS.CATEGORY' | translate: { label: summary.category_label } }}
+    </span>
+    @if (summary.court_side_label) {
+      <span class="badge badge--status">{{ summary.court_side_label }}</span>
+    }
+  </div>
+
+  <div class="player-card__head">
+    <span class="organizer-avatar player-card__avatar">{{ playerInitials(summary.name) }}</span>
+    <h3 class="player-card__name">{{ summary.name }}</h3>
+  </div>
+
+  <ul class="match-meta">
+    <li>
+      <mat-icon aria-hidden="true">sports_tennis</mat-icon>
+      <span>
+        {{ 'PLAYERS.RECORD' | translate: { wins: summary.wins, losses: summary.losses } }}
+      </span>
+    </li>
+    <li>
+      <mat-icon aria-hidden="true">timeline</mat-icon>
+      <span>
+        {{
+          'PLAYERS.STREAK'
+            | translate: { current: summary.current_streak, best: summary.best_streak }
+        }}
+      </span>
+    </li>
+    <li>
+      <mat-icon aria-hidden="true">star</mat-icon>
+      <span>
+        {{
+          'PLAYERS.RATING_SUMMARY'
+            | translate: { stars: starsLabel(summary), count: summary.reviews_count }
+        }}
+      </span>
+    </li>
+  </ul>
+
+  <div class="match-card-actions">
+    <button type="button" class="cta-button cta-button--secondary" (click)="onToggleClick()">
+      {{ (expanded() ? 'PLAYERS.HIDE_DETAIL' : 'PLAYERS.VIEW_DETAIL') | translate }}
+    </button>
+  </div>
+
+  @if (expanded()) {
+    <div class="player-card__detail">
+      @if (detailLoading()) {
+        <p class="state-message">{{ 'PLAYERS.LOADING_DETAIL' | translate }}</p>
+      } @else if (detailError()) {
+        <p class="state-message error">{{ detailError() | translate }}</p>
+      } @else if (detail(); as full) {
+        <dl class="player-card__stats-grid">
+          <div>
+            <dt>{{ 'PLAYERS.CURRENT_STREAK' | translate }}</dt>
+            <dd>{{ full.current_streak }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'PLAYERS.BEST_STREAK' | translate }}</dt>
+            <dd>{{ full.best_streak }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'PLAYERS.SELF_CATEGORY' | translate }}</dt>
+            <dd>{{ full.category_label }}</dd>
+          </div>
+        </dl>
+
+        @if (full.bio) {
+          <p class="player-card__bio">{{ full.bio }}</p>
+        }
+
+        <app-player-stats-chart [detail]="full" />
+
+        <h4 class="player-card__reviews-title">{{ 'PLAYERS.REVIEWS_TITLE' | translate }}</h4>
+        @if (full.reviews.length === 0) {
+          <p class="state-message">{{ 'PLAYERS.NO_REVIEWS' | translate }}</p>
+        } @else {
+          <div class="player-card__reviews">
+            @for (review of full.reviews; track review.id) {
+              <app-player-review-card [review]="review" />
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</article>

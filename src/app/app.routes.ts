@@ -4,6 +4,7 @@ import { authGuard, guestGuard } from './login/auth.guard';
 import { clubRoutes } from './club/club.routes';
 import { courtsRoutes } from './courts/courts.routes';
 import { matchesRoutes } from './matches/matches.routes';
+import { playersRoutes } from './players/players.routes';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -22,6 +23,7 @@ export const routes: Routes = [
         loadComponent: () => import('./home/home').then((m) => m.Home),
       },
       ...matchesRoutes,
+      ...playersRoutes,
       ...clubRoutes,
       ...courtsRoutes,
       ...configurationsRoutes,

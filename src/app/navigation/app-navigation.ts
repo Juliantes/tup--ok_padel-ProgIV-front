@@ -11,6 +11,7 @@ export interface AppNavItem {
 export const APP_NAV_ITEMS: AppNavItem[] = [
   { labelKey: 'NAV.HOME', path: '/home', analyticsName: 'inicio' },
   { labelKey: 'NAV.MATCHES', path: '/matches', analyticsName: 'partidos' },
+  { labelKey: 'NAV.PLAYERS', path: '/players', analyticsName: 'jugadores' },
   {
     labelKey: 'NAV.CLUB',
     path: '/club',
