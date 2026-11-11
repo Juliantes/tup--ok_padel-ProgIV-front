@@ -43,6 +43,12 @@ Abrí **http://localhost:4200** (mismo host que el CORS del backend).
 | `npm test`      | Tests (Vitest)                 |
 | `npm run lint`  | ESLint                         |
 
+## Seguridad de dependencias (`npm audit`)
+
+Tras los upgrades en `fix-vulnerabilities`, `npm audit` puede seguir reportando **5 high** en `@grpc/grpc-js@1.9.x` arrastrado por `firebase` (Firestore SDK). El advisory [GHSA-m9gg-hp2v-232j](https://github.com/advisories/GHSA-m9gg-hp2v-232j) aplica a **servidores gRPC** que usan `getAuthContext`; este front solo usa Firebase Auth cliente. Forzar `@grpc/grpc-js` 1.13+ rompe el pin de Firebase 12; subir a Firebase 13 queda fuera de alcance mientras `@capacitor-firebase/authentication` exige `firebase@^12`.
+
+`package.json` incluye `overrides` para transitive de tooling (`glob`, `minimatch`, `tar`, `uuid`, `basic-ftp`). No usar `npm audit fix --force` (propone downgrades de Angular/Firebase/ESLint).
+
 ## Flujo de sesión
 
 Hay **dos tokens**. La API Rails no usa el de Firebase en cada request.
