@@ -43,11 +43,30 @@ Abrí **http://localhost:4200** (mismo host que el CORS del backend).
 | `npm test`      | Tests (Vitest)                 |
 | `npm run lint`  | ESLint                         |
 
+<<<<<<< HEAD
+
 ## Seguridad de dependencias (`npm audit`)
 
 Tras los upgrades en `fix-vulnerabilities`, `npm audit` puede seguir reportando **5 high** en `@grpc/grpc-js@1.9.x` arrastrado por `firebase` (Firestore SDK). El advisory [GHSA-m9gg-hp2v-232j](https://github.com/advisories/GHSA-m9gg-hp2v-232j) aplica a **servidores gRPC** que usan `getAuthContext`; este front solo usa Firebase Auth cliente. Forzar `@grpc/grpc-js` 1.13+ rompe el pin de Firebase 12; subir a Firebase 13 queda fuera de alcance mientras `@capacitor-firebase/authentication` exige `firebase@^12`.
 
-`package.json` incluye `overrides` para transitive de tooling (`glob`, `minimatch`, `tar`, `uuid`, `basic-ftp`). No usar `npm audit fix --force` (propone downgrades de Angular/Firebase/ESLint).
+# `package.json` incluye `overrides` para transitive de tooling (`glob`, `minimatch`, `tar`, `uuid`, `basic-ftp`). No usar `npm audit fix --force` (propone downgrades de Angular/Firebase/ESLint).
+
+## Docker
+
+Imagen de producción con **nginx** que sirve el build estático. La URL de la API se define en **build time** (`API_BASE_URL`, default `http://localhost:3000`).
+
+**Stack completo (recomendado):** desde el repo backend hermano `ok_padel`, ver su README → Docker (`docker compose up --build`).
+
+**Solo front:**
+
+```bash
+docker build --build-arg API_BASE_URL=http://localhost:3000 -t tup-padel-match:local .
+docker run --rm -p 4200:80 tup-padel-match:local
+```
+
+Opcional: `--build-arg FIREBASE_API_KEY=...` (y el resto de `FIREBASE_*` del `Dockerfile`) para login con Google dentro del contenedor.
+
+> > > > > > > aa8a53a (Serve the Angular app from a production nginx image.)
 
 ## Flujo de sesión
 
