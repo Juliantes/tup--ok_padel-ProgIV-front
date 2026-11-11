@@ -64,9 +64,9 @@ docker build --build-arg API_BASE_URL=http://localhost:3000 -t tup-padel-match:l
 docker run --rm -p 4200:80 tup-padel-match:local
 ```
 
-Opcional: `--build-arg FIREBASE_API_KEY=...` (y el resto de `FIREBASE_*` del `Dockerfile`) para login con Google dentro del contenedor.
+Opcional: `--build-arg FIREBASE_API_KEY=...` (y el resto de `FIREBASE_*` del `Dockerfile`).
 
-> > > > > > > aa8a53a (Serve the Angular app from a production nginx image.)
+**Stack con `ok_padel`:** definí las mismas claves en `ok_padel/.env` (ver `.env.example`); `docker compose` las inyecta al build del front.
 
 ## Flujo de sesión
 
