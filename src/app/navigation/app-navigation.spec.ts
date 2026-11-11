@@ -5,7 +5,7 @@ import { navItemsForRoles } from './app-navigation';
 describe('navItemsForRoles', () => {
   it('always includes home, matches and config', () => {
     const paths = navItemsForRoles([]).map((item) => item.path);
-    expect(paths).toEqual(['/home', '/matches', '/configurations']);
+    expect(paths).toEqual(['/home', '/matches', '/players', '/configurations']);
   });
 
   it('includes club only for club_owner', () => {

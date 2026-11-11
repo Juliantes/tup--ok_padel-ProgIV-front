@@ -1,0 +1,30 @@
+@let current = review();
+<article class="review-card">
+  <header class="review-card__header">
+    <span class="organizer-avatar">{{ playerInitials(current.reviewer.name) }}</span>
+    <div>
+      <strong>{{ current.reviewer.name }}</strong>
+      <p class="review-card__date">{{ current.created_at | date: 'mediumDate' }}</p>
+    </div>
+    <div
+      class="review-card__stars"
+      [attr.aria-label]="'PLAYERS.STARS_OF' | translate: { count: current.stars }"
+    >
+      @for (star of [1, 2, 3, 4, 5]; track star) {
+        <mat-icon
+          class="review-star"
+          [class.review-star--filled]="isStarFilled(star, current)"
+          aria-hidden="true"
+        >
+          {{ isStarFilled(star, current) ? 'star' : 'star_border' }}
+        </mat-icon>
+      }
+    </div>
+  </header>
+  @if (current.comment) {
+    <p class="review-card__comment">{{ current.comment }}</p>
+  }
+  <p class="review-card__level">
+    {{ 'PLAYERS.REVIEW_LEVEL' | translate: { label: current.level_category_label } }}
+  </p>
+</article>

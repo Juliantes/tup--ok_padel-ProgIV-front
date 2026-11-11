@@ -1,0 +1,42 @@
+<section class="players-page">
+  <header class="players-header">
+    <p class="eyebrow">{{ 'PLAYERS.EYEBROW' | translate }}</p>
+    <h1>{{ 'PLAYERS.TITLE' | translate }}</h1>
+  </header>
+
+  <div class="players-search">
+    <input
+      class="search-input"
+      type="search"
+      [value]="searchTerm()"
+      (input)="onSearchInput($event)"
+      [placeholder]="'PLAYERS.SEARCH_PLACEHOLDER' | translate"
+      [attr.aria-label]="'PLAYERS.SEARCH_ARIA' | translate"
+    />
+  </div>
+
+  @if (errorMessage()) {
+    <p class="state-message error">{{ errorMessage() | translate }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (players().length === 0) {
+    <p class="state-message">{{ 'PLAYERS.EMPTY' | translate }}</p>
+  } @else {
+    <div class="players-grid">
+      @for (player of players(); track player.id) {
+        <app-player-card
+          [player]="player"
+          [expanded]="isExpanded(player.id)"
+          [detail]="detailFor(player.id)"
+          [detailLoading]="detailLoadingId() === player.id"
+          [detailError]="detailErrorFor(player.id)"
+          (toggleDetail)="toggleDetail(player)"
+        />
+      }
+    </div>
+  }
+</section>

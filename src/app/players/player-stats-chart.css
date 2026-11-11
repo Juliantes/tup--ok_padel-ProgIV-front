@@ -1,0 +1,108 @@
+.stats-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stats-chart__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stats-chart__empty {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.stats-chart__summary {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.stats-chart__win-rate {
+  font-weight: 700;
+}
+
+.stats-chart__bar {
+  background: #e5e7eb;
+  border-radius: 999px;
+  display: flex;
+  height: 0.65rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.stats-chart__segment--wins {
+  background: #149a61;
+}
+
+.stats-chart__segment--losses {
+  background: #9ca3af;
+}
+
+.stats-chart__ratings {
+  border-top: 0.0625rem solid rgba(16, 59, 80, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+}
+
+.stats-chart__rating-head {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.stats-chart__rating-head mat-icon {
+  color: #f59e0b;
+  font-size: 1.1rem;
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.stats-chart__rating-head span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.stats-chart__star-row {
+  align-items: center;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: 1rem auto 1fr 2rem;
+}
+
+.stats-chart__star-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.stats-chart__star-icon {
+  color: #f59e0b;
+  font-size: 0.95rem;
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.stats-chart__star-track {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 0.45rem;
+  overflow: hidden;
+}
+
+.stats-chart__star-fill {
+  background: #f59e0b;
+  display: block;
+  height: 100%;
+}
+
+.stats-chart__star-count {
+  font-size: 0.8rem;
+  text-align: right;
+}
