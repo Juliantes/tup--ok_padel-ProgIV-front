@@ -3,6 +3,8 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
+RUN corepack enable
+
 ARG API_BASE_URL=http://localhost:3000
 ARG FIREBASE_API_KEY=
 ARG FIREBASE_AUTH_DOMAIN=
@@ -12,7 +14,7 @@ ARG FIREBASE_MESSAGING_SENDER_ID=
 ARG FIREBASE_APP_ID=
 
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN corepack install && corepack npm ci --ignore-scripts
 
 COPY . .
 
@@ -29,7 +31,7 @@ RUN set -eux; \
   cp src/environments/environment.ts src/environments/environment.prod.ts; \
   sed -i "s|production: false|production: true|g" src/environments/environment.prod.ts
 
-RUN npm run build
+RUN corepack npm run build
 
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
